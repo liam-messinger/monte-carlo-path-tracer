@@ -1,21 +1,33 @@
 use image::{ImageBuffer, Rgb};
+use indicatif::{ProgressBar, ProgressStyle};
 
 fn main() {
 
     // Image
 
-    let IMAGE_WIDTH: u32 = 265;
-    let IMAGE_HEIGHT: u32 = 265;
+    let image_width: u32 = 265;
+    let image_height: u32 = 265;
 
     // Create image buffer
-    let mut img = ImageBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT);
+    let mut img = ImageBuffer::new(image_width, image_height);
+
+    // Create progress bar
+    let pb = ProgressBar::new(image_height as u64);
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} scanlines ({eta}) {msg}")
+            .unwrap()
+            .progress_chars("#>-")
+    );
 
     // Render
-    for j in (0..IMAGE_HEIGHT).rev() {
-        eprintln!("Scanlines remaining: {}", j);
-        for i in 0..IMAGE_WIDTH {
-            let r = i as f32 / (IMAGE_WIDTH - 1) as f32;
-            let g = j as f32 / (IMAGE_HEIGHT - 1) as f32;
+    for j in (0..image_height).rev() {
+        // Progress indicator
+        pb.set_position(image_height as u64 - j as u64);
+
+        for i in 0..image_width {
+            let r = i as f32 / (image_width - 1) as f32;
+            let g = j as f32 / (image_height - 1) as f32;
             let b = 0.0;
 
             let ir = (255.999 * r) as u8;
@@ -27,7 +39,9 @@ fn main() {
         }
     }
     
+    pb.finish_with_message("Rendering complete!");
+    
     // Save the image
     img.save("output.png").unwrap();
-    eprintln!("Done. Image saved as output.png");
+    eprintln!("Image saved as output.png");
 }
