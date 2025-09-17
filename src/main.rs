@@ -1,14 +1,16 @@
 mod vec3;
+mod color;
 
-use image::{ImageBuffer, Rgb};
+use image::ImageBuffer;
 use indicatif::{ProgressBar, ProgressStyle};
+use color::Color;
 
 fn main() {
 
     // Image
 
-    let image_width: u32 = 265;
-    let image_height: u32 = 265;
+    let image_width: u32 = 512;
+    let image_height: u32 = 512;
 
     // Create image buffer
     let mut img = ImageBuffer::new(image_width, image_height);
@@ -28,16 +30,15 @@ fn main() {
         pb.set_position(image_height as u64 - j as u64);
 
         for i in 0..image_width {
-            let r = i as f32 / (image_width - 1) as f32;
-            let g = j as f32 / (image_height - 1) as f32;
+            let r = i as f64 / (image_width - 1) as f64;
+            let g = j as f64 / (image_height - 1) as f64;
             let b = 0.0;
 
-            let ir = (255.999 * r) as u8;
-            let ig = (255.999 * g) as u8;
-            let ib = (255.999 * b) as u8;
-
-            // Set pixel in image buffer
-            img.put_pixel(i, j, Rgb([ir, ig, ib]));
+            // Create a Color
+            let pixel_color = Color::rgb(r, g, b);
+            
+            // Convert to RGB and set pixel in image buffer
+            img.put_pixel(i, j, pixel_color.to_rgb());
         }
     }
     
