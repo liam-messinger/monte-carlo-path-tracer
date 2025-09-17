@@ -123,6 +123,13 @@ impl Mul<f64> for Vec3 { // v * t
   }
 }
 
+impl Mul<Vec3> for f64 { // t * v
+  type Output = Vec3;
+  fn mul(self, v: Vec3) -> Vec3 {
+    Vec3 { e: [v.e[0] * self, v.e[1] * self, v.e[2] * self] }
+  }
+}
+
 impl Div<f64> for Vec3 { // v / t
   type Output = Vec3;
   fn div(self, t: f64) -> Vec3 {
