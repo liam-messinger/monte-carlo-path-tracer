@@ -137,3 +137,10 @@ impl fmt::Display for Vec3 {
     write!(f, "{} {} {}", self.e[0], self.e[1], self.e[2])
   }
 }
+
+// ----------------- Default trait implementation -----------------
+impl Default for Vec3 {
+  fn default() -> Self {
+    Self::zero()
+  }
+}

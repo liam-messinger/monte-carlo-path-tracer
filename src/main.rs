@@ -1,5 +1,6 @@
 mod vec3;
 mod color;
+mod ray;
 
 use image::ImageBuffer;
 use indicatif::{ProgressBar, ProgressStyle};
