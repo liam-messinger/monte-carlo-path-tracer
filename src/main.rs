@@ -11,6 +11,7 @@ use ray::Ray;
 use image::ImageBuffer;
 use indicatif::{ProgressBar, ProgressStyle};
 
+// Create and configure a progress bar
 fn create_progress_bar(total: u64) -> ProgressBar {
   let pb = ProgressBar::new(total);
   pb.set_style(
@@ -22,7 +23,22 @@ fn create_progress_bar(total: u64) -> ProgressBar {
   pb
 }
 
+// Check if hit a sphere
+fn hit_sphere(center: Point3, radius: f64, r: &Ray) -> bool {
+  let oc: Vec3 = *r.origin() - center;
+  let a = r.direction().length_squared();
+  let b  = 2.0 * (*r.direction() * oc);
+  let c = oc.length_squared() - radius * radius;
+  let discriminant = b*b - 4.0*a*c;
+  discriminant > 0.0
+}
+
+// Compute the color seen along a ray
 pub fn ray_color(r: &Ray) -> Color {
+  if hit_sphere(Point3::new(0.0, 0.0, 1.0), 0.5, r) {
+    return rgb(1.0, 0.0, 0.0); // Red color for the sphere
+  }
+
   let unit_direction = unit_vector(*r.direction());
   let a = 0.5 * (unit_direction.y() + 1.0);
   (1.0 - a) * rgb(1.0, 1.0, 1.0) + a * rgb(0.5, 0.7, 1.0)

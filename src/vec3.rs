@@ -111,9 +111,9 @@ impl Sub for Vec3 { // v - u
 }
 
 impl Mul for Vec3 { // v * u (dot product)
-  type Output = Vec3;
-  fn mul(self, other: Vec3) -> Vec3 {
-    Vec3 { e: [self.e[0] * other.e[0], self.e[1] * other.e[1], self.e[2] * other.e[2]] }
+  type Output = f64;
+  fn mul(self, other: Vec3) -> f64 {
+    self.e[0] * other.e[0] + self.e[1] * other.e[1] + self.e[2] * other.e[2]
   }
 }
 
