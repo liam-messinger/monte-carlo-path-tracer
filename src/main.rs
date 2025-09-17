@@ -4,10 +4,13 @@
 mod vec3;
 mod color;
 mod ray;
+mod hittable;
 
 use vec3::{Vec3, Point3, unit_vector, dot, cross};
 use color::{Color, rgb};
 use ray::Ray;
+
+use crate::hittable::{Sphere, HitRecord, Hittable};
 
 // External crates
 use image::ImageBuffer;
@@ -25,29 +28,18 @@ fn create_progress_bar(total: u64) -> ProgressBar {
   pb
 }
 
-// Check if hit a sphere
-fn hit_sphere(center: Point3, radius: f64, r: &Ray) -> f64 {
-  let oc: Vec3 = center - *r.origin();
-  let a = r.direction().length_squared();
-  let h = dot(r.direction(), &oc);
-  let c = oc.length_squared() - radius * radius;
-  let discriminant = h*h - a*c;
-  
-  if discriminant < 0.0 {
-    return -1.0
-  } else {
-    return (h - discriminant.sqrt()) / a;
-  }
-}
-
 // Compute the color seen along a ray
 pub fn ray_color(r: &Ray) -> Color {
-  let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r);
-  if t > 0.0 {
-    let N: Vec3 = unit_vector(r.at(t) - Vec3::new(0.0, 0.0, -1.0));
-    return 0.5 * Color::new(N.x()+1.0, N.y()+1.0, N.z()+1.0);
+  // Create sphere
+  let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
+  let mut rec = HitRecord::new();
+
+  // Check for sphere hit
+  if sphere.hit(r, 0.0, 5.0, &mut rec) {
+    return 0.5 * Color::new(rec.normal.x() + 1.0, rec.normal.y() + 1.0, rec.normal.z() + 1.0);
   }
 
+  // Sky background
   let unit_direction = unit_vector(*r.direction());
   let a = 0.5 * (unit_direction.y() + 1.0);
   (1.0 - a) * rgb(1.0, 1.0, 1.0) + a * rgb(0.5, 0.7, 1.0)
