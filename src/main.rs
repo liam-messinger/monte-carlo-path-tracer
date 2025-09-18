@@ -8,7 +8,7 @@ mod vec3;
 
 use color::{Color, rgb};
 use ray::Ray;
-use vec3::{Point3, Vec3, cross, dot, unit_vector};
+use vec3::{Point3, Vec3, unit_vector};
 
 use crate::hittable::{HitRecord, Hittable, Sphere};
 

@@ -2,6 +2,7 @@ use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3, dot};
 
 // Record of a ray-object intersection
+#[derive(Clone)]
 pub struct HitRecord {
     pub point: Point3,
     pub normal: Vec3,
