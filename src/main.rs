@@ -5,12 +5,11 @@ mod color;
 mod hittable;
 mod ray;
 mod vec3;
+mod prelude;
 
-use color::{Color, rgb};
-use ray::Ray;
-use vec3::{Point3, Vec3, unit_vector};
+use prelude::*;
 
-use crate::hittable::{HitRecord, Hittable, Sphere};
+use crate::hittable::{HitRecord, Hittable, HittableList, Sphere};
 
 // External crates
 use image::ImageBuffer;
@@ -29,23 +28,14 @@ fn create_progress_bar(total: u64) -> ProgressBar {
 }
 
 // Compute the color seen along a ray
-pub fn ray_color(r: &Ray) -> Color {
-    // Create sphere
-    let sphere = Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5);
+pub fn ray_color(r: &Ray, world: &HittableList) -> Color {
     let mut rec = HitRecord::new();
-
-    // Check for sphere hit
-    if sphere.hit(r, 0.0, 5.0, &mut rec) {
-        return 0.5
-            * Color::new(
-                rec.normal.x() + 1.0,
-                rec.normal.y() + 1.0,
-                rec.normal.z() + 1.0,
-            );
+    if world.hit(r, 0.0, INFINITY, &mut rec) {
+        return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
     }
 
     // Sky background
-    let unit_direction = unit_vector(*r.direction());
+    let unit_direction: Vec3 = unit_vector(*r.direction());
     let a = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - a) * rgb(1.0, 1.0, 1.0) + a * rgb(0.5, 0.7, 1.0)
 }
@@ -56,6 +46,12 @@ fn main() {
     let ASPECT_RATIO: f64 = 16.0 / 9.0;
     let IMAGE_WIDTH: u32 = 400;
     let IMAGE_HEIGHT: u32 = (IMAGE_WIDTH as f64 / ASPECT_RATIO) as u32;
+
+    // ----- World -----
+
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
 
     // ----- Camera -----
 
@@ -91,7 +87,7 @@ fn main() {
             let ray_direction = pixel_center - CAMERA_CENTER;
             let r = Ray::new(CAMERA_CENTER, ray_direction);
 
-            let pixel_color = ray_color(&r);
+            let pixel_color = ray_color(&r, &world);
             img.put_pixel(i, j, pixel_color.to_rgb());
         }
     }
