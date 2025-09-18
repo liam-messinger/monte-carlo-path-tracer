@@ -11,6 +11,8 @@ use prelude::*;
 
 use crate::hittable::{HitRecord, Hittable, HittableList, Sphere};
 
+use std::rc::Rc;
+
 // External crates
 use image::ImageBuffer;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -50,8 +52,8 @@ fn main() {
     // ----- World -----
 
     let mut world = HittableList::new();
-    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
-    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+    world.add(Rc::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Rc::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
 
     // ----- Camera -----
 

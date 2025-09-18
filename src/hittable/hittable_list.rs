@@ -1,8 +1,9 @@
 use super::utils::{HitRecord, Hittable};
 use crate::ray::Ray;
+use std::rc::Rc;
 
 pub struct HittableList {
-    pub objects: Vec<Box<dyn Hittable>>,
+    pub objects: Vec<Rc<dyn Hittable>>,
 }
 
 impl HittableList {
@@ -12,7 +13,7 @@ impl HittableList {
     }
 
     // Add an object to the list
-    pub fn add(&mut self, object: Box<dyn Hittable>) {
+    pub fn add(&mut self, object: Rc<dyn Hittable>) {
         self.objects.push(object);
     }
 
