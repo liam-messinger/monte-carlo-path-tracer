@@ -2,9 +2,9 @@
 pub use crate::color::{Color, rgb};
 pub use crate::ray::Ray;
 pub use crate::vec3::{Point3, Vec3, unit_vector, dot, cross};
+pub use crate::interval::Interval;
 
 // Constants
-pub const INFINITY: f64 = f64::INFINITY;
 pub const PI: f64 = std::f64::consts::PI;
 
 // Utility Functions

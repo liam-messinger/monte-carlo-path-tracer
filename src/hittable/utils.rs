@@ -1,5 +1,6 @@
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3, dot};
+use crate::interval::Interval;
 
 // Record of a ray-object intersection
 #[derive(Clone)]
@@ -35,5 +36,5 @@ impl HitRecord {
 
 // Trait for hittable objects
 pub trait Hittable {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool;
+    fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool;
 }

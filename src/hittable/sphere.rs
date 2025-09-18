@@ -1,5 +1,6 @@
 use super::utils::{HitRecord, Hittable};
 use crate::ray::Ray;
+use crate::interval::Interval;
 use crate::vec3::{Point3, Vec3, dot};
 
 pub struct Sphere {
@@ -18,7 +19,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
+    fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
         // Calculate the discriminant of the quadratic equation for ray-sphere intersection
         let oc: Vec3 = self.center - *r.origin();
         let a = r.direction().length_squared();
@@ -34,9 +35,9 @@ impl Hittable for Sphere {
 
         // Find the nearest root that lies in the acceptable range.
         let root = (h - sqrtd) / a;
-        if root <= t_min || root >= t_max {
+        if !ray_t.contains(root) {
             let root = (h + sqrtd) / a;
-            if root <= t_min || root >= t_max {
+            if !ray_t.contains(root) {
                 return false;
             }
         }
