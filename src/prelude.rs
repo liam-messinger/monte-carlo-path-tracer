@@ -15,3 +15,13 @@ pub fn degrees_to_radians(degrees: f64) -> f64 {
 pub fn radians_to_degrees(radians: f64) -> f64 {
     radians * 180.0 / PI
 }
+
+pub fn random_f64() -> f64 {
+    // Returns a random real in [0,1).
+    rand::random::<f64>()
+}
+
+pub fn random_f64_range(min: f64, max: f64) -> f64 {
+    // Returns a random real in [min,max).
+    min + (max - min) * random_f64()
+}

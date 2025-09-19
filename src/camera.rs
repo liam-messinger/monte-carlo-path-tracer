@@ -6,16 +6,49 @@ use image::ImageBuffer;
 use indicatif::{ProgressBar, ProgressStyle};
 
 pub struct Camera {
-    pub aspect_ratio: f64, // Ratio of image width over height
-    pub image_width: u32,  // Rendered image width in pixel count
-    image_height: u32,     // Rendered image height
-    center: Point3,        // Camera center
-    pixel00_loc: Point3,   // Location of pixel 0, 0
-    pixel_delta_u: Vec3,   // Offeset to pixel to the right
-    pixel_delta_v: Vec3,   // Offset to pixel below
+    pub aspect_ratio: f64,      // Ratio of image width over height
+    pub image_width: u32,       // Rendered image width in pixel count
+    pub samples_per_pixel: u32, // Number of samples per pixel for anti-aliasing
+
+    image_height: u32,          // Rendered image height
+    pixel_samples_scaled: f64,  // Color scale factor for a sum of pixel samples
+    center: Point3,             // Camera center
+    pixel00_loc: Point3,        // Location of pixel 0, 0
+    pixel_delta_u: Vec3,        // Offeset to pixel to the right
+    pixel_delta_v: Vec3,        // Offset to pixel below
 }
 
 impl Camera {
+    // ----- Public -----
+
+    // Render the scene from this camera's point of view
+    pub fn render (&mut self, world: &dyn Hittable) {
+        self.initialize();
+
+        let mut img = ImageBuffer::new(self.image_width, self.image_height); // Create image buffer
+
+        let pb = Self::create_progress_bar(self.image_height as u64); // Create progress bar
+
+        // Loop over each pixel in the image
+        for j in 0..self.image_height {
+            pb.set_position(j as u64);
+            for i in 0..self.image_width {
+                let mut pixel_color = Color::default();
+                for _sample in 0..self.samples_per_pixel {
+                    let r: Ray = self.get_ray(i, j);
+                    pixel_color += Camera::ray_color(&r, world);
+                }
+                img.put_pixel(i, j, (self.pixel_samples_scaled * pixel_color).to_rgb());
+            }
+        }
+
+        pb.finish_with_message("Render complete!");
+
+        // Save the image
+        img.save("output.png").unwrap();
+        eprint!("Image saved to output.png\n");
+    }
+
     // ----- Private -----
 
     // Create and configure a progress bar
@@ -34,6 +67,8 @@ impl Camera {
     fn initialize(&mut self) {
         self.image_height = (self.image_width as f64 / self.aspect_ratio) as u32;
         self.image_height = if self.image_height < 1 { 1 } else { self.image_height };
+
+        self.pixel_samples_scaled = 1.0 / self.samples_per_pixel as f64;
 
         self.center = Point3::zero();
 
@@ -55,8 +90,29 @@ impl Camera {
         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
     }
 
+    //
+    fn get_ray(&self, i: u32, j: u32) -> Ray {
+        // Construct a camera ray originating from the origin and directed at randomly sampled
+        // point around the pixel location i, j.
+
+        let offset = Camera::sample_square();
+        let pixel_sample = self.pixel00_loc
+                         + (i as f64 + offset.x()) * self.pixel_delta_u
+                         + (j as f64 + offset.y()) * self.pixel_delta_v;  
+
+        let ray_origin = self.center;
+        let ray_direction = pixel_sample - ray_origin;
+
+        Ray::new(ray_origin, ray_direction)
+    }
+
+    fn sample_square() -> Vec3 {
+        // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
+        Vec3::new(random_f64() - 0.5, random_f64() - 0.5, 0.0)
+    }
+    
     // Compute the color seen along a ray
-    fn ray_color(&self, r: &Ray, world: &dyn Hittable) -> Color {
+    fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
         let mut rec = HitRecord::new();
 
         if world.hit(r, Interval::new(0.0, f64::INFINITY), &mut rec) {
@@ -68,45 +124,19 @@ impl Camera {
         let a = 0.5 * (unit_direction.y() + 1.0);
         (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
     }
-
-    // ----- Public -----
-
-    // Render the scene from this camera's point of view
-    pub fn render (&mut self, world: &dyn Hittable) {
-        self.initialize();
-
-        let mut img = ImageBuffer::new(self.image_width, self.image_height); // Create image buffer
-
-        let pb = Self::create_progress_bar(self.image_height as u64); // Create progress bar
-
-        // Loop over each pixel in the image
-        for j in 0..self.image_height {
-            pb.set_position(self.image_height as u64 - j as u64);
-            for i in 0..self.image_width {
-                let pixel_center = self.pixel00_loc + (i as f64) * self.pixel_delta_u + (j as f64) * self.pixel_delta_v;
-                let ray_direction = pixel_center - self.center;
-                let r = Ray::new(self.center, ray_direction);
-
-                let pixel_color = self.ray_color(&r, world);
-                img.put_pixel(i, j, pixel_color.to_rgb());
-            }
-        }
-
-        pb.finish_with_message("Render complete!");
-
-        // Save the image
-        img.save("output.png").unwrap();
-        eprint!("Image saved to output.png\n");
-    }
 }
 
 // Implement default camera settings
 impl Default for Camera {
     fn default() -> Self {
         let cam = Camera {
-            aspect_ratio: 16.0 / 9.0,
-            image_width: 400,
-            image_height: 0, // Will be set in initialize()
+            // Public
+            aspect_ratio: 1.0,
+            image_width: 100,
+            samples_per_pixel: 10,
+            // Will be set in initialize()
+            image_height: 0,
+            pixel_samples_scaled: 0.0,
             center: Point3::zero(),
             pixel00_loc: Point3::zero(),
             pixel_delta_u: Vec3::zero(),
