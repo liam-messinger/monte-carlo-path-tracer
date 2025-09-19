@@ -21,9 +21,9 @@ impl Sphere {
 impl Hittable for Sphere {
     fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
         // Calculate the discriminant of the quadratic equation for ray-sphere intersection
-        let oc: Vec3 = self.center - *r.origin();
-        let a = r.direction().length_squared();
-        let h = dot(r.direction(), &oc);
+        let oc: Vec3 = self.center - r.origin;
+        let a = r.direction.length_squared();
+        let h = dot(&r.direction, &oc);
         let c = oc.length_squared() - self.radius * self.radius;
 
         let discriminant = h * h - a * c;

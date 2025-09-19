@@ -1,5 +1,5 @@
 // Common imports
-pub use crate::color::{Color, rgb};
+pub use crate::color::{Color, rgb, rgb_bytes};
 pub use crate::ray::Ray;
 pub use crate::vec3::{Point3, Vec3, unit_vector, dot, cross};
 pub use crate::interval::Interval;
