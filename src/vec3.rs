@@ -1,5 +1,6 @@
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub};
+use crate::prelude::random_f64;
 
 // Struct definition
 #[derive(Debug, Clone, Copy)]
@@ -33,12 +34,29 @@ impl Vec3 {
     }
 
     // Additional methods
-    pub fn length(&self) -> f64 {
+
+    // vec.length()
+    pub fn length(&self) -> f64 { // length of the vector
         self.length_squared().sqrt()
     }
 
-    pub fn length_squared(&self) -> f64 {
+    // vec.length_squared()
+    pub fn length_squared(&self) -> f64 { // squared length of the vector
         self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
+    }
+
+    // Vec3::random()
+    pub fn random() -> Self { // random vector with each component in [0,1)
+        Vec3::new(random_f64(), random_f64(), random_f64())
+    }
+
+    // Vec3::random_range(min, max)
+    pub fn random_range(min: f64, max: f64) -> Self { // random vector with each component in [min,max)
+        Vec3::new( 
+            random_f64() * (max - min) + min,
+            random_f64() * (max - min) + min,
+            random_f64() * (max - min) + min,
+        )
     }
 }
 
