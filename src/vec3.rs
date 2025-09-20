@@ -33,7 +33,7 @@ impl Vec3 {
         self.e[2]
     }
 
-    // Additional methods
+    // ----------------- Utility functions -----------------
 
     // vec.length()
     pub fn length(&self) -> f64 { // length of the vector
@@ -43,6 +43,12 @@ impl Vec3 {
     // vec.length_squared()
     pub fn length_squared(&self) -> f64 { // squared length of the vector
         self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
+    }
+
+    // vec.near_zero()
+    pub fn near_zero(&self) -> bool { // checks if the vector is close to zero in all dimensions
+        let s = 1e-8;
+        self.e[0].abs() < s && self.e[1].abs() < s && self.e[2].abs() < s
     }
 
     // Vec3::random()
@@ -58,45 +64,52 @@ impl Vec3 {
             random_f64() * (max - min) + min,
         )
     }
-}
 
-// ----------------- Utility functions -----------------
-pub fn dot(u: &Vec3, v: &Vec3) -> f64 {
-    u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2]
-}
-
-pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
-    Vec3 {
-        e: [
-            u.e[1] * v.e[2] - u.e[2] * v.e[1],
-            u.e[2] * v.e[0] - u.e[0] * v.e[2],
-            u.e[0] * v.e[1] - u.e[1] * v.e[0],
-        ],
+    // Vec3::dot(u, v)
+    pub fn dot(u: &Vec3, v: &Vec3) -> f64 { // dot product of two vectors
+        u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2]
     }
-}
 
-pub fn unit_vector(v: Vec3) -> Vec3 {
-    v / v.length()
-}
-
-// Generates a random unit vector uniformly distributed over the unit sphere
-pub fn random_unit_vector() -> Vec3 {
-    loop {
-        let v = Vec3::random_range(-1.0, 1.0);
-        let lensq = v.length_squared();
-        if 1e-160 < lensq && lensq < 1.0 {
-            return v / lensq.sqrt();
+    // Vec3::cross(u, v)
+    pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 { // cross product of two vectors
+        Vec3 {
+            e: [
+                u.e[1] * v.e[2] - u.e[2] * v.e[1],
+                u.e[2] * v.e[0] - u.e[0] * v.e[2],
+                u.e[0] * v.e[1] - u.e[1] * v.e[0],
+            ],
         }
     }
-}
 
-// Using a normal, generates a random vector in the "same" direction
-pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
-    let on_unit_sphere = random_unit_vector();
-    if dot(&on_unit_sphere, normal) > 0.0 {
-        on_unit_sphere
-    } else {
-        -on_unit_sphere
+    // Vec3::unit_vector(v)
+    pub fn unit_vector(v: Vec3) -> Vec3 { // returns the unit vector in the direction of v
+        v / v.length()
+    }
+
+    // Vec3::random_unit_vector()
+    pub fn random_unit_vector() -> Vec3 { // Generates a random unit vector uniformly distributed over the unit sphere
+        loop {
+            let v = Vec3::random_range(-1.0, 1.0);
+            let lensq = v.length_squared();
+            if 1e-160 < lensq && lensq < 1.0 {
+                return v / lensq.sqrt();
+            }
+        }
+    }
+
+    // Vec3::random_in_hemisphere(normal)
+    pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 { // Using a normal, generates a random vector in the "same" direction
+        let on_unit_sphere = Vec3::random_unit_vector();
+        if Vec3::dot(&on_unit_sphere, normal) > 0.0 {
+            on_unit_sphere
+        } else {
+            -on_unit_sphere
+        }
+    }
+
+    // Vec3::reflect(v, n)
+    pub fn reflect(vec: &Vec3, normal: &Vec3) -> Vec3 { // Reflects vector vec around a normal
+        (*vec) - 2.0 * Vec3::dot(vec, normal) * (*normal)
     }
 }
 
@@ -177,10 +190,16 @@ impl Sub for Vec3 {
 }
 
 impl Mul for Vec3 {
-    // v * u (dot product)
-    type Output = f64;
-    fn mul(self, other: Vec3) -> f64 {
-        self.e[0] * other.e[0] + self.e[1] * other.e[1] + self.e[2] * other.e[2]
+    // v * u (element-wise multiplication)
+    type Output = Vec3;
+    fn mul(self, other: Vec3) -> Vec3 {
+        Vec3 {
+            e: [ 
+                self.e[0] * other.e[0],
+                self.e[1] * other.e[1],
+                self.e[2] * other.e[2],
+            ],
+        }
     }
 }
 

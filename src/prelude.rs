@@ -1,7 +1,7 @@
 // Common imports
 pub use crate::color::Color;
 pub use crate::ray::Ray;
-pub use crate::vec3::{Point3, Vec3, unit_vector, dot, cross, random_unit_vector, random_in_hemisphere};
+pub use crate::vec3::{Point3, Vec3};
 pub use crate::interval::Interval;
 
 // Constants
@@ -24,4 +24,12 @@ pub fn random_f64() -> f64 {
 pub fn random_f64_range(min: f64, max: f64) -> f64 {
     // Returns a random real in [min,max).
     min + (max - min) * random_f64()
+}
+
+// Macro to mimic C++ "make_shared"
+#[macro_export]
+macro_rules! make_shared {
+    ($type:ty, $($arg:expr),*) => {
+        std::rc::Rc::new(<$type>::new($($arg),*))
+    };
 }

@@ -1,4 +1,4 @@
-use super::utils::{HitRecord, Hittable};
+use super::core::{HitRecord, Hittable};
 use crate::ray::Ray;
 use crate::interval::Interval;
 use std::rc::Rc;

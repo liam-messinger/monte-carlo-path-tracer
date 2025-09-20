@@ -120,12 +120,16 @@ impl Camera {
         let mut rec = HitRecord::new();
 
         if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
-            let direction = rec.normal + random_unit_vector();
-            return 0.5 * Camera::ray_color(&Ray::new(rec.point, direction), depth - 1, world);
+            let mut scattered = Ray::default();
+            let mut attenuation = Color::default();
+            if rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
+                return attenuation * Camera::ray_color(&scattered, depth - 1, world);
+            }
+            return Color::zero()
         }
 
         // Sky background
-        let unit_direction = unit_vector(r.direction);
+        let unit_direction = Vec3::unit_vector(r.direction);
         let a = 0.5 * (unit_direction.y() + 1.0);
         (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
     }
