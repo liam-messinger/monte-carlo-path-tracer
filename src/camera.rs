@@ -9,6 +9,7 @@ pub struct Camera {
     pub aspect_ratio: f64,      // Ratio of image width over height
     pub image_width: u32,       // Rendered image width in pixel count
     pub samples_per_pixel: u32, // Number of samples per pixel for anti-aliasing
+    pub max_depth: u32,         // Maximum ray bounce depth
 
     image_height: u32,          // Rendered image height
     pixel_samples_scaled: f64,  // Color scale factor for a sum of pixel samples
@@ -36,7 +37,7 @@ impl Camera {
                 let mut pixel_color = Color::default();
                 for _sample in 0..self.samples_per_pixel {
                     let r: Ray = self.get_ray(i, j);
-                    pixel_color += Camera::ray_color(&r, world);
+                    pixel_color += Camera::ray_color(&r, self.max_depth, world);
                 }
                 img.put_pixel(i, j, (self.pixel_samples_scaled * pixel_color).to_rgb());
             }
@@ -112,11 +113,15 @@ impl Camera {
     }
     
     // Compute the color seen along a ray
-    fn ray_color(r: &Ray, world: &dyn Hittable) -> Color {
+    fn ray_color(r: &Ray, depth: u32, world: &dyn Hittable) -> Color {
+        // If we've exceeded the ray bounce limit, no more light is gathered.
+        if depth == 0 { return Color::zero(); }
+
         let mut rec = HitRecord::new();
 
-        if world.hit(r, Interval::new(0.0, f64::INFINITY), &mut rec) {
-            return 0.5 * (rec.normal + Color::new(1.0, 1.0, 1.0));
+        if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
+            let direction = random_in_hemisphere(&rec.normal);
+            return 0.5 * Camera::ray_color(&Ray::new(rec.point, direction), depth - 1, world);
         }
 
         // Sky background
@@ -134,6 +139,7 @@ impl Default for Camera {
             aspect_ratio: 1.0,
             image_width: 100,
             samples_per_pixel: 10,
+            max_depth: 10,
             // Will be set in initialize()
             image_height: 0,
             pixel_samples_scaled: 0.0,

@@ -100,8 +100,6 @@ pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
     }
 }
 
-pub fn 
-
 // ----------------- Operator overloads for Vec3 -----------------
 
 impl Neg for Vec3 {
