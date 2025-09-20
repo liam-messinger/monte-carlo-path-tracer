@@ -79,6 +79,29 @@ pub fn unit_vector(v: Vec3) -> Vec3 {
     v / v.length()
 }
 
+// Generates a random unit vector uniformly distributed over the unit sphere
+pub fn random_unit_vector() -> Vec3 {
+    loop {
+        let v = Vec3::random_range(-1.0, 1.0);
+        let lensq = v.length_squared();
+        if 1e-160 < lensq && lensq < 1.0 {
+            return v / lensq.sqrt();
+        }
+    }
+}
+
+// Using a normal, generates a random vector in the "same" direction
+pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
+    let on_unit_sphere = random_unit_vector();
+    if dot(&on_unit_sphere, normal) > 0.0 {
+        on_unit_sphere
+    } else {
+        -on_unit_sphere
+    }
+}
+
+pub fn 
+
 // ----------------- Operator overloads for Vec3 -----------------
 
 impl Neg for Vec3 {
