@@ -32,16 +32,15 @@ impl Hittable for Sphere {
         let c = oc.length_squared() - self.radius * self.radius;
 
         let discriminant = h * h - a * c;
-        if discriminant < 0.0 {
-            // No real roots, ray does not hit the sphere
+        if discriminant < 0.0 { // No real roots, ray does not hit the sphere
             return false;
         }
         let sqrtd = discriminant.sqrt();
 
         // Find the nearest root that lies in the acceptable range.
-        let root = (h - sqrtd) / a;
+        let mut root = (h - sqrtd) / a;
         if !ray_t.contains(root) {
-            let root = (h + sqrtd) / a;
+            root = (h + sqrtd) / a;
             if !ray_t.contains(root) {
                 return false;
             }

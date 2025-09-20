@@ -111,6 +111,14 @@ impl Vec3 {
     pub fn reflect(vec: &Vec3, normal: &Vec3) -> Vec3 { // Reflects vector vec around a normal
         (*vec) - 2.0 * Vec3::dot(vec, normal) * (*normal)
     }
+
+    // Vec3::refract(ray_in, normal, etai_over_etat)
+    pub fn refract(ray_in: &Vec3, normal: &Vec3, etai_over_etat: f64) -> Vec3 { // Refracts ray_in with normal and ratio of indices of refraction
+        let cos_theta = Vec3::dot(&-*ray_in, normal).min(1.0);
+        let r_out_perp = etai_over_etat * (*ray_in + cos_theta * (*normal));
+        let r_out_parallel = -(1.0 - r_out_perp.length_squared()).abs().sqrt() * (*normal);
+        r_out_perp + r_out_parallel
+    }
 }
 
 // ----------------- Operator overloads for Vec3 -----------------

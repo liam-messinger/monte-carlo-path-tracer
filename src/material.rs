@@ -59,3 +59,37 @@ impl Material for Metal {
         Vec3::dot(&scattered.direction, &rec.normal) > 0.0
     }
 }
+
+// ----- Dielectric (glass-like) Material -----
+
+pub struct Dielectric {
+    // Refractive index in vacuum or air, or the ratio of the material's refractive index over
+    // the refractive index of the enclosing media
+    refraction_index: f64, // Index of Refraction
+}
+
+impl Dielectric {
+    pub fn new(refraction_index: f64) -> Self {
+        Self { refraction_index }
+    }
+
+    fn reflectance(cosine: f64, ref_idx: f64) -> f64 {
+        // Use Schlick's approximation for reflectance
+        let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+        let r0 = r0 * r0;
+        r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+        *attenuation = Color::new(1.0, 1.0, 1.0); // No attenuation for Dielectric
+        let ri: f64 = if rec.front_face { 1.0 / self.refraction_index } else { self.refraction_index };
+
+        let unit_direction = Vec3::unit_vector(ray_in.direction);
+        let refracted = Vec3::refract(&unit_direction, &rec.normal, ri);
+
+        *scattered = Ray::new(rec.point, refracted);
+        true
+    }
+}
