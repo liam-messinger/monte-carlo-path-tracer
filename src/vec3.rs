@@ -1,6 +1,6 @@
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub};
-use crate::prelude::random_f64;
+use crate::prelude::{random_f64, random_f64_range};
 
 // Struct definition
 #[derive(Debug, Clone, Copy)]
@@ -84,6 +84,16 @@ impl Vec3 {
     // Vec3::unit_vector(v)
     pub fn unit_vector(v: Vec3) -> Vec3 { // returns the unit vector in the direction of v
         v / v.length()
+    }
+
+    // Vec3::random_in_unit_circle()
+    pub fn random_in_unit_circle() -> Vec3 { // Generates a random point in the unit disk in the XY plane
+        loop {
+            let p = Vec3::new(random_f64_range(-1.0, 1.0), random_f64_range(-1.0, 1.0), 0.0);
+            if p.length_squared() < 1.0 {
+                return p;
+            }
+        }
     }
 
     // Vec3::random_unit_vector()
