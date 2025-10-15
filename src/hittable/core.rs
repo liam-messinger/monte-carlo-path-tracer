@@ -2,6 +2,7 @@ use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
 use crate::interval::Interval;
 use crate::material::{Material, Lambertian};
+use crate::hittable::Sphere;
 
 // Record of a ray-object intersection
 #[derive(Clone)]
@@ -37,7 +38,18 @@ impl HitRecord {
     }
 }
 
-// Trait for hittable objects
-pub trait Hittable {
-    fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool;
+// ----- Enum for Hittable Object Types -----
+#[derive(Clone)]
+pub enum HittableObject {
+    Sphere(Sphere),
+    // Etc.
+}
+
+impl HittableObject {
+    pub fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
+        match self {
+            HittableObject::Sphere(sphere) => sphere.hit(r, ray_t, rec),
+            // Etc.
+        }
+    }
 }
