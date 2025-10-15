@@ -1,7 +1,6 @@
 use super::core::{HitRecord, HittableObject};
 use crate::ray::Ray;
 use crate::interval::Interval;
-use std::rc::Rc;
 
 pub struct HittableList {
     pub objects: Vec<HittableObject>,
