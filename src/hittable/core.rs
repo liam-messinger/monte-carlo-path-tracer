@@ -46,6 +46,7 @@ pub enum HittableObject {
 }
 
 impl HittableObject {
+    #[inline]
     pub fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
         match self {
             HittableObject::Sphere(sphere) => sphere.hit(r, ray_t, rec),
