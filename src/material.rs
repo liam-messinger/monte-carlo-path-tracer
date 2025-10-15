@@ -47,6 +47,13 @@ impl Lambertian {
         
 }
 
+// From Lambertian to Material implementation
+impl From<Lambertian> for Material {
+    fn from(mat: Lambertian) -> Self {
+        Material::Lambertian(mat)
+    }
+}
+
 // ----- Metal Material -----
 
 #[derive(Clone)]
@@ -69,6 +76,13 @@ impl Metal {
         *scattered = Ray::new(rec.point, reflected);
         *attenuation = self.albedo;
         Vec3::dot(&scattered.direction, &rec.normal) > 0.0
+    }
+}
+
+// From Metal to Material implementation
+impl From<Metal> for Material {
+    fn from(mat: Metal) -> Self {
+        Material::Metal(mat)
     }
 }
 
@@ -112,5 +126,12 @@ impl Dielectric {
 
         *scattered = Ray::new(rec.point, direction);
         true
+    }
+}
+
+// From Dielectric to Material implementation
+impl From<Dielectric> for Material {
+    fn from(mat: Dielectric) -> Self {
+        Material::Dielectric(mat)
     }
 }
