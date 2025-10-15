@@ -2,6 +2,7 @@ use crate::hittable::{HitRecord};
 use crate::prelude::*;
 
 // ----- Enum for different material types -----
+#[derive(Clone)]
 pub enum Material {
     Lambertian(Lambertian),
     Metal(Metal),
@@ -12,9 +13,9 @@ pub enum Material {
 impl Material {
     pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         match self {
-            Material::Lambertian(mat) => mat.scatter(ray_in, rec),
-            Material::Metal(mat) => mat.scatter(ray_in, rec),
-            Material::Dielectric(mat) => mat.scatter(ray_in, rec),
+            Material::Lambertian(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
+            Material::Metal(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
+            Material::Dielectric(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
         }
     }
 }
