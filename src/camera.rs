@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::hittable::{HitRecord, Hittable};
+use crate::hittable::{HitRecord, HittableList};
 
 // External crates
 use image::ImageBuffer;
@@ -36,7 +36,7 @@ impl Camera {
     // ----- Public -----
 
     // Render the scene from this camera's point of view
-    pub fn render (&mut self, world: &dyn Hittable) {
+    pub fn render (&mut self, world: &HittableList) {
         self.initialize();
 
         let mut img = ImageBuffer::new(self.image_width, self.image_height); // Create image buffer
@@ -145,7 +145,7 @@ impl Camera {
     } 
 
     // Compute the color seen along a ray
-    fn ray_color(r: &Ray, depth: u32, world: &dyn Hittable) -> Color {
+    fn ray_color(r: &Ray, depth: u32, world: &HittableList) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered.
         if depth == 0 { return Color::zero(); }
 
@@ -154,7 +154,7 @@ impl Camera {
         if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
             let mut scattered = Ray::default();
             let mut attenuation = Color::default();
-            if rec.mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
+            if rec.material.scatter(r, &rec, &mut attenuation, &mut scattered) {
                 return attenuation * Camera::ray_color(&scattered, depth - 1, world);
             }
             return Color::zero()
