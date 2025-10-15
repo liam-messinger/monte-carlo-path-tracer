@@ -1,4 +1,4 @@
-use super::core::{HitRecord};
+use super::core::{HitRecord, HittableObject};
 use crate::ray::Ray;
 use crate::interval::Interval;
 use crate::vec3::{Point3, Vec3};
@@ -51,5 +51,12 @@ impl Sphere {
         rec.material = self.material.clone();
 
         true
+    }
+}
+
+// From Sphere to HittableObject implementation
+impl From<Sphere> for HittableObject {
+    fn from(sphere: Sphere) -> Self {
+        HittableObject::Sphere(sphere)
     }
 }
