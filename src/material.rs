@@ -11,6 +11,7 @@ pub enum Material {
 
 // Implementation of scatter method for Material enum
 impl Material {
+    #[inline]
     pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         match self {
             Material::Lambertian(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
@@ -32,6 +33,7 @@ impl Lambertian {
         Self { albedo }
     }
 
+    #[inline]
     fn scatter(&self, _ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         let mut scatter_direction = rec.normal + Vec3::random_unit_vector();
 
@@ -70,6 +72,7 @@ impl Metal {
         }
     }
 
+    #[inline]
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         let mut reflected = Vec3::reflect(&ray_in.direction, &rec.normal);
         reflected = Vec3::unit_vector(reflected) + (self.fuzz * Vec3::random_unit_vector());
@@ -107,6 +110,7 @@ impl Dielectric {
         r0_squared + (1.0 - r0_squared) * f64::powf(1.0 - cosine, 5.0)
     }
 
+    #[inline]
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         *attenuation = Color::new(1.0, 1.0, 1.0); // No attenuation for Dielectric
         let ri: f64 = if rec.front_face { 1.0 / self.refraction_index } else { self.refraction_index };
