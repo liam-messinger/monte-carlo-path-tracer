@@ -145,6 +145,7 @@ impl Camera {
     } 
 
     // Compute the color seen along a ray
+    #[inline]
     fn ray_color(r: &Ray, depth: u32, world: &HittableList) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered.
         if depth == 0 { return Color::zero(); }
