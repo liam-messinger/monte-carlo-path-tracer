@@ -2,9 +2,22 @@ use crate::hittable::{HitRecord};
 
 use crate::prelude::*;
 
-// Trait for materials
-pub trait Material {
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool;
+// ----- Enum for different material types -----
+pub enum Material {
+    Lambertian(Lambertian),
+    Metal(Metal),
+    Dielectric(Dielectric),
+}
+
+// Implementation of scatter method for Material enum
+impl Material {
+    pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord) -> Option<(Color, Ray)> {
+        match self {
+            Material::Lambertian(mat) => mat.scatter(ray_in, rec),
+            Material::Metal(mat) => mat.scatter(ray_in, rec),
+            Material::Dielectric(mat) => mat.scatter(ray_in, rec),
+        }
+    }
 }
 
 // ----- Lambertian (diffuse) Material -----
