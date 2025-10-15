@@ -22,6 +22,7 @@ impl Sphere {
     }
 
     // Check for ray-sphere intersection
+    #[inline]
     pub fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
         // Calculate the discriminant of the quadratic equation for ray-sphere intersection
         let oc: Vec3 = self.center - r.origin;
