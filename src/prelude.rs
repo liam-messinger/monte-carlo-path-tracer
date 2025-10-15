@@ -25,11 +25,3 @@ pub fn random_f64_range(min: f64, max: f64) -> f64 {
     // Returns a random real in [min,max).
     min + (max - min) * random_f64()
 }
-
-// Macro to mimic C++ "make_shared"
-#[macro_export]
-macro_rules! make_shared {
-    ($type:ty, $($arg:expr),*) => {
-        std::rc::Rc::new(<$type>::new($($arg),*))
-    };
-}
