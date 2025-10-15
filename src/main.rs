@@ -10,16 +10,15 @@ mod camera;
 mod material;
 
 use prelude::*;
-use crate::hittable::{HittableList, Sphere};
+use crate::hittable::{HittableList, HittableObject, Sphere};
 use crate::camera::Camera;
 use crate::material::{Material, Lambertian, Metal, Dielectric};
-use std::rc::Rc;
 
 fn main() {
     let mut world = HittableList::new();
 
     let ground_material = Material::Lambertian(Lambertian::new(Color::new(0.5, 0.5, 0.5)));
-    world.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, ground_material));
+    world.add(HittableObject::Sphere(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, ground_material)));
 
     for a in -11..11 {
         for b in -11..11 {
@@ -33,30 +32,30 @@ fn main() {
                     // diffuse
                     let albedo = Color::random() * Color::random();
                     sphere_material = Material::Lambertian(Lambertian::new(albedo));
-                    world.add(Sphere::new(center, 0.2, sphere_material));
+                    world.add(HittableObject::Sphere(Sphere::new(center, 0.2, sphere_material)));
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Color::random_range(0.5, 1.0);
                     let fuzz = random_f64_range(0.0, 0.5);
                     sphere_material = Material::Metal(Metal::new(albedo, fuzz));
-                    world.add(Sphere::new(center, 0.2, sphere_material));
+                    world.add(HittableObject::Sphere(Sphere::new(center, 0.2, sphere_material)));
                 } else {
                     // glass
                     sphere_material = Material::Dielectric(Dielectric::new(1.5));
-                    world.add(Sphere::new(center, 0.2, sphere_material));
+                    world.add(HittableObject::Sphere(Sphere::new(center, 0.2, sphere_material)));
                 }
             }
         }
     }
 
     let material1 = Material::Dielectric(Dielectric::new(1.5));
-    world.add(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, material1));
+    world.add(HittableObject::Sphere(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, material1)));
 
     let material2 = Material::Lambertian(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
-    world.add(Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, material2));
+    world.add(HittableObject::Sphere(Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, material2)));
 
     let material3 = Material::Metal(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
-    world.add(Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, material3));
+    world.add(HittableObject::Sphere(Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, material3)));
 
     let mut cam = Camera::default();
 
