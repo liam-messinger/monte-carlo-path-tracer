@@ -32,7 +32,7 @@ impl Lambertian {
         Self { albedo }
     }
 
-    pub fn scatter(&self, _ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+    fn scatter(&self, _ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         let mut scatter_direction = rec.normal + Vec3::random_unit_vector();
 
         // Catch degenerate scatter direction
@@ -63,7 +63,7 @@ impl Metal {
         }
     }
 
-    pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         let mut reflected = Vec3::reflect(&ray_in.direction, &rec.normal);
         reflected = Vec3::unit_vector(reflected) + (self.fuzz * Vec3::random_unit_vector());
         *scattered = Ray::new(rec.point, reflected);
@@ -74,6 +74,7 @@ impl Metal {
 
 // ----- Dielectric (glass-like) Material -----
 
+#[derive(Clone)]
 pub struct Dielectric {
     // Refractive index in vacuum or air, or the ratio of the material's refractive index over
     // the refractive index of the enclosing media
@@ -91,9 +92,7 @@ impl Dielectric {
         let r0_squared: f64 = r0 * r0;
         r0_squared + (1.0 - r0_squared) * f64::powf(1.0 - cosine, 5.0)
     }
-}
 
-impl Material for Dielectric {
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         *attenuation = Color::new(1.0, 1.0, 1.0); // No attenuation for Dielectric
         let ri: f64 = if rec.front_face { 1.0 / self.refraction_index } else { self.refraction_index };
