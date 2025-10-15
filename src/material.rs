@@ -22,6 +22,7 @@ impl Material {
 
 // ----- Lambertian (diffuse) Material -----
 
+#[derive(Clone)]
 pub struct Lambertian {
     pub albedo: Color,
 }
@@ -30,10 +31,8 @@ impl Lambertian {
     pub fn new(albedo: Color) -> Self {
         Self { albedo }
     }
-}
 
-impl Material for Lambertian {
-    fn scatter(&self, _ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+    pub fn scatter(&self, _ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         let mut scatter_direction = rec.normal + Vec3::random_unit_vector();
 
         // Catch degenerate scatter direction
@@ -45,6 +44,7 @@ impl Material for Lambertian {
         *attenuation = self.albedo;
         true
     }
+        
 }
 
 // ----- Metal Material -----
