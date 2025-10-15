@@ -4,6 +4,7 @@ use crate::interval::Interval;
 use crate::vec3::{Point3, Vec3};
 use crate::material::Material;
 
+#[derive(Clone)]
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
@@ -19,10 +20,9 @@ impl Sphere {
             material,
         }
     }
-}
 
-impl Hittable for Sphere {
-    fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
+    // Check for ray-sphere intersection
+    pub fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
         // Calculate the discriminant of the quadratic equation for ray-sphere intersection
         let oc: Vec3 = self.center - r.origin;
         let a = r.direction.length_squared();
