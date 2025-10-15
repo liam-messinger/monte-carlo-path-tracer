@@ -4,21 +4,19 @@ use crate::interval::Interval;
 use crate::vec3::{Point3, Vec3};
 use crate::material::Material;
 
-use std::rc::Rc;
-
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub mat: Rc<dyn Material>,
+    pub material: Material,
 }
 
 impl Sphere {
     // Constructor for Sphere
-    pub fn new(center: Point3, radius: f64, mat: Rc<dyn Material>) -> Self {
+    pub fn new(center: Point3, radius: f64, material: Material) -> Self {
         Self {
             center,
             radius: radius.max(0.0),
-            mat,
+            material,
         }
     }
 }
@@ -50,7 +48,7 @@ impl Hittable for Sphere {
         rec.point = r.at(rec.t);
         let outward_normal = (rec.point - self.center) / self.radius;
         rec.set_face_normal(r, &outward_normal);
-        rec.mat = self.mat.clone();
+        rec.material = self.material.clone();
 
         true
     }
