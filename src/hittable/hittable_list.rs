@@ -20,8 +20,8 @@ impl HittableList {
     }
 
     // Add an object to the list
-    pub fn add(&mut self, object: HittableObject) {
-        self.objects.push(object);
+    pub fn add(&mut self, object: impl Into<HittableObject>) {
+        self.objects.push(object.into());
     }
 
     // Check for ray intersections with all objects in the list
