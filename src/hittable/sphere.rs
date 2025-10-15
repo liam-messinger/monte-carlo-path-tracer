@@ -1,4 +1,4 @@
-use super::core::{HitRecord, Hittable};
+use super::core::{HitRecord};
 use crate::ray::Ray;
 use crate::interval::Interval;
 use crate::vec3::{Point3, Vec3};
