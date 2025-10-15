@@ -13,11 +13,11 @@ pub struct Sphere {
 
 impl Sphere {
     // Constructor for Sphere
-    pub fn new(center: Point3, radius: f64, material: Material) -> Self {
+    pub fn new(center: Point3, radius: f64, material: impl Into<Material>) -> Self {
         Self {
             center,
             radius: radius.max(0.0),
-            material,
+            material: material.into(),
         }
     }
 
