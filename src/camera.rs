@@ -52,7 +52,7 @@ impl Camera {
                     let r: Ray = self.get_ray(i, j);
                     pixel_color += Camera::ray_color(&r, self.max_depth, world);
                 }
-                img.put_pixel(i, j, (self.pixel_samples_scaled * pixel_color).to_rgb());
+                img.put_pixel(i, j, (self.pixel_samples_scaled * pixel_color).as_rgb());
             }
         }
 
@@ -60,7 +60,7 @@ impl Camera {
 
         // Save the image
         img.save("output.png").unwrap();
-        eprint!("Image saved to output.png\n");
+        eprintln!("Image saved to output.png");
     }
 
     // ----- Private -----
@@ -171,7 +171,7 @@ impl Camera {
 // Implement default camera settings
 impl Default for Camera {
     fn default() -> Self {
-        let cam = Camera {
+        Camera {
             // Public
             aspect_ratio: 1.0,
             image_width: 100,
@@ -199,7 +199,6 @@ impl Default for Camera {
             w: Vec3::zero(),
             apature_disk_u: Vec3::zero(),
             apature_disk_v: Vec3::zero(),
-        };
-        cam
+        }
     }
 }
