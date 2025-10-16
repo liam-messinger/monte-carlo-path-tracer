@@ -4,6 +4,7 @@ use crate::vec3::{Point3, Vec3};
 pub struct Ray {
     pub origin: Point3,
     pub direction: Vec3,
+    pub time: f64,
 }
 
 impl Ray {
@@ -12,14 +13,25 @@ impl Ray {
         Ray {
             origin: Point3::zero(),
             direction: Vec3::zero(),
+            time: 0.0,
         }
     }
 
-    // Create a new ray with default values (origin at zero, direction at zero)
+    // Create a new ray with default values (origin at zero, direction at zero, time at 0.0)
     pub fn new(origin: Point3, direction: Vec3) -> Self {
         Ray {
             origin,
             direction,
+            time: 0.0,
+        }
+    }
+
+    // Create a new ray with specified origin, direction, and time
+    pub fn new_with_time(origin: Point3, direction: Vec3, time: f64) -> Self {
+        Ray {
+            origin,
+            direction,
+            time,
         }
     }
 
