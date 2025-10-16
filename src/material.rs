@@ -21,6 +21,13 @@ impl Material {
     }
 }
 
+// Default material (Lambertian gray)
+impl Default for Material {
+    fn default() -> Self {
+        Lambertian::new(Color::new(0.5, 0.5, 0.5)).into()
+    }
+}
+
 // ----- Lambertian (diffuse) Material -----
 
 #[derive(Clone)]
