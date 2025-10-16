@@ -4,6 +4,7 @@ use crate::hittable::{HitRecord, HittableList};
 // External crates
 use image::ImageBuffer;
 use indicatif::{ProgressBar, ProgressStyle};
+use rayon::prelude::*;
 
 pub struct Camera {
     pub aspect_ratio: f64,      // Ratio of image width over height
@@ -39,27 +40,43 @@ impl Camera {
     pub fn render (&mut self, world: &HittableList) {
         self.initialize();
 
-        let mut img = ImageBuffer::new(self.image_width, self.image_height); // Create image buffer
+        let width = self.image_width;
+        let height = self.image_height;
+        let spp = self.samples_per_pixel;
+        let max_depth = self.max_depth;
 
-        let pb = Self::create_progress_bar(self.image_height as u64); // Create progress bar
+        // Progress bar by row
+        let pb = Self::create_progress_bar(height as u64);
 
-        // Loop over each pixel in the image
-        for j in 0..self.image_height {
-            pb.set_position(j as u64);
-            for i in 0..self.image_width {
-                let mut pixel_color = Color::default();
-                for _sample in 0..self.samples_per_pixel {
-                    let r: Ray = self.get_ray(i, j);
-                    pixel_color += Camera::ray_color(&r, self.max_depth, world);
+        // Raw RGB buffer (u8) to avoid shared ImageBuffer mutation
+        let mut raw_img: Vec<u8> = vec![0u8; (width as usize) * (height as usize) * 3];
+
+        // Prallelize over rows; each row chunk is disjoint
+        let pb_row = pb.clone();
+        raw_img.par_chunks_mut((width as usize) * 3)
+            .enumerate()
+            .for_each(|(j, row)| {
+                for i in 0..(width as usize) {
+                    let mut pixel_color = Color::default();
+                    for _ in 0..spp {
+                        let r: Ray = self.get_ray(i as u32, j as u32);
+                        pixel_color += Camera::ray_color(&r, max_depth, world);
+                    }
+                    pixel_color *= self.pixel_samples_scaled;
+                    let rgb = pixel_color.as_rgb();
+                    row[i * 3] = rgb[0];
+                    row[i * 3 + 1] = rgb[1];
+                    row[i * 3 + 2] = rgb[2];
                 }
-                img.put_pixel(i, j, (self.pixel_samples_scaled * pixel_color).as_rgb());
-            }
-        }
+                pb_row.inc(1);
+            });
 
         pb.finish_with_message("Render complete!");
 
-        // Save the image
-        img.save("output.png").unwrap();
+        // Build the image and save
+        let img = image::RgbImage::from_raw(width, height, raw_img)
+            .expect("Buffer size mismatch");
+        img.save("output.png").expect("Failed to save output.png");
         eprintln!("Image saved to output.png");
     }
 
