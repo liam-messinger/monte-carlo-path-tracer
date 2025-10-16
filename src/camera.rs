@@ -145,8 +145,9 @@ impl Camera {
         // Use ideal or realistic apature based on apature setting
         let ray_origin = if self.apature_angle <= 0.0 { self.center } else { self.apature_disk_sample() }; 
         let ray_direction = pixel_sample - ray_origin;
+        let ray_time = random_f64();
 
-        Ray::new(ray_origin, ray_direction)
+        Ray::new_with_time(ray_origin, ray_direction, ray_time)
     }
 
     // Returns a random point on the unit square
