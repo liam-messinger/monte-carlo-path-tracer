@@ -3,14 +3,14 @@ use crate::vec3::{Point3, Vec3};
 use crate::interval::Interval;
 use crate::material::{Material};
 use crate::hittable::Sphere;
-use std::rc::Rc;
+use std::sync::Arc;
 
 // Record of a ray-object intersection
 #[derive(Clone)]
 pub struct HitRecord {
     pub point: Point3,
     pub normal: Vec3,
-    pub material: Rc<Material>,
+    pub material: Arc<Material>,
     pub t: f64,
     pub front_face: bool,
 }
@@ -21,7 +21,7 @@ impl HitRecord {
         Self {
             point: Point3::zero(),
             normal: Vec3::zero(),
-            material: Rc::new(Material::default()),
+            material: Arc::new(Material::default()),
             t: 0.0,
             front_face: false,
         }

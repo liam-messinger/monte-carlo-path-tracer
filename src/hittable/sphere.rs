@@ -3,13 +3,13 @@ use crate::ray::Ray;
 use crate::interval::Interval;
 use crate::vec3::{Point3, Vec3};
 use crate::material::Material;
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Sphere {
     pub center: Point3,
     pub radius: f64,
-    pub material: Rc<Material>,
+    pub material: Arc<Material>,
 }
 
 impl Sphere {
@@ -18,7 +18,7 @@ impl Sphere {
         Self {
             center,
             radius: radius.max(0.0),
-            material: Rc::new(material.into()),
+            material: Arc::new(material.into()),
         }
     }
 
@@ -50,7 +50,7 @@ impl Sphere {
         rec.point = r.at(rec.t);
         let outward_normal = (rec.point - self.center) / self.radius;
         rec.set_face_normal(r, &outward_normal);
-        rec.material = Rc::clone(&self.material);
+        rec.material = Arc::clone(&self.material);
 
         true
     }
