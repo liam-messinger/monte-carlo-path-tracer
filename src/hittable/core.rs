@@ -1,15 +1,16 @@
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
 use crate::interval::Interval;
-use crate::material::{Material, Lambertian};
+use crate::material::{Material};
 use crate::hittable::Sphere;
+use std::rc::Rc;
 
 // Record of a ray-object intersection
 #[derive(Clone)]
 pub struct HitRecord {
     pub point: Point3,
     pub normal: Vec3,
-    pub material: Material,
+    pub material: Rc<Material>,
     pub t: f64,
     pub front_face: bool,
 }
@@ -20,7 +21,7 @@ impl HitRecord {
         Self {
             point: Point3::zero(),
             normal: Vec3::zero(),
-            material: Material::Lambertian(Lambertian::new(Vec3::new(0.5, 0.5, 0.5))), // Default material
+            material: Rc::new(Material::default()),
             t: 0.0,
             front_face: false,
         }
