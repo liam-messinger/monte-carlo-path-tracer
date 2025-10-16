@@ -29,7 +29,8 @@ fn main() {
                     // diffuse
                     let albedo = Color::random() * Color::random();
                     let sphere_material = material::Lambertian::new(albedo);
-                    world.add(Sphere::new(center, 0.2, sphere_material));
+                    let center2 = center + Vec3::new(0.0, random_f64_range(0.0, 0.5), 0.0);
+                    world.add(Sphere::new_moving(center, center2, 0.2, sphere_material));
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Color::random_range(0.5, 1.0);
