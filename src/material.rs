@@ -41,7 +41,7 @@ impl Lambertian {
     }
 
     #[inline]
-    fn scatter(&self, _ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         let mut scatter_direction = rec.normal + Vec3::random_unit_vector();
 
         // Catch degenerate scatter direction
@@ -49,7 +49,7 @@ impl Lambertian {
             scatter_direction = rec.normal;
         }
 
-        *scattered = Ray::new(rec.point, scatter_direction);
+        *scattered = Ray::new_with_time(rec.point, scatter_direction, ray_in.time);
         *attenuation = self.albedo;
         true
     }
@@ -83,7 +83,7 @@ impl Metal {
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         let mut reflected = Vec3::reflect(&ray_in.direction, &rec.normal);
         reflected = Vec3::unit_vector(reflected) + (self.fuzz * Vec3::random_unit_vector());
-        *scattered = Ray::new(rec.point, reflected);
+        *scattered = Ray::new_with_time(rec.point, reflected, ray_in.time);
         *attenuation = self.albedo;
         Vec3::dot(&scattered.direction, &rec.normal) > 0.0
     }
@@ -134,7 +134,7 @@ impl Dielectric {
             Vec3::refract(&unit_direction, &rec.normal, ri)
         };
 
-        *scattered = Ray::new(rec.point, direction);
+        *scattered = Ray::new_with_time(rec.point, direction, ray_in.time);
         true
     }
 }
