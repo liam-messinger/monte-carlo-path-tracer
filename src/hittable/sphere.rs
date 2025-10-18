@@ -1,8 +1,10 @@
-use super::core::{HitRecord, HittableObject};
-use crate::ray::Ray;
+use super::core::{HitRecord, Hittable};
+use crate::aabb::AABB;
 use crate::interval::Interval;
-use crate::vec3::{Point3, Vec3};
 use crate::material::Material;
+use crate::ray::Ray;
+use crate::vec3::{Point3, Vec3};
+
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -10,30 +12,46 @@ pub struct Sphere {
     pub center: Ray,
     pub radius: f64,
     pub material: Arc<Material>,
+    pub bounding_box: AABB,
 }
 
 impl Sphere {
     // Constructor for Stationary Sphere
-    pub fn new(center: Point3, radius: f64, material: impl Into<Material>) -> Self {
+    pub fn new(static_center: Point3, radius: f64, material: impl Into<Material>) -> Self {
         Self {
-            center: Ray::new(center, Vec3::zero()),
+            center: Ray::new(static_center, Vec3::zero()),
             radius: radius.max(0.0),
             material: Arc::new(material.into()),
+            bounding_box: {
+                let r_vec = Vec3::new(radius, radius, radius);
+                AABB::from_points(&(static_center - r_vec), &(static_center + r_vec))
+            },
         }
     }
 
     // Constructor for Moving Sphere
-    pub fn new_moving(center1: Point3, center2: Point3, radius: f64, material: impl Into<Material>) -> Self {
+    pub fn new_moving(
+        center1: Point3,
+        center2: Point3,
+        radius: f64,
+        material: impl Into<Material>,
+    ) -> Self {
         Self {
             center: Ray::new(center1, center2 - center1),
             radius: radius.max(0.0),
             material: Arc::new(material.into()),
+            bounding_box: {
+                let r_vec = Vec3::new(radius, radius, radius);
+                let box1 = AABB::from_points(&(center1 - r_vec), &(center1 + r_vec));
+                let box2 = AABB::from_points(&(center2 - r_vec), &(center2 + r_vec));
+                AABB::merge(&box1, &box2)
+            },
         }
     }
 
     // Check for ray-sphere intersection
     #[inline]
-    pub fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool {
+    pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         let current_center: Point3 = self.center.at(r.time);
         // Calculate the discriminant of the quadratic equation for ray-sphere intersection
         let oc: Vec3 = current_center - r.origin;
@@ -64,11 +82,16 @@ impl Sphere {
 
         true
     }
+
+    // Get the bounding box of the sphere
+    pub fn bounding_box(&self) -> &AABB {
+        &self.bounding_box
+    }
 }
 
-// From Sphere to HittableObject implementation
-impl From<Sphere> for HittableObject {
+// From Sphere to Hittable implementation
+impl From<Sphere> for Hittable {
     fn from(sphere: Sphere) -> Self {
-        HittableObject::Sphere(sphere)
+        Hittable::Sphere(sphere)
     }
 }
