@@ -1,10 +1,11 @@
+use crate::hittable::core::Hittable;
 use crate::prelude::*;
-use crate::hittable::{HitRecord, HittableList};
+use crate::hittable::{HitRecord};
 
 // External crates
-use image::ImageBuffer;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
+use image::ImageBuffer;
 
 pub struct Camera {
     pub aspect_ratio: f64,      // Ratio of image width over height
@@ -37,7 +38,10 @@ impl Camera {
     // ----- Public -----
 
     // Render the scene from this camera's point of view
-    pub fn render (&mut self, world: &HittableList) {
+    pub fn render (&mut self, world: impl Into<Hittable>) {
+        let world: &Hittable = &world.into();
+
+        //*
         self.initialize();
 
         let width = self.image_width;
@@ -78,6 +82,34 @@ impl Camera {
             .expect("Buffer size mismatch");
         img.save("output.png").expect("Failed to save output.png");
         eprintln!("Image saved to output.png");
+        //*/
+
+        /*
+        self.initialize();
+
+        let mut img = ImageBuffer::new(self.image_width, self.image_height); // Create image buffer
+
+        let pb = Self::create_progress_bar(self.image_height as u64); // Create progress bar
+
+        // Loop over each pixel in the image
+        for j in 0..self.image_height {
+            pb.set_position(j as u64);
+            for i in 0..self.image_width {
+                let mut pixel_color = Color::default();
+                for _sample in 0..self.samples_per_pixel {
+                    let r: Ray = self.get_ray(i, j);
+                    pixel_color += Camera::ray_color(&r, self.max_depth, world);
+                }
+                img.put_pixel(i, j, (self.pixel_samples_scaled * pixel_color).as_rgb());
+            }
+        }
+
+        pb.finish_with_message("Render complete!");
+
+        // Save the image
+        img.save("output.png").unwrap();
+        eprintln!("Image saved to output.png");
+        */
     }
 
     // ----- Private -----
@@ -164,13 +196,13 @@ impl Camera {
 
     // Compute the color seen along a ray
     #[inline]
-    fn ray_color(r: &Ray, depth: u32, world: &HittableList) -> Color {
+    fn ray_color(r: &Ray, depth: u32, world: &Hittable) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered.
         if depth == 0 { return Color::zero(); }
 
         let mut rec = HitRecord::new();
 
-        if world.hit(r, Interval::new(0.001, f64::INFINITY), &mut rec) {
+        if world.hit(r, &Interval::new(0.001, f64::INFINITY), &mut rec) {
             let mut scattered = Ray::default();
             let mut attenuation = Color::default();
             if rec.material.scatter(r, &rec, &mut attenuation, &mut scattered) {
