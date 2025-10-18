@@ -47,8 +47,6 @@ impl HittableList {
     }
 
     // Check for ray intersections with all objects in the list
-    // TODO: Remove cloning of HitRecord
-    // TODO: Remove repeated new Interval creation
     #[inline]
     pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         let mut temp_rec = HitRecord::new();
