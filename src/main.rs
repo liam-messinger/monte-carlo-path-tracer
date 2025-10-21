@@ -17,7 +17,7 @@ use crate::camera::Camera;
 use crate::texture::{Texture, SolidColor, CheckerTexture};
 use crate::material::{Material, Lambertian, Metal, Dielectric};
 
-fn main() {
+fn bouncing_spheres() {
     let mut world = HittableList::new();
 
     let checker = CheckerTexture::from_colors(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
@@ -77,4 +77,8 @@ fn main() {
     // Build BVH from world
     let world = world.to_bvh();
     cam.render(world);
+}
+
+fn main() {
+    bouncing_spheres();
 }
