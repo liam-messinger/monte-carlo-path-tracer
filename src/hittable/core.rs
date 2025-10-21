@@ -17,6 +17,8 @@ pub struct HitRecord {
     pub normal: Vec3,
     pub material: Arc<Material>,
     pub t: f64,
+    pub u: f64,
+    pub v: f64,
     pub front_face: bool,
 }
 
@@ -28,6 +30,8 @@ impl HitRecord {
             normal: Vec3::zero(),
             material: Arc::new(Material::default()),
             t: 0.0,
+            u: 0.0,
+            v: 0.0,
             front_face: false,
         }
     }
