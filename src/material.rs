@@ -47,8 +47,10 @@ impl Lambertian {
     }
 
     // Constructor from Texture reference counter
-    pub fn from_texture(tex: Arc<Texture>) -> Self {
-        Self { tex }
+    pub fn from_texture(tex: Texture) -> Self {
+        Self { 
+            tex: Arc::new(tex),
+        }
     }
 
     #[inline]

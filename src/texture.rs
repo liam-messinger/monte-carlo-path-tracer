@@ -58,11 +58,11 @@ pub struct CheckerTexture {
 
 impl CheckerTexture {
     // Constructor from scale, even texture, and odd texture
-    pub fn new(scale: f64, even: Arc<Texture>, odd: Arc<Texture>) -> Self {
+    pub fn new(scale: f64, even: Texture, odd: Texture) -> Self {
         Self {
             inv_scale: 1.0 / scale,
-            even,
-            odd,
+            even: Arc::new(even),
+            odd: Arc::new(odd),
         }
     }
 
