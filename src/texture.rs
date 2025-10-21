@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::prelude::*;
 
 // ----- Enum for different texture types -----
@@ -44,5 +46,48 @@ impl SolidColor {
 impl From<SolidColor> for Texture {
     fn from(tex: SolidColor) -> Self {
         Texture::SolidColor(tex)
+    }
+}
+
+// ----- Checker Texture -----
+pub struct CheckerTexture {
+    inv_scale: f64,
+    even: Arc<Texture>,
+    odd: Arc<Texture>,
+}
+
+impl CheckerTexture {
+    // Constructor from scale, even texture, and odd texture
+    pub fn new(scale: f64, even: Arc<Texture>, odd: Arc<Texture>) -> Self {
+        Self {
+            inv_scale: 1.0 / scale,
+            even,
+            odd,
+        }
+    }
+
+    // Constructor from scale and two colors
+    pub fn from_colors(scale: f64, even: Color, odd: Color) -> Self {
+        Self {
+            inv_scale: 1.0 / scale,
+            even: Arc::new(Texture::from(SolidColor::new(even))),
+            odd: Arc::new(Texture::from(SolidColor::new(odd))),
+        }
+    }
+
+    // Value method returns the checker pattern color
+    #[inline]
+    pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+        let xInt = (p.x() * self.inv_scale).floor() as i32;
+        let yInt = (p.y() * self.inv_scale).floor() as i32;
+        let zInt = (p.z() * self.inv_scale).floor() as i32
+
+        let isEven = (xInt + yInt + zInt) % 2 == 0;
+
+        if isEven {
+            self.even.value(u, v, p)
+        } else {
+            self.odd.value(u, v, p)
+        }
     }
 }
