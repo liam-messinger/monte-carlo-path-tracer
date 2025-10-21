@@ -5,6 +5,7 @@ use crate::prelude::*;
 // ----- Enum for different texture types -----
 pub enum Texture {
     SolidColor(SolidColor),
+    CheckerTexture(CheckerTexture),
 }
 
 // Implementation of the value method for Texture enum
@@ -13,6 +14,7 @@ impl Texture {
     pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
         match self {
             Texture::SolidColor(tex) => tex.value(u, v, p),
+            Texture::CheckerTexture(tex) => tex.value(u, v, p),
         }
     }
 }
@@ -89,5 +91,12 @@ impl CheckerTexture {
         } else {
             self.odd.value(u, v, p)
         }
+    }
+}
+
+// From CheckerTexture to Texture implementation
+impl From<CheckerTexture> for Texture {
+    fn from(tex: CheckerTexture) -> Self {
+        Texture::CheckerTexture(tex)
     }
 }
