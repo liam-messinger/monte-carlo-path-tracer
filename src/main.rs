@@ -9,8 +9,9 @@ mod interval;
 mod camera;
 mod material;
 mod aabb;
+mod texture;
 
-use prelude::*;
+use crate::prelude::*;
 use crate::hittable::{HittableList, Sphere};
 use crate::camera::Camera;
 
