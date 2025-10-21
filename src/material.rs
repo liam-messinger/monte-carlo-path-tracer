@@ -1,5 +1,8 @@
+use std::sync::Arc;
+
 use crate::hittable::{HitRecord};
 use crate::prelude::*;
+use crate::texture::{Texture, SolidColor};
 
 // ----- Enum for different material types -----
 #[derive(Clone)]
@@ -32,12 +35,20 @@ impl Default for Material {
 
 #[derive(Clone)]
 pub struct Lambertian {
-    pub albedo: Color,
+    tex: Arc<Texture>,
 }
 
 impl Lambertian {
+    // Constructor from Color
     pub fn new(albedo: Color) -> Self {
-        Self { albedo }
+        Self { 
+            tex: Arc::new(Texture::from(SolidColor::new(albedo))),
+        }
+    }
+
+    // Constructor from Texture reference counter
+    pub fn from_texture(tex: Arc<Texture>) -> Self {
+        Self { tex }
     }
 
     #[inline]
@@ -50,10 +61,9 @@ impl Lambertian {
         }
 
         *scattered = Ray::new_with_time(rec.point, scatter_direction, ray_in.time);
-        *attenuation = self.albedo;
+        *attenuation = self.tex.value(rec.u, rec.v, &rec.point);
         true
-    }
-        
+    }   
 }
 
 // From Lambertian to Material implementation
