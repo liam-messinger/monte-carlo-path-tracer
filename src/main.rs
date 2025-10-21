@@ -14,15 +14,17 @@ mod texture;
 use crate::prelude::*;
 use crate::hittable::{HittableList, Sphere};
 use crate::camera::Camera;
+use crate::texture::{Texture, SolidColor, CheckerTexture};
+use crate::material::{Material, Lambertian, Metal, Dielectric};
 
 fn main() {
     let mut world = HittableList::new();
 
-    let ground_material = material::Lambertian::new(Color::new(0.5, 0.5, 0.5));
-    world.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, ground_material));
+    let checker = CheckerTexture::from_colors(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    world.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::from_texture(checker.into())));
 
-    for a in -1582..1582 {
-        for b in -1582..1582 {
+    for a in -11..11 {
+        for b in -11..11 {
             let choose_mat: f64 = random_f64();
             let center = Point3::new(a as f64 + 0.9 * random_f64(), 0.2, b as f64 + 0.9 * random_f64());
 
@@ -32,7 +34,7 @@ fn main() {
                     let albedo = Color::random() * Color::random();
                     let sphere_material = material::Lambertian::new(albedo);
                     let center2 = center + Vec3::new(0.0, random_f64_range(0.0, 0.35), 0.0);
-                    world.add(Sphere::new_moving(center, center,0.2, sphere_material));
+                    world.add(Sphere::new_moving(center, center2,0.2, sphere_material));
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Color::random_range(0.5, 1.0);
@@ -69,8 +71,8 @@ fn main() {
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
-    //cam.apature_angle = 0.6;
-    //cam.focus_dist = 10.0;
+    cam.apature_angle = 0.3;
+    cam.focus_dist = 10.0;
 
     // Build BVH from world
     let world = world.to_bvh();
