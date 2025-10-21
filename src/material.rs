@@ -76,7 +76,7 @@ impl From<Lambertian> for Material {
 }
 
 // ----- Metal Material -----
-
+// TODO: Add textures to Metal material
 #[derive(Clone)]
 pub struct Metal {
     pub albedo: Color,
@@ -109,7 +109,7 @@ impl From<Metal> for Material {
 }
 
 // ----- Dielectric (glass-like) Material -----
-
+// TODO: Add textures to Dielectric material
 #[derive(Clone)]
 pub struct Dielectric {
     // Refractive index in vacuum or air, or the ratio of the material's refractive index over
