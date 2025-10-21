@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::prelude::*;
 
 // ----- Enum for different texture types -----
+#[derive(Clone)]
 pub enum Texture {
     SolidColor(SolidColor),
     CheckerTexture(CheckerTexture),
@@ -20,6 +21,7 @@ impl Texture {
 }
 
 // ----- Solid Color Texture -----
+#[derive(Clone)]
 pub struct SolidColor {
     albedo: Color,
 }
@@ -52,6 +54,7 @@ impl From<SolidColor> for Texture {
 }
 
 // ----- Checker Texture -----
+#[derive(Clone)]
 pub struct CheckerTexture {
     inv_scale: f64,
     even: Arc<Texture>,
