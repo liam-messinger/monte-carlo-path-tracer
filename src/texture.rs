@@ -80,7 +80,7 @@ impl CheckerTexture {
     pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
         let xInt = (p.x() * self.inv_scale).floor() as i32;
         let yInt = (p.y() * self.inv_scale).floor() as i32;
-        let zInt = (p.z() * self.inv_scale).floor() as i32
+        let zInt = (p.z() * self.inv_scale).floor() as i32;
 
         let isEven = (xInt + yInt + zInt) % 2 == 0;
 
