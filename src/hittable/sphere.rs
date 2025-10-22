@@ -1,6 +1,5 @@
-use super::{Hittable, HitRecord};
+use super::{Hittable, HitRecord, AABB};
 
-use crate::aabb::AABB;
 use crate::interval::Interval;
 use crate::material::Material;
 use crate::ray::Ray;

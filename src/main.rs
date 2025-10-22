@@ -9,7 +9,6 @@ mod prelude;
 mod interval;
 mod camera;
 mod material;
-mod aabb;
 mod texture;
 
 use crate::prelude::*;

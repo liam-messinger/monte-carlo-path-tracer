@@ -1,8 +1,7 @@
-use super::{HitRecord, Hittable, BVHNode};
+use super::{HitRecord, Hittable, BVHNode, AABB};
 
 use crate::ray::Ray;
 use crate::interval::Interval;
-use crate::aabb::AABB;
 
 use std::sync::Arc;
 

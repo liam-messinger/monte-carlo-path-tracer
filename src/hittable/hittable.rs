@@ -1,8 +1,7 @@
+use super::{HitRecord, HittableList, BVHNode, Sphere, AABB};
+
 use crate::ray::Ray;
 use crate::interval::Interval;
-use crate::aabb::AABB;
-
-use super::{HitRecord, HittableList, BVHNode, Sphere};
 
 // ----- Enum for Hittable Object Types -----
 #[derive(Clone)]
