@@ -75,11 +75,12 @@ impl Sphere {
             }
         }
 
-        rec.t = root;
-        rec.point = r.at(rec.t);
-        let outward_normal = (rec.point - current_center) / self.radius;
-        rec.set_face_normal(r, &outward_normal);
-        rec.material = Arc::clone(&self.material);
+        rec.t = root; // Assign hit time
+        rec.point = r.at(rec.t); // Assign hit point
+        let outward_normal = (rec.point - current_center) / self.radius; // Normal at the hit point
+        rec.set_face_normal(r, &outward_normal); // Determine if the hit was on the front face
+        Self::get_sphere_uv(&outward_normal, &mut rec.u, &mut rec.v); // Assign UV coordinates to record
+        rec.material = Arc::clone(&self.material); // Assign material
 
         true
     }
