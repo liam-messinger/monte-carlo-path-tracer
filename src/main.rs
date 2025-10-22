@@ -1,7 +1,6 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-// TODO: Add lib.rs
 mod color;
 mod hittable;
 mod ray;
