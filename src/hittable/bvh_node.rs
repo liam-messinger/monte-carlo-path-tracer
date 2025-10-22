@@ -1,4 +1,4 @@
-use super::{HitRecord, Hittable, HittableList};
+use super::{HitRecord, Hittable, HittableList, AABB};
 
 use crate::aabb::AABB;
 use crate::interval::Interval;
