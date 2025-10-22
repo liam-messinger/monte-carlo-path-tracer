@@ -10,6 +10,7 @@ mod interval;
 mod camera;
 mod material;
 mod texture;
+mod image_data;
 
 use crate::prelude::*;
 use crate::hittable::{HittableList, Sphere};
