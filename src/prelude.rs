@@ -5,6 +5,7 @@ pub use crate::vec3::{Point3, Vec3};
 pub use crate::interval::Interval;
 
 use rand::Rng;
+use std::f64::consts::PI;
 
 // Utility Functions
 #[inline]
