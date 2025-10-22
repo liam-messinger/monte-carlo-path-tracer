@@ -6,9 +6,6 @@ pub use crate::interval::Interval;
 
 use rand::Rng;
 
-// Constants
-pub const PI: f64 = std::f64::consts::PI;
-
 // Utility Functions
 #[inline]
 pub fn degrees_to_radians(degrees: f64) -> f64 {
