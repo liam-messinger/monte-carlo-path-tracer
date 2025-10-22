@@ -1,5 +1,5 @@
-use super::core::{HitRecord, Hittable};
-use super::bvh_node::BVHNode;
+use super::{HitRecord, Hittable, BVHNode};
+
 use crate::ray::Ray;
 use crate::interval::Interval;
 use crate::aabb::AABB;

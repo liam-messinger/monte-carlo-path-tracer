@@ -1,4 +1,4 @@
-use crate::hittable::core::Hittable;
+use crate::hittable::Hittable;
 use crate::prelude::*;
 use crate::hittable::{HitRecord};
 

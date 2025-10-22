@@ -1,4 +1,5 @@
-use super::core::{HitRecord, Hittable};
+use super::{Hittable, HitRecord};
+
 use crate::aabb::AABB;
 use crate::interval::Interval;
 use crate::material::Material;
