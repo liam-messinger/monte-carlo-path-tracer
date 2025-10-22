@@ -5,6 +5,7 @@ use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
 
+use std::f64::consts::PI;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -86,6 +87,15 @@ impl Sphere {
     // Get the bounding box of the sphere
     pub fn bounding_box(&self) -> &AABB {
         &self.bounding_box
+    }
+
+    // Get the uv coordinates for a point on the sphere
+    fn get_sphere_uv(p: &Point3, u: &mut f64, v: &mut f64) {
+        let theta = (-p.y()).acos();
+        let phi = (-p.z()).atan2(p.x()) + PI;
+
+        *u = phi / (2.0 * PI);
+        *v = theta / PI;
     }
 }
 
