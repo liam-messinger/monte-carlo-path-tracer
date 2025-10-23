@@ -15,12 +15,13 @@ mod image_data;
 use crate::prelude::*;
 use crate::hittable::{HittableList, Sphere};
 use crate::camera::Camera;
-use crate::texture::{Texture, SolidColor, CheckerTexture};
+use crate::texture::{CheckerTexture, ImageTexture, SolidColor, Texture};
 use crate::material::{Material, Lambertian, Metal, Dielectric};
 
 fn bouncing_spheres() {
     let mut world = HittableList::new();
-
+    // TODO: Simplify texture construction
+    // TODO: Make constructors use Arc references to allow sharing textures
     let checker = CheckerTexture::from_colors(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
     world.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::from_texture(checker.into())));
 
@@ -75,8 +76,7 @@ fn bouncing_spheres() {
     cam.apature_angle = 0.3;
     cam.focus_dist = 10.0;
 
-    // Build BVH from world
-    let world = world.to_bvh();
+    let world = world.to_bvh(); // Build BVH from world
     cam.render(world);
 }
 
@@ -101,9 +101,37 @@ fn checkered_spheres() {
 
     cam.apature_angle = 0.0;
 
+    let world = world.to_bvh(); // Build BVH from world
     cam.render(world);
 }
 
+fn earth() {
+    let earth_texture: Texture = ImageTexture::from_file("earthmap.jpg").into();
+    let earth_material: Material = Lambertian::from_texture(earth_texture).into();
+    let globe = Sphere::new(Point3::new(0.0, 0.0, 0.0), 2.0, earth_material);
+
+    let mut cam = Camera::default();
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 1200;
+    cam.samples_per_pixel = 100;
+    cam.max_depth = 50;
+
+    cam.v_fov = 20.0;
+    cam.look_from = Point3::new(0.0, 0.0, 12.0);
+    cam.look_at = Point3::new(0.0, 0.0, 0.0);
+    cam.v_up = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.apature_angle = 0.0;
+
+    cam.render(globe);
+}
+
 fn main() {
-    checkered_spheres();
+    match 3 {
+        1 => bouncing_spheres(),
+        2 => checkered_spheres(),
+        3 => earth(),
+        _ => println!("No scene selected."),
+    }
 }
