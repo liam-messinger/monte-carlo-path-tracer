@@ -31,7 +31,20 @@ impl Default for Material {
     }
 }
 
-// TODO: Add macro to reduce boilerplate for From implementations
+// ----- Macro to implement From trait for material types -----
+macro_rules! impl_material_from {
+    ($($variant:ident),+ $(,)?) => {
+        $(
+            impl From<$variant> for Material {
+                fn from(mat: $variant) -> Self {
+                    Material::$variant(mat)
+                }
+            }
+        )+
+    };
+}
+
+impl_material_from!(Lambertian, Metal, Dielectric);
 
 // ----- Lambertian (diffuse) Material -----
 
@@ -70,13 +83,6 @@ impl Lambertian {
     }   
 }
 
-// From Lambertian to Material implementation
-impl From<Lambertian> for Material {
-    fn from(mat: Lambertian) -> Self {
-        Material::Lambertian(mat)
-    }
-}
-
 // ----- Metal Material -----
 // TODO: Add textures to Metal material
 #[derive(Clone)]
@@ -100,13 +106,6 @@ impl Metal {
         *scattered = Ray::new_with_time(rec.point, reflected, ray_in.time);
         *attenuation = self.albedo;
         Vec3::dot(&scattered.direction, &rec.normal) > 0.0
-    }
-}
-
-// From Metal to Material implementation
-impl From<Metal> for Material {
-    fn from(mat: Metal) -> Self {
-        Material::Metal(mat)
     }
 }
 
@@ -150,12 +149,5 @@ impl Dielectric {
 
         *scattered = Ray::new_with_time(rec.point, direction, ray_in.time);
         true
-    }
-}
-
-// From Dielectric to Material implementation
-impl From<Dielectric> for Material {
-    fn from(mat: Dielectric) -> Self {
-        Material::Dielectric(mat)
     }
 }
