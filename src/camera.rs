@@ -78,6 +78,7 @@ impl Camera {
         pb.finish_with_message("Render complete!");
 
         // Build the image and save
+        // Default colorspace of an ImageBuffer is sRGB
         let img = image::RgbImage::from_raw(width, height, raw_img)
             .expect("Buffer size mismatch");
         img.save("output.png").expect("Failed to save output.png");
