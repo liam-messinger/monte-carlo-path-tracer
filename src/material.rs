@@ -31,7 +31,8 @@ impl Default for Material {
     }
 }
 
-// ----- Macro to implement From trait for material types -----
+// ----- Macros to implement From trait for material types -----
+// From material type to Material
 macro_rules! impl_material_from {
     ($($variant:ident),+ $(,)?) => {
         $(
@@ -43,8 +44,21 @@ macro_rules! impl_material_from {
         )+
     };
 }
-
 impl_material_from!(Lambertian, Metal, Dielectric);
+
+// From material type to Arc<Material>
+macro_rules! impl_arc_material_from {
+    ($($variant:ident),+ $(,)?) => {
+        $(
+            impl From<$variant> for Arc<Material> {
+                fn from(mat: $variant) -> Self {
+                    Arc::new(Material::$variant(mat))
+                }
+            }
+        )+
+    };
+}
+impl_arc_material_from!(Lambertian, Metal, Dielectric);
 
 // ----- Lambertian (diffuse) Material -----
 
@@ -62,9 +76,9 @@ impl Lambertian {
     }
 
     // Constructor from Texture reference counter
-    pub fn from_texture(tex: Texture) -> Self {
+    pub fn from_texture(tex: Arc<Texture>) -> Self {
         Self { 
-            tex: Arc::new(tex),
+            tex,
         }
     }
 
