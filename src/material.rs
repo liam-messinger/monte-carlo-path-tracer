@@ -31,6 +31,8 @@ impl Default for Material {
     }
 }
 
+// TODO: Add macro to reduce boilerplate for From implementations
+
 // ----- Lambertian (diffuse) Material -----
 
 #[derive(Clone)]

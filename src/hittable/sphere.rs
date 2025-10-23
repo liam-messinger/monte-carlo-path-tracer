@@ -18,6 +18,7 @@ pub struct Sphere {
 
 impl Sphere {
     // Constructor for Stationary Sphere
+    // TODO: Change material parameter to just accept Arc<Material>
     pub fn new(static_center: Point3, radius: f64, material: impl Into<Material>) -> Self {
         Self {
             center: Ray::new(static_center, Vec3::zero()),
@@ -31,12 +32,8 @@ impl Sphere {
     }
 
     // Constructor for Moving Sphere
-    pub fn new_moving(
-        center1: Point3,
-        center2: Point3,
-        radius: f64,
-        material: impl Into<Material>,
-    ) -> Self {
+    // TODO: Change material parameter to just accept Arc<Material>
+    pub fn new_moving( center1: Point3, center2: Point3, radius: f64, material: impl Into<Material>, ) -> Self {
         Self {
             center: Ray::new(center1, center2 - center1),
             radius: radius.max(0.0),
