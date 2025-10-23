@@ -18,12 +18,11 @@ pub struct Sphere {
 
 impl Sphere {
     // Constructor for Stationary Sphere
-    // TODO: Change material parameter to just accept Arc<Material>
-    pub fn new(static_center: Point3, radius: f64, material: impl Into<Material>) -> Self {
+    pub fn new(static_center: Point3, radius: f64, material: Arc<Material>) -> Self {
         Self {
             center: Ray::new(static_center, Vec3::zero()),
             radius: radius.max(0.0),
-            material: Arc::new(material.into()),
+            material,
             bounding_box: {
                 let r_vec = Vec3::new(radius, radius, radius);
                 AABB::from_points(&(static_center - r_vec), &(static_center + r_vec))
@@ -32,12 +31,11 @@ impl Sphere {
     }
 
     // Constructor for Moving Sphere
-    // TODO: Change material parameter to just accept Arc<Material>
-    pub fn new_moving( center1: Point3, center2: Point3, radius: f64, material: impl Into<Material>, ) -> Self {
+    pub fn new_moving( center1: Point3, center2: Point3, radius: f64, material: Arc<Material>) -> Self {
         Self {
             center: Ray::new(center1, center2 - center1),
             radius: radius.max(0.0),
-            material: Arc::new(material.into()),
+            material,
             bounding_box: {
                 let r_vec = Vec3::new(radius, radius, radius);
                 let box1 = AABB::from_points(&(center1 - r_vec), &(center1 + r_vec));
