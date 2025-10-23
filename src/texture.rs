@@ -26,7 +26,8 @@ impl Texture {
     }
 }
 
-// ----- Macro to implement From trait for texture types -----
+// ----- Macros to implement From trait for texture types -----
+// From texture type to Textuee
 macro_rules! impl_texture_from {
     ($($variant:ident),+ $(,)?) => {
         $(
@@ -38,8 +39,21 @@ macro_rules! impl_texture_from {
         )+
     };
 }
-
 impl_texture_from!(SolidColor, CheckerTexture, ImageTexture);
+
+// From texture type to Arc<Texture>
+macro_rules! impl_arc_texture_from {
+    ($($variant:ident),+ $(,)?) => {
+        $(
+            impl From<$variant> for Arc<Texture> {
+                fn from(tex: $variant) -> Self {
+                    Arc::new(Texture::$variant(tex))
+                }
+            }
+        )+
+    };
+}
+impl_arc_texture_from!(SolidColor, CheckerTexture, ImageTexture);
 
 // ----- Solid Color Texture -----
 #[derive(Clone)]
