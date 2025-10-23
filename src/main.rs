@@ -1,64 +1,71 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
+mod camera;
 mod color;
 mod hittable;
-mod ray;
-mod vec3;
-mod prelude;
-mod interval;
-mod camera;
-mod material;
-mod texture;
 mod image_data;
+mod interval;
+mod material;
+mod prelude;
+mod ray;
+mod texture;
+mod vec3;
 
-use crate::prelude::*;
-use crate::hittable::{HittableList, Sphere};
+use std::sync::Arc;
+
 use crate::camera::Camera;
+use crate::hittable::{HittableList, Sphere};
+use crate::material::{Dielectric, Lambertian, Material, Metal};
+use crate::prelude::*;
 use crate::texture::{CheckerTexture, ImageTexture, SolidColor, Texture};
-use crate::material::{Material, Lambertian, Metal, Dielectric};
 
 fn bouncing_spheres() {
     let mut world = HittableList::new();
     // TODO: Simplify texture construction
     // TODO: Make constructors use Arc references to allow sharing textures
-    let checker = CheckerTexture::from_colors(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
-    world.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::from_texture(checker.into())));
+    let checker_texture: Arc<Texture> = CheckerTexture::from_colors(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9)).into();
+    let checker_material: Arc<Material> = Lambertian::from_texture(checker_texture).into();
+    world.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, checker_material));
 
     for a in -11..11 {
         for b in -11..11 {
             let choose_mat: f64 = random_f64();
-            let center = Point3::new(a as f64 + 0.9 * random_f64(), 0.2, b as f64 + 0.9 * random_f64());
+            let center = Point3::new(
+                a as f64 + 0.9 * random_f64(),
+                0.2,
+                b as f64 + 0.9 * random_f64(),
+            );
 
             if (center - Point3::new(4.0, 0.2, 0.0)).length() > 0.9 {
                 if choose_mat < 0.8 {
                     // diffuse
                     let albedo = Color::random() * Color::random();
-                    let sphere_material = material::Lambertian::new(albedo);
+                    let sphere_material: Arc<Material> = material::Lambertian::new(albedo).into();
                     let center2 = center + Vec3::new(0.0, random_f64_range(0.0, 0.35), 0.0);
-                    world.add(Sphere::new_moving(center, center2,0.2, sphere_material));
+                    world.add(Sphere::new_moving(center, center2, 0.2, sphere_material));
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Color::random_range(0.5, 1.0);
                     let fuzz = random_f64_range(0.0, 0.5);
-                    let sphere_material = material::Metal::new(albedo, fuzz);
+                    let sphere_material: Arc<Material> = Metal::new(albedo, fuzz).into();
                     world.add(Sphere::new(center, 0.2, sphere_material));
                 } else {
                     // glass
-                    let sphere_material = material::Dielectric::new(1.5);
+                    let sphere_material: Arc<Material> = material::Dielectric::new(1.5).into();
                     world.add(Sphere::new(center, 0.2, sphere_material));
                 }
             }
         }
     }
 
-    let material1 = material::Dielectric::new(1.5);
+    let material1: Arc<Material> = material::Dielectric::new(1.5).into();
     world.add(Sphere::new(Point3::new(0.0, 1.0, 0.0), 1.0, material1));
 
-    let material2 = material::Lambertian::new(Color::new(0.4, 0.2, 0.1));
+    let material2: Arc<Material> = material::Lambertian::new(Color::new(0.4, 0.2, 0.1)).into();
     world.add(Sphere::new(Point3::new(-4.0, 1.0, 0.0), 1.0, material2));
 
-    let material3 = material::Metal::new(Color::new(0.7, 0.6, 0.5), 0.0);
+    let material3: Arc<Material> = material::Metal::new(Color::new(0.7, 0.6, 0.5), 0.0).into();
     world.add(Sphere::new(Point3::new(4.0, 1.0, 0.0), 1.0, material3));
 
     let mut cam = Camera::default();
@@ -83,9 +90,10 @@ fn bouncing_spheres() {
 fn checkered_spheres() {
     let mut world = HittableList::new();
 
-    let checker = CheckerTexture::from_colors(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
-    world.add(Sphere::new(Point3::new(0.0, -10.0, 0.0), 10.0, Lambertian::from_texture(checker.clone().into())));
-    world.add(Sphere::new(Point3::new(0.0, 10.0, 0.0), 10.0, Lambertian::from_texture(checker.into())));
+    let checker_texture: Arc<Texture> = CheckerTexture::from_colors(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9)).into();
+    let checker_material: Arc<Material> = Lambertian::from_texture(checker_texture).into();
+    world.add(Sphere::new(Point3::new(0.0, -10.0, 0.0), 10.0, checker_material.clone()));
+    world.add(Sphere::new(Point3::new(0.0, 10.0, 0.0), 10.0, checker_material.clone()));
 
     let mut cam = Camera::default();
 
@@ -106,8 +114,8 @@ fn checkered_spheres() {
 }
 
 fn earth() {
-    let earth_texture: Texture = ImageTexture::from_file("earthmap.jpg").into();
-    let earth_material: Material = Lambertian::from_texture(earth_texture).into();
+    let earth_texture: Arc<Texture> = ImageTexture::from_file("earthmap.jpg").into();
+    let earth_material: Arc<Material> = Lambertian::from_texture(earth_texture).into();
     let globe = Sphere::new(Point3::new(0.0, 0.0, 0.0), 2.0, earth_material);
 
     let mut cam = Camera::default();
