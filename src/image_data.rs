@@ -6,11 +6,12 @@ use crate::color::Color;
 pub struct ImageData {
     width: u32,
     height: u32,
-    // Packed RGB bytes, row-major, 3 bytes per pixel
+    // Linear RGB bytes, row-major, 3 bytes per pixel
     data: Vec<u8>,
 }
 
 impl ImageData {
+    // TODO: If image quality degrades from space conversion, consider storing as f32 internally.
     // Loads an image from the given filename.
     // Searches for the  file in the current directory, in 'textures/' and '../textures/'.
     // Writes to "data" in row-major order, 3 bytes per pixel (R, G, B).
@@ -26,11 +27,18 @@ impl ImageData {
         for path in &search_paths {
             if let Ok(img) = image::open(path) {
                 let rgb_img = img.to_rgb8();
-                return Self {
-                    width: rgb_img.width(),
-                    height: rgb_img.height(),
-                    data: rgb_img.into_raw(),
-                };
+                let w = rgb_img.width();
+                let h = rgb_img.height();
+
+                // Convert sRGB bytes to linear on load
+                let mut data = rgb_img.into_raw();
+                for px in data.chunks_mut(3) {
+                    px[0] = srgb_to_linear_u8(px[0]);
+                    px[1] = srgb_to_linear_u8(px[1]);
+                    px[2] = srgb_to_linear_u8(px[2]);
+                }
+
+                return Self { width: w, height: h, data };
             }
         }
 
@@ -78,4 +86,15 @@ impl ImageData {
 
         Color::new(r, g, b)
     }
+}
+
+// sRGB -> linear (re-quantized to 8-bit)
+fn srgb_to_linear_u8(v: u8) -> u8 {
+    let c = v as f64 / 255.0;
+    let lin = if c <= 0.04045 {
+        c / 12.92
+    } else {
+        ((c + 0.055) / 1.055).powf(2.4)
+    };
+    (lin * 255.0 + 0.5) as u8
 }
