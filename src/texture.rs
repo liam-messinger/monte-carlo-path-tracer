@@ -1,21 +1,27 @@
 use std::sync::Arc;
 
 use crate::prelude::*;
+use crate::image_data::ImageData;
+
+// Todo: Split texture types into separate files if this file gets too large
 
 // ----- Enum for different texture types -----
+// A texture is a mapping from a (u,v) texture coordinate to a Color value.
 #[derive(Clone)]
-pub enum Texture {
+pub enum Texture { // Update for each new texture type
     SolidColor(SolidColor),
     CheckerTexture(CheckerTexture),
+    ImageTexture(ImageTexture),
 }
 
 // Implementation of the value method for Texture enum
 impl Texture {
     #[inline]
-    pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+    pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color { // Update for each new texture type
         match self {
             Texture::SolidColor(tex) => tex.value(u, v, p),
             Texture::CheckerTexture(tex) => tex.value(u, v, p),
+            Texture::ImageTexture(tex) => tex.value(u, v, p),
         }
     }
 }
@@ -101,5 +107,36 @@ impl CheckerTexture {
 impl From<CheckerTexture> for Texture {
     fn from(tex: CheckerTexture) -> Self {
         Texture::CheckerTexture(tex)
+    }
+}
+
+// ----- Image Texture -----
+#[derive(Clone)]
+pub struct ImageTexture {
+    image_data: ImageData, // Ownes the image data
+}
+
+impl ImageTexture {
+    // Constructor from filename
+    pub fn from_file(filename: &str) -> Self {
+        Self {
+            image_data: ImageData::new(filename),
+        }
+    }
+
+    // Value method returns the color from the image at (u, v)
+    #[inline]
+    pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+        // If we have no texture data, then return solid cyan as a debugging aid.
+        if self.image_data.height() <= 0 { return Color::new(0.0, 1.0, 1.0); }
+
+        // Clamp input texture coordinates to [0,1] x [1,0]
+        let u = u.clamp(0.0, 1.0);
+        let v = 1.0 - v.clamp(0.0, 1.0); // Flip V to image coordinates (0 at top left)
+
+        let i = (u * self.image_data.width() as f64) as u32; // u * width = pixel location in x direction
+        let j = (v * self.image_data.height() as f64) as u32; // v * height = pixel location in y direction
+
+        self.image_data.pixel_data(i, j) // Get the pixel color at (i, j)
     }
 }
