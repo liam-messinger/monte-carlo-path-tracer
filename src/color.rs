@@ -6,7 +6,6 @@ pub type Color = Vec3;
 
 impl Color {
     // Convert a color with components in [0,1] range to RGB bytes [0,255]
-    // TODO: Fix gamma correction to convert to sRGB properly
     pub fn as_rgb(&self) -> Rgb<u8> {
         let r = self.x();
         let g = self.y();
