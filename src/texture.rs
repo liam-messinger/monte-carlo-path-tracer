@@ -26,6 +26,21 @@ impl Texture {
     }
 }
 
+// ----- Macro to implement From trait for texture types -----
+macro_rules! impl_texture_from {
+    ($($variant:ident),+ $(,)?) => {
+        $(
+            impl From<$variant> for Texture {
+                fn from(tex: $variant) -> Self {
+                    Texture::$variant(tex)
+                }
+            }
+        )+
+    };
+}
+
+impl_texture_from!(SolidColor, CheckerTexture, ImageTexture);
+
 // ----- Solid Color Texture -----
 #[derive(Clone)]
 pub struct SolidColor {
@@ -49,13 +64,6 @@ impl SolidColor {
     #[inline]
     pub fn value(&self, _u: f64, _v: f64, _p: &Point3) -> Color {
         self.albedo
-    }
-}
-
-// From SolidColor to Texture implementation
-impl From<SolidColor> for Texture {
-    fn from(tex: SolidColor) -> Self {
-        Texture::SolidColor(tex)
     }
 }
 
@@ -103,13 +111,6 @@ impl CheckerTexture {
     }
 }
 
-// From CheckerTexture to Texture implementation
-impl From<CheckerTexture> for Texture {
-    fn from(tex: CheckerTexture) -> Self {
-        Texture::CheckerTexture(tex)
-    }
-}
-
 // ----- Image Texture -----
 #[derive(Clone)]
 pub struct ImageTexture {
@@ -126,7 +127,7 @@ impl ImageTexture {
 
     // Value method returns the color from the image at (u, v)
     #[inline]
-    pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+    pub fn value(&self, u: f64, v: f64, _p: &Point3) -> Color {
         // If we have no texture data, then return solid cyan as a debugging aid.
         if self.image_data.height() <= 0 { return Color::new(0.0, 1.0, 1.0); }
 
