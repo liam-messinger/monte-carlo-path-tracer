@@ -14,10 +14,10 @@ mod vec3;
 
 use std::sync::Arc;
 
+use crate::prelude::*;
 use crate::camera::Camera;
 use crate::hittable::{HittableList, Sphere};
 use crate::material::{Dielectric, Lambertian, Material, Metal};
-use crate::prelude::*;
 use crate::texture::{CheckerTexture, ImageTexture, SolidColor, Texture};
 
 fn bouncing_spheres() {
@@ -154,7 +154,7 @@ fn solar_system() {
     world.add(Sphere::new(Point3::new(-2.3, 0.07, 0.4), 0.24, venus_mat));
 
     // Earth
-    let earth_tex: Arc<Texture> = ImageTexture::from_file("earthmap.jpg").into();
+    let earth_tex: Arc<Texture> = ImageTexture::from_file("2k_earth_daymap.jpg").into();
     let earth_mat: Arc<Material> = Lambertian::from_texture(earth_tex).into();
     world.add(Sphere::new(Point3::new(-1.4, 0.09, -0.35), 0.26, earth_mat));
 
