@@ -14,11 +14,16 @@ pub struct Quad {
     v: Vec3,
     material: Arc<Material>,
     bounding_box: AABB,
+    normal: Vec3,
+    D: f64, // Normal dot Q
 }
 
 impl Quad {
     // Constructor
     pub fn new(Q: &Point3, u: &Vec3, v: &Vec3, material: Arc<Material>) -> Self {
+        let normal = Vec3::unit_vector(&Vec3::cross(u, v));
+        let D = Vec3::dot(&normal, Q);
+        
         // Compute the bounding box by considering the two diagonals of the quad
         let bbox_diagonal1 = AABB::from_points(Q, &(*Q + *u + *v));
         let bbox_diagonal2 = AABB::from_points(&(*Q + *u), &(*Q + *v));
