@@ -16,12 +16,14 @@ pub struct Quad {
     bounding_box: AABB,
     normal: Vec3,
     D: f64, // Normal dot Q
+    w: Vec3, // n / (n dot n)
 }
 
 impl Quad {
     // Constructor
     pub fn new(Q: &Point3, u: &Vec3, v: &Vec3, material: Arc<Material>) -> Self {
-        let normal = Vec3::unit_vector(&Vec3::cross(u, v));
+        let n = Vec3::cross(u, v);
+        let normal = Vec3::unit_vector(&n);
         let D = Vec3::dot(&normal, Q);
         
         // Compute the bounding box by considering the two diagonals of the quad
@@ -35,6 +37,7 @@ impl Quad {
             bounding_box: AABB::merge(&bbox_diagonal1, &bbox_diagonal2),
             normal,
             D,
+            w: n / Vec3::dot(&n, &n),
         }
     }
 
@@ -59,13 +62,36 @@ impl Quad {
             return false;
         }
 
-        let intersection = r.at(t);
+        // Determine if the hit point lies within the planar shape using its plane coordinates.
+        let intersection: Vec3 = r.at(t);
+        let planar_hitpt_vector: Vec3 = intersection - self.Q;
+        let alpha = Vec3::dot(&planar_hitpt_vector, &self.v);
+        let beta = Vec3::dot(&planar_hitpt_vector, &self.u);
 
+        if !Self::is_interior(alpha, beta, rec) {
+            return false;
+        }
+
+        // Ray hits the 2D shape; set the rest of the hit record and return true.
         rec.t = t;
         rec.point = intersection;
         rec.material = Arc::clone(&self.material);
         rec.set_face_normal(r, &self.normal);
 
+        true
+    }
+
+    pub fn is_interior(a: f64, b: f64, rec: &mut HitRecord) -> bool {
+        let unit_interval = Interval::new(0.0, 1.0);
+        // Given the hit point in plane coordinates, return false if it is outside the
+        // primitive, otherwise set the hit record UV coordinates and return true.
+
+        if !unit_interval.contains(a) || !unit_interval.contains(b) {
+            return false;
+        }
+
+        rec.u = a;
+        rec.v = b;
         true
     }
 }
