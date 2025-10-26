@@ -11,14 +11,15 @@ mod prelude;
 mod ray;
 mod texture;
 mod vec3;
+mod noise;
 
 use std::sync::Arc;
 
 use crate::prelude::*;
 use crate::camera::Camera;
 use crate::hittable::{HittableList, Sphere};
-use crate::material::{Dielectric, Lambertian, Material, Metal};
-use crate::texture::{CheckerTexture, ImageTexture, SolidColor, Texture};
+use crate::material::*;
+use crate::texture::*;
 
 fn bouncing_spheres() {
     let mut world = HittableList::new();
@@ -138,7 +139,7 @@ fn earth() {
 fn solar_system() {
     let mut world = HittableList::new();
 
-    // Sun (bright texture; Lambertian here since no emissive material is in use)
+    // Sun
     let sun_tex: Arc<Texture> = ImageTexture::from_file("2k_sun.jpg").into();
     let sun_mat: Arc<Material> = Lambertian::from_texture(sun_tex).into();
     world.add(Sphere::new(Point3::new(-6.0, 0.0, 0.0), 2.2, sun_mat));
@@ -192,7 +193,7 @@ fn solar_system() {
     let mut cam = Camera::default();
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 1200;
-    cam.samples_per_pixel = 500;
+    cam.samples_per_pixel = 100;
     cam.max_depth = 50;
 
     cam.v_fov = 35.0;
@@ -207,12 +208,39 @@ fn solar_system() {
     cam.render(world);
 }
 
+fn perlin_spheres() {
+    let mut world = HittableList::new();
+
+    let perlin_texture: Arc<Texture> = NoiseTexture::new().into();
+    let perlin_material: Arc<Material> = Lambertian::from_texture(perlin_texture).into();
+    world.add(Sphere::new(Point3::new(0.0, -1000.0, 0.0), 1000.0, perlin_material.clone()));
+    world.add(Sphere::new(Point3::new(0.0, 2.0, 0.0), 2.0, perlin_material.clone()));
+
+    let mut cam = Camera::default();
+
+    cam.aspect_ratio = 16.0 / 9.0;
+    cam.image_width = 1200;
+    cam.samples_per_pixel = 500;
+    cam.max_depth = 50;
+
+    cam.v_fov = 20.0;
+    cam.look_from = Point3::new(13.0, 2.0, 3.0);
+    cam.look_at = Point3::new(0.0, 0.0, 0.0);
+    cam.v_up = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.apature_angle = 0.0;
+
+    let world = world.to_bvh(); // Build BVH from world
+    cam.render(world);
+}
+
 fn main() {
-    match 4 {
+    match 5 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
         4 => solar_system(),
+        5 => perlin_spheres(),
         _ => println!("No scene selected."),
     }
 }
