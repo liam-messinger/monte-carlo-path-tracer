@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::prelude::*;
 use crate::image_data::ImageData;
+use crate::noise::Noise;
 
 // Todo: Split texture types into separate files if this file gets too large
 
@@ -12,6 +13,7 @@ pub enum Texture { // Update for each new texture type
     SolidColor(SolidColor),
     CheckerTexture(CheckerTexture),
     ImageTexture(ImageTexture),
+    NoiseTexture(NoiseTexture),
 }
 
 // Implementation of the value method for Texture enum
@@ -22,6 +24,7 @@ impl Texture {
             Texture::SolidColor(tex) => tex.value(u, v, p),
             Texture::CheckerTexture(tex) => tex.value(u, v, p),
             Texture::ImageTexture(tex) => tex.value(u, v, p),
+            Texture::NoiseTexture(tex) => tex.value(u, v, p),
         }
     }
 }
@@ -39,7 +42,7 @@ macro_rules! impl_texture_from {
         )+
     };
 }
-impl_texture_from!(SolidColor, CheckerTexture, ImageTexture);
+impl_texture_from!(SolidColor, CheckerTexture, ImageTexture, NoiseTexture);
 
 // From texture type to Arc<Texture>
 macro_rules! impl_arc_texture_from {
@@ -53,7 +56,7 @@ macro_rules! impl_arc_texture_from {
         )+
     };
 }
-impl_arc_texture_from!(SolidColor, CheckerTexture, ImageTexture);
+impl_arc_texture_from!(SolidColor, CheckerTexture, ImageTexture, NoiseTexture);
 
 // ----- Solid Color Texture -----
 #[derive(Clone)]
@@ -153,5 +156,26 @@ impl ImageTexture {
         let j = (v * self.image_data.height() as f64) as u32; // v * height = pixel location in y direction
 
         self.image_data.pixel_data(i, j) // Get the pixel color at (i, j)
+    }
+}
+
+// ----- Noise Texture -----
+#[derive(Clone)]
+pub struct NoiseTexture {
+    noise: Noise,
+}
+
+impl NoiseTexture {
+    // Constructor
+    pub fn new() -> Self {
+        Self {
+            noise: Noise::perlin(),
+        }
+    }
+
+    // Value method returns the noise value as a grayscale color
+    #[inline]
+    pub fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color {
+        Color::new(1.0, 1.0, 1.0) * self.noise.value(p)
     }
 }
