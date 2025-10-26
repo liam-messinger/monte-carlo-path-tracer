@@ -33,6 +33,8 @@ impl Quad {
             v: *v,
             material,
             bounding_box: AABB::merge(&bbox_diagonal1, &bbox_diagonal2),
+            normal,
+            D,
         }
     }
 
