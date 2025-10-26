@@ -65,8 +65,8 @@ impl Quad {
         // Determine if the hit point lies within the planar shape using its plane coordinates.
         let intersection: Vec3 = r.at(t);
         let planar_hitpt_vector: Vec3 = intersection - self.Q;
-        let alpha = Vec3::dot(&planar_hitpt_vector, &self.v);
-        let beta = Vec3::dot(&planar_hitpt_vector, &self.u);
+        let alpha = Vec3::dot(&self.w, &Vec3::cross(&planar_hitpt_vector, &self.v));
+        let beta = Vec3::dot(&self.w, &Vec3::cross(&self.u, &planar_hitpt_vector));
 
         if !Self::is_interior(alpha, beta, rec) {
             return false;
