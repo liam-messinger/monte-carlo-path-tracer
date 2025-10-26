@@ -42,11 +42,15 @@ impl Interval {
         value > self.min && value < self.max
     }
 
-    pub fn expand(&self, delta: f64) -> Self {
+    pub fn expand(&mut self, delta: f64) {
         let padding = delta / 2.0;
-        Self {
-            min: self.min - padding,
-            max: self.max + padding,
+        self.min -= padding;
+        self.max += padding;
+    }
+
+    pub fn pad_to_minimum(&mut self, delta: f64) {
+        if self.size() < delta { 
+            self.expand(delta);
         }
     }
 }

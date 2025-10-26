@@ -17,7 +17,9 @@ impl AABB {
 
     // Constructor for AABB
     pub fn new(x: Interval, y: Interval, z: Interval) -> Self {
-        Self { x, y, z }
+        let n = Self { x, y, z };
+        n.pad_to_minimum();
+        n
     }
 
     // TODO: Find where else to add const fns
@@ -36,7 +38,9 @@ impl AABB {
         let x = if p1.x() < p2.x() { Interval::new(p1.x(), p2.x()) } else { Interval::new(p2.x(), p1.x()) };
         let y = if p1.y() < p2.y() { Interval::new(p1.y(), p2.y()) } else { Interval::new(p2.y(), p1.y()) };
         let z = if p1.z() < p2.z() { Interval::new(p1.z(), p2.z()) } else { Interval::new(p2.z(), p1.z()) };
-        Self { x, y, z }
+        let n = Self { x, y, z };
+        n.pad_to_minimum();
+        n
     }
 
     // Assign the AABB to tightly enclose two points
@@ -101,6 +105,14 @@ impl AABB {
         } else {
             if self.y.size() > self.z.size() { 1 } else { 2 }
         }
+    }
+
+    fn pad_to_minimum(&mut self) {
+        // Adjust the AABB so that no side is narrower than some delta, padding if necessary
+        let delta = 0.0001;
+        self.x.pad_to_minimum(delta);
+        self.y.pad_to_minimum(delta);
+        self.z.pad_to_minimum(delta);
     }
 }
 
