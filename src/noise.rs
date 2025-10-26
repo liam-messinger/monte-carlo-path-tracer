@@ -19,7 +19,7 @@ impl Noise {
             perm_z: [0; POINT_COUNT],
         };
         for i in 0..POINT_COUNT {
-            n.randvec[i] = Vec3::unit_vector(Vec3::random_range(-1.0, 1.0));
+            n.randvec[i] = Vec3::unit_vector(&Vec3::random_range(-1.0, 1.0));
         }
         n.perm_x = Noise::perlin_generate_perm();
         n.perm_y = Noise::perlin_generate_perm();

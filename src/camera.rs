@@ -143,8 +143,8 @@ impl Camera {
         let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
 
         // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
-        self.w = Vec3::unit_vector(self.look_from - self.look_at);
-        self.u = Vec3::unit_vector(Vec3::cross(&self.v_up, &self.w));
+        self.w = Vec3::unit_vector(&(self.look_from - self.look_at));
+        self.u = Vec3::unit_vector(&Vec3::cross(&self.v_up, &self.w));
         self.v = Vec3::cross(&self.w, &self.u);
 
         // Calculate the vectors across the horizontal and down the vertical viewport edges.
@@ -213,7 +213,7 @@ impl Camera {
         }
 
         // Sky background
-        let unit_direction = Vec3::unit_vector(r.direction);
+        let unit_direction = Vec3::unit_vector(&r.direction);
         let a = 0.5 * (unit_direction.y() + 1.0);
         (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
     }

@@ -116,7 +116,7 @@ impl Metal {
     #[inline]
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         let mut reflected = Vec3::reflect(&ray_in.direction, &rec.normal);
-        reflected = Vec3::unit_vector(reflected) + (self.fuzz * Vec3::random_unit_vector());
+        reflected = Vec3::unit_vector(&reflected) + (self.fuzz * Vec3::random_unit_vector());
         *scattered = Ray::new_with_time(rec.point, reflected, ray_in.time);
         *attenuation = self.albedo;
         Vec3::dot(&scattered.direction, &rec.normal) > 0.0
@@ -149,7 +149,7 @@ impl Dielectric {
         *attenuation = Color::new(1.0, 1.0, 1.0); // No attenuation for Dielectric
         let ri: f64 = if rec.front_face { 1.0 / self.refraction_index } else { self.refraction_index };
 
-        let unit_direction = Vec3::unit_vector(ray_in.direction);
+        let unit_direction = Vec3::unit_vector(&ray_in.direction);
         let cos_theta: f64 = f64::min(Vec3::dot(&-unit_direction, &rec.normal), 1.0);
         let sin_theta: f64 = f64::sqrt(1.0 - cos_theta * cos_theta);
 

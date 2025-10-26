@@ -93,8 +93,8 @@ impl Vec3 {
 
     // Vec3::unit_vector(v)
     #[inline]
-    pub fn unit_vector(v: Vec3) -> Vec3 { // returns the unit vector in the direction of v
-        v / v.length()
+    pub fn unit_vector(v: &Vec3) -> Vec3 { // returns the unit vector in the direction of v
+        *v / v.length()
     }
 
     // Vec3::random_in_unit_circle()
