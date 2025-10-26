@@ -17,7 +17,7 @@ impl AABB {
 
     // Constructor for AABB
     pub fn new(x: Interval, y: Interval, z: Interval) -> Self {
-        let n = Self { x, y, z };
+        let mut n = Self { x, y, z };
         n.pad_to_minimum();
         n
     }
@@ -38,7 +38,7 @@ impl AABB {
         let x = if p1.x() < p2.x() { Interval::new(p1.x(), p2.x()) } else { Interval::new(p2.x(), p1.x()) };
         let y = if p1.y() < p2.y() { Interval::new(p1.y(), p2.y()) } else { Interval::new(p2.y(), p1.y()) };
         let z = if p1.z() < p2.z() { Interval::new(p1.z(), p2.z()) } else { Interval::new(p2.z(), p1.z()) };
-        let n = Self { x, y, z };
+        let mut n = Self { x, y, z };
         n.pad_to_minimum();
         n
     }
