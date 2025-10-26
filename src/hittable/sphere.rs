@@ -18,29 +18,28 @@ pub struct Sphere {
 
 impl Sphere {
     // Constructor for Stationary Sphere
-    // TODO: make center parameters reference to avoid copying
-    pub fn new(static_center: Point3, radius: f64, material: Arc<Material>) -> Self {
+    pub fn new(center: &Point3, radius: f64, material: Arc<Material>) -> Self {
         Self {
-            center: Ray::new(static_center, Vec3::zero()),
+            center: Ray::new(*center, Vec3::zero()),
             radius: radius.max(0.0),
             material,
             bounding_box: {
                 let r_vec = Vec3::new(radius, radius, radius);
-                AABB::from_points(&(static_center - r_vec), &(static_center + r_vec))
+                AABB::from_points(&(*center - r_vec), &(*center + r_vec))
             },
         }
     }
 
     // Constructor for Moving Sphere
-    pub fn new_moving( center1: Point3, center2: Point3, radius: f64, material: Arc<Material>) -> Self {
+    pub fn new_moving( center1: &Point3, center2: &Point3, radius: f64, material: Arc<Material>) -> Self {
         Self {
-            center: Ray::new(center1, center2 - center1),
+            center: Ray::new(*center1, *center2 - *center1),
             radius: radius.max(0.0),
             material,
             bounding_box: {
                 let r_vec = Vec3::new(radius, radius, radius);
-                let box1 = AABB::from_points(&(center1 - r_vec), &(center1 + r_vec));
-                let box2 = AABB::from_points(&(center2 - r_vec), &(center2 + r_vec));
+                let box1 = AABB::from_points(&(*center1 - r_vec), &(*center1 + r_vec));
+                let box2 = AABB::from_points(&(*center2 - r_vec), &(*center2 + r_vec));
                 AABB::merge(&box1, &box2)
             },
         }

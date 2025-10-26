@@ -11,7 +11,6 @@ pub struct ImageData {
 }
 
 impl ImageData {
-    // TODO: If image quality degrades from space conversion, consider storing as f32 internally.
     // Loads an image from the given filename.
     // Searches for the  file in the current directory, in 'textures/' and '../textures/'.
     // Writes to "data" in row-major order, 3 bytes per pixel (R, G, B).

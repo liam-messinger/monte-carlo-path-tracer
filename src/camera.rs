@@ -37,6 +37,7 @@ pub struct Camera {
 impl Camera {
     // ----- Public -----
 
+    // TODO: Make render take a HittableList and convert to BVH automatically
     // Render the scene from this camera's point of view
     pub fn render (&mut self, world: impl Into<Hittable>) {
         let world: &Hittable = &world.into();
