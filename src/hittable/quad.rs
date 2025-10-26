@@ -46,7 +46,27 @@ impl Quad {
     // Hit method
     #[inline]
     pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
-        false // todo
+        let denom = Vec3::dot(&self.normal, &r.direction);
+        
+        // No hit if the ray is parallel to the plane.
+        if denom.abs() < 1e-8 {
+            return false;
+        }
+        
+        // Return false if the hit point parameter t is outside the ray interval.
+        let t = (self.D - Vec3::dot(&self.normal, &r.origin)) / denom;
+        if !ray_t.contains(t) {
+            return false;
+        }
+
+        let intersection = r.at(t);
+
+        rec.t = t;
+        rec.point = intersection;
+        rec.material = Arc::clone(&self.material);
+        rec.set_face_normal(r, &self.normal);
+
+        true
     }
 }
 
