@@ -52,6 +52,20 @@ impl Noise {
         Noise::perlin_interp(&c, u, v, w)
     }
 
+    pub fn turbulence(&self, p: &Point3, depth: usize) -> f64 {
+        let mut accum = 0.0;
+        let mut temp_p = *p;
+        let mut weight = 1.0;
+
+        for _ in 0..depth {
+            accum += weight * self.value(&temp_p);
+            weight *= 0.5;
+            temp_p = temp_p * 2.0;
+        }
+
+        accum.abs()
+    }
+
     fn perlin_generate_perm() -> [usize; POINT_COUNT] {
         let mut p: [usize; POINT_COUNT] = [0; POINT_COUNT];
         for i in 0..POINT_COUNT {
