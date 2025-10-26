@@ -10,10 +10,10 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Sphere {
-    pub center: Ray,
-    pub radius: f64,
-    pub material: Arc<Material>,
-    pub bounding_box: AABB,
+    center: Ray,
+    radius: f64,
+    material: Arc<Material>,
+    bounding_box: AABB,
 }
 
 impl Sphere {
