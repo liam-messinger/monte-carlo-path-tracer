@@ -17,7 +17,7 @@ use std::sync::Arc;
 
 use crate::prelude::*;
 use crate::camera::Camera;
-use crate::hittable::{HittableList, Sphere};
+use crate::hittable::*;
 use crate::material::*;
 use crate::texture::*;
 
@@ -234,13 +234,49 @@ fn perlin_spheres() {
     cam.render(world);
 }
 
+fn quads() {
+    let mut world: HittableList = HittableList::new();
+
+    // Materials
+    let left_red: Arc<Material> = Lambertian::new(Color::new(1.0, 0.2, 0.2)).into();
+    let back_green: Arc<Material> = Lambertian::new(Color::new(0.2, 1.0, 0.2)).into();
+    let right_blue: Arc<Material> = Lambertian::new(Color::new(0.2, 0.2, 1.0)).into();
+    let upper_orange: Arc<Material> = Lambertian::new(Color::new(1.0, 0.5, 0.0)).into();
+    let lower_teal: Arc<Material> = Lambertian::new(Color::new(0.2, 0.8, 0.8)).into();
+
+    // Quads
+    world.add(Quad::new(&Point3::new(-3.0, -2.0, 5.0), &Vec3::new(0.0, 0.0, -4.0), &Vec3::new(0.0, 4.0, 0.0), left_red));
+    world.add(Quad::new(&Point3::new(-2.0, -2.0, 0.0), &Vec3::new(4.0, 0.0, 0.0), &Vec3::new(0.0, 4.0, 0.0), back_green));
+    world.add(Quad::new(&Point3::new(3.0, -2.0, 1.0), &Vec3::new(0.0, 0.0, 4.0), &Vec3::new(0.0, 4.0, 0.0), right_blue));
+    world.add(Quad::new(&Point3::new(-2.0, 3.0, 1.0), &Vec3::new(4.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, 4.0), upper_orange));
+    world.add(Quad::new(&Point3::new(-2.0, -3.0, 5.0), &Vec3::new(4.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, -4.0), lower_teal));
+
+    let mut cam = Camera::default();
+
+    cam.aspect_ratio = 1.0;
+    cam.image_width = 1200;
+    cam.samples_per_pixel = 500;
+    cam.max_depth = 50;
+
+    cam.v_fov = 80.0;
+    cam.look_from = Point3::new(0.0, 0.0, 9.0);
+    cam.look_at = Point3::new(0.0, 0.0, 0.0);
+    cam.v_up = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.apature_angle = 0.0;
+
+    let world = world.to_bvh(); // Build BVH from world
+    cam.render(world);
+}
+
 fn main() {
-    match 5 {
+    match 6 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
         4 => solar_system(),
         5 => perlin_spheres(),
+        6 => quads(),
         _ => println!("No scene selected."),
     }
 }
