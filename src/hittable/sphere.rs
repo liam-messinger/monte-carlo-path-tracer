@@ -18,6 +18,7 @@ pub struct Sphere {
 
 impl Sphere {
     // Constructor for Stationary Sphere
+    // TODO: make center parameters reference to avoid copying
     pub fn new(static_center: Point3, radius: f64, material: Arc<Material>) -> Self {
         Self {
             center: Ray::new(static_center, Vec3::zero()),
