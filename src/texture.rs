@@ -178,6 +178,6 @@ impl NoiseTexture {
     // Value method returns the noise value as a grayscale color
     #[inline]
     pub fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color {
-        Color::new(1.0, 1.0, 1.0) * self.noise.turbulence(p, 7)
+        Color::new(0.5, 0.5, 0.5) * (1.0 + (self.scale * p.z() + 10.0 * self.noise.turbulence(p, 7)).sin())
     }
 }
