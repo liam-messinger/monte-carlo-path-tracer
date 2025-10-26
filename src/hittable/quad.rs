@@ -42,3 +42,10 @@ impl Quad {
         false // todo
     }
 }
+
+// From Quad to Hittable implementation
+impl From<Quad> for Hittable {
+    fn from(quad: Quad) -> Self {
+        Hittable::Quad(quad)
+    }
+}
