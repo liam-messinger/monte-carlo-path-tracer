@@ -163,19 +163,21 @@ impl ImageTexture {
 #[derive(Clone)]
 pub struct NoiseTexture {
     noise: Noise,
+    scale: f64,
 }
 
 impl NoiseTexture {
     // Constructor
-    pub fn new() -> Self {
+    pub fn new(scale: f64) -> Self {
         Self {
             noise: Noise::perlin(),
+            scale,
         }
     }
 
     // Value method returns the noise value as a grayscale color
     #[inline]
     pub fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color {
-        Color::new(1.0, 1.0, 1.0) * self.noise.value(p)
+        Color::new(1.0, 1.0, 1.0) * self.noise.value(&(*p * self.scale))
     }
 }
