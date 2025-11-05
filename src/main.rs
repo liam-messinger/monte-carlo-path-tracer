@@ -79,7 +79,7 @@ fn bouncing_spheres() {
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
-    cam.apature_angle = 0.3;
+    cam.aperture_angle = 0.3;
     cam.focus_dist = 10.0;
 
     let world = world.to_bvh(); // Build BVH from world
@@ -106,7 +106,7 @@ fn checkered_spheres() {
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
-    cam.apature_angle = 0.0;
+    cam.aperture_angle = 0.0;
 
     let world = world.to_bvh(); // Build BVH from world
     cam.render(world);
@@ -129,7 +129,7 @@ fn earth() {
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
-    cam.apature_angle = 0.0;
+    cam.aperture_angle = 0.0;
 
     cam.render(globe);
 }
@@ -200,7 +200,7 @@ fn solar_system() {
     cam.look_at = Point3::new(1.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
-    cam.apature_angle = 0.0;
+    cam.aperture_angle = 0.0;
 
     let world = world.to_bvh();
     cam.render(world);
@@ -226,7 +226,7 @@ fn perlin_spheres() {
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
-    cam.apature_angle = 0.0;
+    cam.aperture_angle = 0.0;
 
     let world = world.to_bvh(); // Build BVH from world
     cam.render(world);
@@ -268,7 +268,7 @@ fn quads() {
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
-    cam.apature_angle = 0.0;
+    cam.aperture_angle = 0.0;
 
     let world = world.to_bvh(); // Build BVH from world
     cam.render(world);

@@ -18,7 +18,7 @@ pub struct Camera {
     pub look_at: Point3,        // Point camera is looking at
     pub v_up: Vec3,             // "Up" direction for the camera
 
-    pub apature_angle: f64,     // Variation angle of rays through each pixel
+    pub aperture_angle: f64,    // Variation angle of rays through each pixel
     pub focus_dist: f64,        // Distance from camera lookfrom point to plane of perfect focus
 
     image_height: u32,          // Rendered image height
@@ -30,8 +30,8 @@ pub struct Camera {
     u: Vec3,                    // Camera coordinate system basis vector u
     v: Vec3,                    // Camera coordinate system basis vector v
     w: Vec3,                    // Camera coordinate system basis vector w
-    apature_disk_u: Vec3,       // Apature disk horizontal radius
-    apature_disk_v: Vec3,       // Apature disk vertical radius
+    aperture_disk_u: Vec3,      // Aperture disk horizontal radius
+    aperture_disk_v: Vec3,      // Aperture disk vertical radius
 }
 
 impl Camera {
@@ -160,15 +160,15 @@ impl Camera {
         let viewport_upper_left: Point3 = self.center - (self.focus_dist * self.w) - viewport_u / 2.0 - viewport_v / 2.0;                           
         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
 
-        // Calculate the camera apature disk basis vectors.
-        let apature_radius = self.focus_dist * (self.apature_angle.to_radians() / 2.0).tan();
-        self.apature_disk_u = self.u * apature_radius;
-        self.apature_disk_v = self.v * apature_radius;
+        // Calculate the camera aperture disk basis vectors.
+        let aperture_radius = self.focus_dist * (self.aperture_angle.to_radians() / 2.0).tan();
+        self.aperture_disk_u = self.u * aperture_radius;
+        self.aperture_disk_v = self.v * aperture_radius;
     }
 
     // Get a ray from the camera through pixel (i,j)
     fn get_ray(&self, i: u32, j: u32) -> Ray {
-        // Construct a camera ray originating from the apature disk and directed at a randomly
+        // Construct a camera ray originating from the aperture disk and directed at a randomly
         // sampled point around the pixel location i, j.
 
         let offset = Camera::sample_square();
@@ -176,8 +176,8 @@ impl Camera {
                          + (i as f64 + offset.x()) * self.pixel_delta_u
                          + (j as f64 + offset.y()) * self.pixel_delta_v;  
 
-        // Use ideal or realistic apature based on apature setting
-        let ray_origin = if self.apature_angle <= 0.0 { self.center } else { self.apature_disk_sample() }; 
+        // Use ideal or realistic aperture based on aperture setting
+        let ray_origin = if self.aperture_angle <= 0.0 { self.center } else { self.aperture_disk_sample() }; 
         let ray_direction = pixel_sample - ray_origin;
         let ray_time = random_f64();
 
@@ -190,10 +190,10 @@ impl Camera {
         Vec3::new(random_f64() - 0.5, random_f64() - 0.5, 0.0)
     }
 
-    // Returns a random point in the camera apature disk.
-    fn apature_disk_sample(&self) -> Point3 {
+    // Returns a random point in the camera aperture disk.
+    fn aperture_disk_sample(&self) -> Point3 {
         let p = Vec3::random_in_unit_circle();
-        self.center + (p.x() * self.apature_disk_u) + (p.y() * self.apature_disk_v)
+        self.center + (p.x() * self.aperture_disk_u) + (p.y() * self.aperture_disk_v)
     } 
 
     // Compute the color seen along a ray
@@ -235,7 +235,7 @@ impl Default for Camera {
             look_at: Point3::new(0.0, 0.0, -1.0),
             v_up: Vec3::new(0.0, 1.0, 0.0),
 
-            apature_angle: 0.0,
+            aperture_angle: 0.0,
             focus_dist: 1.0,
 
             // Private
@@ -249,8 +249,8 @@ impl Default for Camera {
             u: Vec3::zero(),
             v: Vec3::zero(),
             w: Vec3::zero(),
-            apature_disk_u: Vec3::zero(),
-            apature_disk_v: Vec3::zero(),
+            aperture_disk_u: Vec3::zero(),
+            aperture_disk_v: Vec3::zero(),
         }
     }
 }
