@@ -218,6 +218,23 @@ impl Camera {
         let a = 0.5 * (unit_direction.y() + 1.0);
         (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
     }
+
+    // Function to set camera parameters to a high-quality default
+    pub fn set_high_quality_settings(&mut self) {
+        self.aspect_ratio = 16.0 / 9.0;
+        self.image_width = 1200;
+        self.samples_per_pixel = 500;
+        self.max_depth = 50;
+
+        self.v_fov = 20.0;
+    }
+
+    // Constructor for high-quality default camera
+    pub fn high_quality_default() -> Self {
+        let mut cam = Camera::default();
+        cam.set_high_quality_settings();
+        cam
+    }
 }
 
 // Implement default camera settings

@@ -67,14 +67,8 @@ fn bouncing_spheres() {
     let material3: Arc<Material> = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0).into();
     world.add(Sphere::new(&Point3::new(4.0, 1.0, 0.0), 1.0, material3));
 
-    let mut cam = Camera::default();
+    let mut cam = Camera::high_quality_default();
 
-    cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 1200;
-    cam.samples_per_pixel = 500;
-    cam.max_depth = 50;
-
-    cam.v_fov = 20.0;
     cam.look_from = Point3::new(13.0, 2.0, 3.0);
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
@@ -94,19 +88,11 @@ fn checkered_spheres() {
     world.add(Sphere::new(&Point3::new(0.0, -10.0, 0.0), 10.0, checker_material.clone()));
     world.add(Sphere::new(&Point3::new(0.0, 10.0, 0.0), 10.0, checker_material.clone()));
 
-    let mut cam = Camera::default();
+    let mut cam = Camera::high_quality_default();
 
-    cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 1200;
-    cam.samples_per_pixel = 100;
-    cam.max_depth = 50;
-
-    cam.v_fov = 20.0;
     cam.look_from = Point3::new(13.0, 2.0, 3.0);
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
-
-    cam.aperture_angle = 0.0;
 
     let world = world.to_bvh(); // Build BVH from world
     cam.render(world);
@@ -117,19 +103,11 @@ fn earth() {
     let earth_material: Arc<Material> = Lambertian::from_texture(earth_texture).into();
     let globe = Sphere::new(&Point3::new(0.0, 0.0, 0.0), 2.0, earth_material);
 
-    let mut cam = Camera::default();
+    let mut cam = Camera::high_quality_default();
 
-    cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 1200;
-    cam.samples_per_pixel = 100;
-    cam.max_depth = 50;
-
-    cam.v_fov = 20.0;
     cam.look_from = Point3::new(0.0, 0.0, 12.0);
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
-
-    cam.aperture_angle = 0.0;
 
     cam.render(globe);
 }
@@ -188,11 +166,7 @@ fn solar_system() {
     world.add(Sphere::new(&Point3::new(0.0, -30.0, -50.0), 50.0, star_material));
 
     // Camera tuned to frame the whole arc
-    let mut cam = Camera::default();
-    cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 1200;
-    cam.samples_per_pixel = 100;
-    cam.max_depth = 50;
+    let mut cam = Camera::high_quality_default();
 
     cam.v_fov = 35.0;
     // Raise the camera and tilt it downward for an aerial view
@@ -214,19 +188,11 @@ fn perlin_spheres() {
     world.add(Sphere::new(&Point3::new(0.0, -1000.0, 0.0), 1000.0, perlin_material.clone()));
     world.add(Sphere::new(&Point3::new(0.0, 2.0, 0.0), 2.0, perlin_material.clone()));
 
-    let mut cam = Camera::default();
+    let mut cam = Camera::high_quality_default();
 
-    cam.aspect_ratio = 16.0 / 9.0;
-    cam.image_width = 1200;
-    cam.samples_per_pixel = 500;
-    cam.max_depth = 50;
-
-    cam.v_fov = 20.0;
     cam.look_from = Point3::new(13.0, 2.0, 3.0);
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
-
-    cam.aperture_angle = 0.0;
 
     let world = world.to_bvh(); // Build BVH from world
     cam.render(world);
