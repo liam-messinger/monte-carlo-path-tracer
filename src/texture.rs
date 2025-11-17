@@ -114,11 +114,11 @@ impl CheckerTexture {
     // Value method returns the checker pattern color
     #[inline]
     pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
-        let xInt = (p.x() * self.inv_scale).floor() as i32;
-        let yInt = (p.y() * self.inv_scale).floor() as i32;
-        let zInt = (p.z() * self.inv_scale).floor() as i32;
+        let x_int = (p.x() * self.inv_scale).floor() as i32;
+        let y_int = (p.y() * self.inv_scale).floor() as i32;
+        let z_int = (p.z() * self.inv_scale).floor() as i32;
 
-        let isEven = (xInt + yInt + zInt) % 2 == 0;
+        let isEven = (x_int + y_int + z_int) % 2 == 0;
 
         if isEven {
             self.even.value(u, v, p)
