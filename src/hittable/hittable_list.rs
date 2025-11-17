@@ -29,8 +29,8 @@ impl HittableList {
         }
     }
 
-    pub fn to_bvh(&mut self) -> BVHNode {
-        BVHNode::build_from_list(self)
+    pub fn into_bvh(mut self) -> BVHNode {
+        BVHNode::build_from_list(&mut self)
     }
 
     // Clear all objects from the list
