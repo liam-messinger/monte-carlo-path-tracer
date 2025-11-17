@@ -146,7 +146,7 @@ impl ImageTexture {
     #[inline]
     pub fn value(&self, u: f64, v: f64, _p: &Point3) -> Color {
         // If we have no texture data, then return solid cyan as a debugging aid.
-        if self.image_data.height() <= 0 { return Color::new(0.0, 1.0, 1.0); }
+        if self.image_data.height() == 0 { return Color::new(0.0, 1.0, 1.0); }
 
         // Clamp input texture coordinates to [0,1] x [1,0]
         let u = u.clamp(0.0, 1.0);
