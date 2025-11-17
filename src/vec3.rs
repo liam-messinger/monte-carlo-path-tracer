@@ -61,9 +61,9 @@ impl Vec3 {
     // Vec3::random_range(min, max)
     pub fn random_range(min: f64, max: f64) -> Self { // random vector with each component in [min,max)
         Vec3::new( 
-            random_f64() * (max - min) + min,
-            random_f64() * (max - min) + min,
-            random_f64() * (max - min) + min,
+            random_f64_range(min, max),
+            random_f64_range(min, max),
+            random_f64_range(min, max),
         )
     }
 
