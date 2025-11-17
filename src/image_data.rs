@@ -6,8 +6,8 @@ use crate::color::Color;
 pub struct ImageData {
     width: u32,
     height: u32,
-    // Linear RGB bytes, row-major, 3 bytes per pixel
-    data: Vec<u8>,
+    // Linear RGB bytes, row-major, 3 floats per pixel
+    data: Vec<f32>,
 }
 
 impl ImageData {
@@ -25,16 +25,14 @@ impl ImageData {
         // Try to load the image from each path
         for path in &search_paths {
             if let Ok(img) = image::open(path) {
-                let rgb_img = img.to_rgb8();
+                let rgb_img = img.to_rgb32f();
                 let w = rgb_img.width();
                 let h = rgb_img.height();
 
-                // Convert sRGB bytes to linear on load
+                // Convert sRGB -> linear (kept as f32)
                 let mut data = rgb_img.into_raw();
-                for px in data.chunks_mut(3) {
-                    px[0] = srgb_to_linear_u8(px[0]);
-                    px[1] = srgb_to_linear_u8(px[1]);
-                    px[2] = srgb_to_linear_u8(px[2]);
+                for c in data.iter_mut() {
+                    *c = srgb_unit_to_linear(*c);
                 }
 
                 return Self { width: w, height: h, data };
@@ -87,13 +85,11 @@ impl ImageData {
     }
 }
 
-// sRGB -> linear (re-quantized to 8-bit)
-fn srgb_to_linear_u8(v: u8) -> u8 {
-    let c = v as f64 / 255.0;
-    let lin = if c <= 0.04045 {
+// sRGB [0, 1] -> linear [0, 1] as f32
+fn srgb_unit_to_linear(c: f32) -> f32 {
+    if c <= 0.04045 {
         c / 12.92
     } else {
         ((c + 0.055) / 1.055).powf(2.4)
-    };
-    (lin * 255.0 + 0.5) as u8
+    }
 }
