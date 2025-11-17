@@ -18,8 +18,8 @@ impl Noise {
             perm_y: [0; POINT_COUNT],
             perm_z: [0; POINT_COUNT],
         };
-        for i in 0..POINT_COUNT {
-            n.randvec[i] = Vec3::unit_vector(&Vec3::random_range(-1.0, 1.0));
+        for rv in n.randvec.iter_mut() {
+            *rv = Vec3::unit_vector(&Vec3::random_range(-1.0, 1.0));
         }
         n.perm_x = Noise::perlin_generate_perm();
         n.perm_y = Noise::perlin_generate_perm();
@@ -37,10 +37,10 @@ impl Noise {
         let k = (p.z()).floor() as i32;
         let mut c = [[[Vec3::zero(); 2]; 2]; 2];
 
-        for di in 0..2 {
-            for dj in 0..2 {
-                for dk in 0..2 {
-                    c[di][dj][dk] = self.randvec[
+        for (di, plane) in c.iter_mut().enumerate() {
+            for (dj, row) in plane.iter_mut().enumerate() {
+                for (dk, cell) in row.iter_mut().enumerate() {
+                    *cell = self.randvec[
                         self.perm_x[((i + di as i32) & 255) as usize]
                         ^ self.perm_y[((j + dj as i32) & 255) as usize]
                         ^ self.perm_z[((k + dk as i32) & 255) as usize]
@@ -60,7 +60,7 @@ impl Noise {
         for _ in 0..depth {
             accum += weight * self.value(&temp_p);
             weight *= 0.5;
-            temp_p = temp_p * 2.0;
+            temp_p *= 2.0;
         }
 
         accum.abs()
@@ -68,8 +68,8 @@ impl Noise {
 
     fn perlin_generate_perm() -> [usize; POINT_COUNT] {
         let mut p: [usize; POINT_COUNT] = [0; POINT_COUNT];
-        for i in 0..POINT_COUNT {
-            p[i] = i;
+        for (i, slot) in p.iter_mut().enumerate() {
+            *slot = i;
         }
         Noise::permute(&mut p, POINT_COUNT);
         p
@@ -88,14 +88,15 @@ impl Noise {
         let ww = w * w * (3.0 - 2.0 * w);
         let mut accum = 0.0;
 
-        for i in 0..2 {
-            for j in 0..2 {
-                for k in 0..2 {
+        for (i, plane) in c.iter().enumerate() {
+            let wu = if i == 1 { uu } else { 1.0 - uu };
+            for (j, row) in plane.iter().enumerate() {
+                let wv = if j == 1 { vv } else { 1.0 - vv };
+                for (k, cell) in row.iter().enumerate() {
+                    let ww_factor = if k == 1 { ww } else { 1.0 - ww };
                     let weight_v = Vec3::new(u - i as f64, v - j as f64, w - k as f64);
-                    let dot = Vec3::dot(&c[i][j][k], &weight_v);
-                    accum += ((i as f64) * uu + ((1 - i) as f64) * (1.0 - uu)) *
-                             ((j as f64) * vv + ((1 - j) as f64) * (1.0 - vv)) *
-                             ((k as f64) * ww + ((1 - k) as f64) * (1.0 - ww)) * dot;
+                    let dot = Vec3::dot(cell, &weight_v);
+                    accum += wu * wv * ww_factor * dot;
                 }
             }
         }
