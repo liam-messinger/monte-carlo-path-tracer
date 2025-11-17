@@ -40,7 +40,7 @@ impl Camera {
     // TODO: Make render take a HittableList and convert to BVH automatically
     // Render the scene from this camera's point of view
     pub fn render (&mut self, world: impl Into<Hittable>) {
-        let world: &Hittable = &world.into();
+        let world: Hittable = world.into();
 
         //*
         self.initialize();
@@ -65,7 +65,7 @@ impl Camera {
                     let mut pixel_color = Color::default();
                     for _ in 0..spp {
                         let r: Ray = self.get_ray(i as u32, j as u32);
-                        pixel_color += Camera::ray_color(&r, max_depth, world);
+                        pixel_color += Camera::ray_color(&r, max_depth, &world);
                     }
                     pixel_color *= self.pixel_samples_scaled;
                     let rgb = pixel_color.as_rgb();
@@ -100,7 +100,7 @@ impl Camera {
                 let mut pixel_color = Color::default();
                 for _sample in 0..self.samples_per_pixel {
                     let r: Ray = self.get_ray(i, j);
-                    pixel_color += Camera::ray_color(&r, self.max_depth, world);
+                    pixel_color += Camera::ray_color(&r, self.max_depth, &world);
                 }
                 img.put_pixel(i, j, (self.pixel_samples_scaled * pixel_color).as_rgb());
             }
