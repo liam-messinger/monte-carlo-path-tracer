@@ -21,8 +21,8 @@ impl BVHNode {
     pub fn build_partition(objects: &mut Vec<Arc<Hittable>>, start: usize, end: usize) -> Self {
         // Build the bounding box of the span of source objects.
         let mut bbox = AABB::empty();
-        for i in start..end {
-            bbox = AABB::merge(&bbox, objects[i].bounding_box());
+        for obj in objects.iter().take(end).skip(start) {
+            bbox = AABB::merge(&bbox, obj.bounding_box());
         }
         let axis_index = bbox.longest_axis();
 
