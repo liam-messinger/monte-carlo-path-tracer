@@ -5,7 +5,7 @@ use crate::hittable::{HitRecord};
 // External crates
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
-use image::ImageBuffer;
+//use image::ImageBuffer;
 
 pub struct Camera {
     pub aspect_ratio: f64,      // Ratio of image width over height
