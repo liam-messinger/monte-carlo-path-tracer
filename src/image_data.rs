@@ -6,14 +6,14 @@ use crate::color::Color;
 pub struct ImageData {
     width: u32,
     height: u32,
-    // Linear RGB bytes, row-major, 3 floats per pixel
+    // Linear RGB floats, row-major, 3 floats per pixel
     data: Vec<f32>,
 }
 
 impl ImageData {
     // Loads an image from the given filename.
     // Searches for the  file in the current directory, in 'textures/' and '../textures/'.
-    // Writes to "data" in row-major order, 3 bytes per pixel (R, G, B).
+    // Writes to "data" in row-major order, 3 floats per pixel (R, G, B).
     // Assumptions: The image is in a format supported by the 'image' crate and is RGB8.
     pub fn new(filename: &str) -> Self {
         let search_paths = [ // Search in multiple locations
@@ -77,9 +77,9 @@ impl ImageData {
         let y = y.clamp(0, self.height - 1);
 
         let offset = (y * self.width + x) as usize * 3;
-        let r = self.data[offset] as f64 / 255.0;
-        let g = self.data[offset + 1] as f64 / 255.0;
-        let b = self.data[offset + 2] as f64 / 255.0;
+        let r = self.data[offset] as f64;
+        let g = self.data[offset + 1] as f64;
+        let b = self.data[offset + 2] as f64;
 
         Color::new(r, g, b)
     }
