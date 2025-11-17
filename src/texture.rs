@@ -162,7 +162,7 @@ impl ImageTexture {
 // ----- Noise Texture -----
 #[derive(Clone)]
 pub struct NoiseTexture {
-    noise: Noise,
+    noise: Arc<Noise>,
     scale: f64,
 }
 
@@ -170,7 +170,7 @@ impl NoiseTexture {
     // Constructor
     pub fn new(scale: f64) -> Self {
         Self {
-            noise: Noise::perlin(),
+            noise: Arc::new(Noise::perlin()),
             scale,
         }
     }
