@@ -3,6 +3,7 @@ use crate::vec3::{Point3, Vec3};
 use crate::ray::Ray;
 
 // Axis-aligned bounding box (AABB) struct
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Clone)]
 pub struct AABB {
     x: Interval,
@@ -100,11 +101,13 @@ impl AABB {
 
     pub fn longest_axis(&self) -> usize {
         // Returns the index of the longest axis of the bounding box.
-        if self.x.size() > self.y.size() {
-            if self.x.size() > self.z.size() { 0 } else { 2 }
-        } else {
-            if self.y.size() > self.z.size() { 1 } else { 2 }
-        }
+        let sx = self.x.size();
+        let sy = self.y.size();
+        let sz = self.z.size();
+
+        if sx > sy {
+            if sx > sz { 0 } else { 2 }
+        } else if sy > sz { 1 } else { 2 }
     }
 
     fn pad_to_minimum(&mut self) {
