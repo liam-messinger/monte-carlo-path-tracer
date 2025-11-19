@@ -63,9 +63,10 @@ impl Camera {
             .for_each(|(j, row)| {
                 for i in 0..(width as usize) {
                     let mut pixel_color = Color::default();
+                    let mut rec = HitRecord::new();
                     for _ in 0..spp {
                         let r: Ray = self.get_ray(i as u32, j as u32);
-                        pixel_color += Camera::ray_color(&r, max_depth, &world);
+                        pixel_color += Camera::ray_color(&r, max_depth, &world, &mut rec);
                     }
                     pixel_color *= self.pixel_samples_scaled;
                     let rgb = pixel_color.as_rgb();
@@ -198,17 +199,15 @@ impl Camera {
 
     // Compute the color seen along a ray
     #[inline]
-    fn ray_color(r: &Ray, depth: u32, world: &Hittable) -> Color {
+    fn ray_color(r: &Ray, depth: u32, world: &Hittable, rec: &mut HitRecord) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered.
         if depth == 0 { return Color::zero(); }
 
-        let mut rec = HitRecord::new();
-
-        if world.hit(r, &Interval::new(0.001, f64::INFINITY), &mut rec) {
+        if world.hit(r, &Interval::new(0.001, f64::INFINITY), rec) {
             let mut scattered = Ray::default();
             let mut attenuation = Color::default();
             if rec.material.scatter(r, &rec, &mut attenuation, &mut scattered) {
-                return attenuation * Camera::ray_color(&scattered, depth - 1, world);
+                return attenuation * Camera::ray_color(&scattered, depth - 1, world, rec);
             }
             return Color::zero()
         }
