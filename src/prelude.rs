@@ -7,6 +7,10 @@ pub use crate::interval::Interval;
 use rand::Rng;
 use std::f64::consts::PI;
 
+// Constants
+pub const EPSILON: f64 = 1e-8;
+pub const AABB_MIN_PADDING: f64 = 0.0001;
+
 // Utility Functions
 #[inline]
 pub fn degrees_to_radians(degrees: f64) -> f64 {

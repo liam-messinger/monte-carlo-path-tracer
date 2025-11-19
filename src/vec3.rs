@@ -1,6 +1,6 @@
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub};
-use crate::prelude::{random_f64, random_f64_range};
+use crate::prelude::{random_f64, random_f64_range, EPSILON};
 
 // Struct definition
 #[derive(Debug, Clone, Copy)]
@@ -49,8 +49,7 @@ impl Vec3 {
 
     // vec.near_zero()
     pub fn near_zero(&self) -> bool { // checks if the vector is close to zero in all dimensions
-        let s = 1e-8;
-        self.e[0].abs() < s && self.e[1].abs() < s && self.e[2].abs() < s
+        self.e[0].abs() < EPSILON && self.e[1].abs() < EPSILON && self.e[2].abs() < EPSILON
     }
 
     // Vec3::random()

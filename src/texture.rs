@@ -118,9 +118,9 @@ impl CheckerTexture {
         let y_int = (p.y() * self.inv_scale).floor() as i32;
         let z_int = (p.z() * self.inv_scale).floor() as i32;
 
-        let isEven = (x_int + y_int + z_int) % 2 == 0;
+        let is_even = (x_int + y_int + z_int) % 2 == 0;
 
-        if isEven {
+        if is_even {
             self.even.value(u, v, p)
         } else {
             self.odd.value(u, v, p)

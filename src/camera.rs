@@ -214,8 +214,8 @@ impl Camera {
 
         // Sky background
         let unit_direction = Vec3::unit_vector(&r.direction);
-        let a = 0.5 * (unit_direction.y() + 1.0);
-        (1.0 - a) * Color::new(1.0, 1.0, 1.0) + a * Color::new(0.5, 0.7, 1.0)
+        let t = 0.5 * (unit_direction.y() + 1.0); // From y value from [-1,1] to [0,1]
+        Color::new(1.0, 1.0, 1.0) * (1.0 - t) + Color::new(0.5, 0.7, 1.0) * t // Linear blend
     }
 
     // Function to set camera parameters to a high-quality default

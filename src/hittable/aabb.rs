@@ -1,6 +1,7 @@
 use crate::interval::Interval;
 use crate::vec3::{Point3, Vec3};
 use crate::ray::Ray;
+use crate::prelude::AABB_MIN_PADDING;
 
 // Axis-aligned bounding box (AABB) struct
 #[allow(clippy::upper_case_acronyms)]
@@ -112,10 +113,9 @@ impl AABB {
 
     fn pad_to_minimum(&mut self) {
         // Adjust the AABB so that no side is narrower than some delta, padding if necessary
-        let delta = 0.0001;
-        self.x.pad_to_minimum(delta);
-        self.y.pad_to_minimum(delta);
-        self.z.pad_to_minimum(delta);
+        self.x.pad_to_minimum(AABB_MIN_PADDING);
+        self.y.pad_to_minimum(AABB_MIN_PADDING);
+        self.z.pad_to_minimum(AABB_MIN_PADDING);
     }
 }
 
