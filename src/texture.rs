@@ -38,8 +38,8 @@ impl Texture {
     pub fn checker_tex(scale: f64, even: Texture, odd: Texture) -> Arc<Texture> {
         Arc::new(Texture::CheckerTexture(CheckerTexture::new(scale, even, odd)))
     }
-    pub fn image_from_file(filename: &str) -> Arc<Texture> {
-        Arc::new(Texture::ImageTexture(ImageTexture::from_file(filename)))
+    pub fn image(filename: &str) -> Arc<Texture> {
+        Arc::new(Texture::ImageTexture(ImageTexture::new(filename)))
     }
     pub fn noise(scale: f64) -> Arc<Texture> {
         Arc::new(Texture::NoiseTexture(NoiseTexture::new(scale)))
@@ -153,7 +153,7 @@ pub struct ImageTexture {
 
 impl ImageTexture {
     // Constructor from filename
-    pub fn from_file(filename: &str) -> Self {
+    pub fn new(filename: &str) -> Self {
         Self {
             image_data: ImageData::new(filename),
         }
