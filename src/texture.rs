@@ -16,8 +16,8 @@ pub enum Texture { // Update for each new texture type
     NoiseTexture(NoiseTexture),
 }
 
-// Implementation of the value method for Texture enum
 impl Texture {
+    // Implementation of the value method for Texture enum
     #[inline]
     pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color { // Update for each new texture type
         match self {
@@ -26,6 +26,23 @@ impl Texture {
             Texture::ImageTexture(tex) => tex.value(u, v, p),
             Texture::NoiseTexture(tex) => tex.value(u, v, p),
         }
+    }
+
+    // Convenience Arc constructors
+    pub fn solid(albedo: Color) -> Arc<Texture> {
+        Arc::new(Texture::SolidColor(SolidColor::new(albedo)))
+    }
+    pub fn checker(scale: f64, even: Color, odd: Color) -> Arc<Texture> {
+        Arc::new(Texture::CheckerTexture(CheckerTexture::from_colors(scale, even, odd)))
+    }
+    pub fn checker_tex(scale: f64, even: Texture, odd: Texture) -> Arc<Texture> {
+        Arc::new(Texture::CheckerTexture(CheckerTexture::new(scale, even, odd)))
+    }
+    pub fn image_from_file(filename: &str) -> Arc<Texture> {
+        Arc::new(Texture::ImageTexture(ImageTexture::from_file(filename)))
+    }
+    pub fn noise(scale: f64) -> Arc<Texture> {
+        Arc::new(Texture::NoiseTexture(NoiseTexture::new(scale)))
     }
 }
 

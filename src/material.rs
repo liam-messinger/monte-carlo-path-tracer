@@ -12,8 +12,8 @@ pub enum Material {
     Dielectric(Dielectric),
 }
 
-// Implementation of scatter method for Material enum
 impl Material {
+    // Implementation of scatter method for Material enum
     #[inline]
     pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         match self {
@@ -21,6 +21,20 @@ impl Material {
             Material::Metal(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
             Material::Dielectric(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
         }
+    }
+
+    // Convenience Arc constructors
+    pub fn lambertian(albedo: Color) -> Arc<Material> {
+        Arc::new(Material::Lambertian(Lambertian::new(albedo)))
+    }
+    pub fn lambertian_tex(tex: Arc<Texture>) -> Arc<Material> {
+        Arc::new(Material::Lambertian(Lambertian::from_texture(tex)))
+    }
+    pub fn metal(albedo: Color, fuzz: f64) -> Arc<Material> {
+        Arc::new(Material::Metal(Metal::new(albedo, fuzz)))
+    }
+    pub fn dielectric(refraction_index: f64) -> Arc<Material> {
+        Arc::new(Material::Dielectric(Dielectric::new(refraction_index)))
     }
 }
 
