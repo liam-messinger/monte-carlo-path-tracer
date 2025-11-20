@@ -13,8 +13,6 @@ mod texture;
 mod vec3;
 mod noise;
 
-use std::sync::Arc;
-
 use crate::prelude::*;
 use crate::camera::Camera;
 use crate::hittable::*;
