@@ -99,8 +99,7 @@ fn checkered_spheres() {
 }
 
 fn earth() {
-    let earth_texture: Arc<Texture> = ImageTexture::from_file("earthmap.jpg").into();
-    let earth_material: Arc<Material> = Lambertian::from_texture(earth_texture).into();
+    let earth_material = Material::lambertian_tex(Texture::image("earthmap.jpg"));
     let globe = Sphere::new(&Point3::new(0.0, 0.0, 0.0), 2.0, earth_material);
 
     let mut cam = Camera::high_quality_default();
