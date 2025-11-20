@@ -23,8 +23,8 @@ use crate::texture::*;
 
 fn bouncing_spheres() {
     let mut world = HittableList::new();
-    let checker_texture: Arc<Texture> = CheckerTexture::from_colors(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9)).into();
-    let checker_material: Arc<Material> = Lambertian::from_texture(checker_texture).into();
+    let checker_texture = Texture::checker(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    let checker_material = Material::lambertian_tex(checker_texture);
     world.add(Sphere::new(&Point3::new(0.0, -1000.0, 0.0), 1000.0, checker_material));
 
     for a in -11..11 {
@@ -40,31 +40,31 @@ fn bouncing_spheres() {
                 if choose_mat < 0.8 {
                     // diffuse
                     let albedo = Color::random() * Color::random();
-                    let sphere_material: Arc<Material> = Lambertian::new(albedo).into();
+                    let sphere_material = Material::lambertian(albedo);
                     let center2 = center + Vec3::new(0.0, random_f64_range(0.0, 0.35), 0.0);
                     world.add(Sphere::new_moving(&center, &center2, 0.2, sphere_material));
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Color::random_range(0.5, 1.0);
                     let fuzz = random_f64_range(0.0, 0.5);
-                    let sphere_material: Arc<Material> = Metal::new(albedo, fuzz).into();
+                    let sphere_material = Material::metal(albedo, fuzz);
                     world.add(Sphere::new(&center, 0.2, sphere_material));
                 } else {
                     // glass
-                    let sphere_material: Arc<Material> = Dielectric::new(1.5).into();
+                    let sphere_material = Material::dielectric(1.5);
                     world.add(Sphere::new(&center, 0.2, sphere_material));
                 }
             }
         }
     }
 
-    let material1: Arc<Material> = Dielectric::new(1.5).into();
+    let material1 = Material::dielectric(1.5);
     world.add(Sphere::new(&Point3::new(0.0, 1.0, 0.0), 1.0, material1));
 
-    let material2: Arc<Material> = Lambertian::new(Color::new(0.4, 0.2, 0.1)).into();
+    let material2 = Material::lambertian(Color::new(0.4, 0.2, 0.1));
     world.add(Sphere::new(&Point3::new(-4.0, 1.0, 0.0), 1.0, material2));
 
-    let material3: Arc<Material> = Metal::new(Color::new(0.7, 0.6, 0.5), 0.0).into();
+    let material3 = Material::metal(Color::new(0.7, 0.6, 0.5), 0.0);
     world.add(Sphere::new(&Point3::new(4.0, 1.0, 0.0), 1.0, material3));
 
     let mut cam = Camera::high_quality_default();
