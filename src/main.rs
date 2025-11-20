@@ -190,11 +190,11 @@ fn quads() {
     let mut world: HittableList = HittableList::new();
 
     // Materials
-    let left_material: Arc<Material> = Lambertian::new(Color::new(1.0, 0.2, 0.2)).into();
-    let back_material: Arc<Material> = Lambertian::new(Color::new(0.2, 1.0, 0.2)).into();
-    let right_material: Arc<Material> = Metal::new(Color::new(0.8, 0.8, 0.9), 0.1).into();
-    let upper_material: Arc<Material> = Lambertian::new(Color::new(1.0, 0.5, 0.0)).into();
-    let lower_material: Arc<Material> = Lambertian::from_texture(ImageTexture::from_file("earthmap.jpg").into()).into();
+    let left_material = Material::lambertian(Color::new(1.0, 0.2, 0.2));
+    let back_material = Material::lambertian(Color::new(0.2, 1.0, 0.2));
+    let right_material = Material::metal(Color::new(0.8, 0.8, 0.9), 0.1);
+    let upper_material = Material::lambertian(Color::new(0.2, 0.2, 1.0));
+    let lower_material = Material::lambertian_tex(Texture::image("earthmap.jpg"));
 
     // Quads
     world.add(Quad::new(&Point3::new(-3.0, -2.0, 5.0), &Vec3::new(0.0, 0.0, -4.0), &Vec3::new(0.0, 4.0, 0.0), left_material));
@@ -207,7 +207,7 @@ fn quads() {
     world.add(Sphere::new(
         &Point3::new(0.0, 0.0, 0.0), 
         2.0, 
-        Dielectric::new(2.5).into(),
+        Material::dielectric(2.5),
     ));
 
     let mut cam = Camera::default();
