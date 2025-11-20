@@ -172,8 +172,7 @@ fn solar_system() {
 fn perlin_spheres() {
     let mut world = HittableList::new();
 
-    let perlin_texture: Arc<Texture> = NoiseTexture::new(4.0).into();
-    let perlin_material: Arc<Material> = Lambertian::from_texture(perlin_texture).into();
+    let perlin_material = Material::lambertian_tex(Texture::noise(4.0));
     world.add(Sphere::new(&Point3::new(0.0, -1000.0, 0.0), 1000.0, perlin_material.clone()));
     world.add(Sphere::new(&Point3::new(0.0, 2.0, 0.0), 2.0, perlin_material.clone()));
 
