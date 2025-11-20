@@ -83,8 +83,8 @@ fn bouncing_spheres() {
 fn checkered_spheres() {
     let mut world = HittableList::new();
 
-    let checker_texture: Arc<Texture> = CheckerTexture::from_colors(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9)).into();
-    let checker_material: Arc<Material> = Lambertian::from_texture(checker_texture).into();
+    let checker_texture = Texture::checker(0.32, Color::new(0.2, 0.3, 0.1), Color::new(0.9, 0.9, 0.9));
+    let checker_material = Material::lambertian_tex(checker_texture);
     world.add(Sphere::new(&Point3::new(0.0, -10.0, 0.0), 10.0, checker_material.clone()));
     world.add(Sphere::new(&Point3::new(0.0, 10.0, 0.0), 10.0, checker_material.clone()));
 
