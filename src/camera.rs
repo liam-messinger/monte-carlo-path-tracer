@@ -206,7 +206,7 @@ impl Camera {
         if world.hit(r, &Interval::new(0.001, f64::INFINITY), rec) {
             let mut scattered = Ray::default();
             let mut attenuation = Color::default();
-            if rec.material.scatter(r, &rec, &mut attenuation, &mut scattered) {
+            if rec.material.scatter(r, rec, &mut attenuation, &mut scattered) {
                 return attenuation * Camera::ray_color(&scattered, depth - 1, world, rec);
             }
             return Color::zero()
