@@ -253,6 +253,40 @@ fn simple_light() {
     cam.render(world);
 }
 
+fn cornell_box() {
+    let mut world = HittableList::new();
+
+    let red = Material::lambertian(Color::new(0.65, 0.05, 0.05));
+    let white = Material::lambertian(Color::new(0.73, 0.73, 0.73));
+    let green = Material::lambertian(Color::new(0.12, 0.45, 0.15));
+    let light = Material::diffuse_light(Color::new(15.0, 15.0, 15.0));
+
+    world.add(Quad::new(&Point3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), &Vec3::new(0.0, 0.0, 555.0), green));
+    world.add(Quad::new(&Point3::new(0.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), &Vec3::new(0.0, 0.0, 555.0), red));
+    world.add(Quad::new(&Point3::new(343.0, 554.0, 332.0), &Vec3::new(-130.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, -105.0), light));
+    world.add(Quad::new(&Point3::new(0.0, 0.0, 0.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, 555.0), white.clone()));
+    world.add(Quad::new(&Point3::new(555.0, 555.0, 555.0), &Vec3::new(-555.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, -555.0), white.clone()));
+    world.add(Quad::new(&Point3::new(0.0, 0.0, 555.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), white));
+
+        let mut cam = Camera::default();
+
+    cam.aspect_ratio = 1.0;
+    cam.image_width = 600;
+    cam.samples_per_pixel = 200;
+    cam.max_depth = 50;
+    cam.background = Color::new(0.0, 0.0, 0.0);
+
+    cam.v_fov = 40.0;
+    cam.look_from = Point3::new(278.0, 278.0, -800.0);
+    cam.look_at = Point3::new(278.0, 278.0, 0.0);
+    cam.v_up = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.aperture_angle = 0.0;
+
+    let world = world.into_bvh();
+    cam.render(world);
+}
+
 fn main() {
     match 7 {
         1 => bouncing_spheres(),
@@ -262,6 +296,7 @@ fn main() {
         5 => perlin_spheres(),
         6 => quads(),
         7 => simple_light(),
+        8 => cornell_box(),
         _ => println!("No scene selected."),
     }
 }
