@@ -226,14 +226,42 @@ fn quads() {
     cam.render(world);
 }
 
+fn simple_light() {
+    let mut world = HittableList::new();
+
+    let perlin_texture = Texture::noise(4.0);
+    let perlin_material = Material::lambertian_tex(perlin_texture);
+    world.add(Sphere::new(&Point3::new(0.0, -1000.0, 0.0), 1000.0, perlin_material.clone()));
+    world.add(Sphere::new(&Point3::new(0.0, 2.0, 0.0), 2.0, perlin_material));
+
+    let light_material = Material::diffuse_light(Color::new(4.0, 4.0, 4.0));
+    world.add(Sphere::new(&Point3::new(0.0, 7.0, 0.0), 2.0, light_material.clone()));
+    world.add(Quad::new(&Point3::new(3.0, 1.0, -2.0), &Vec3::new(2.0, 0.0, 0.0), &Vec3::new(0.0, 2.0, 0.0), light_material));
+
+    let mut cam = Camera::default();
+
+    cam.background = Color::zero();
+
+    cam.v_fov = 20.0;
+    cam.look_from = Point3::new(26.0, 3.0, 6.0);
+    cam.look_at = Point3::new(0.0, 2.0, 0.0);
+    cam.v_up = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.aperture_angle = 0.0;
+
+    let world = world.into_bvh();
+    cam.render(world);
+}
+
 fn main() {
-    match 6 {
+    match 7 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
         4 => solar_system(),
         5 => perlin_spheres(),
         6 => quads(),
+        7 => simple_light(),
         _ => println!("No scene selected."),
     }
 }
