@@ -12,6 +12,7 @@ pub struct Camera {
     pub image_width: u32,       // Rendered image width in pixel count
     pub samples_per_pixel: u32, // Number of samples per pixel for anti-aliasing
     pub max_depth: u32,         // Maximum ray bounce depth
+    pub background: Color,      // Background color
 
     pub v_fov: f64,             // Vertical view angle (field of view)
     pub look_from: Point3,      // Point camera is looking from
@@ -66,7 +67,7 @@ impl Camera {
                     let mut rec = HitRecord::new();
                     for _ in 0..spp {
                         let r: Ray = self.get_ray(i as u32, j as u32);
-                        pixel_color += Camera::ray_color(&r, max_depth, &world, &mut rec);
+                        pixel_color += self.ray_color(&r, max_depth, &world, &mut rec);
                     }
                     pixel_color *= self.pixel_samples_scaled;
                     let rgb = pixel_color.as_rgb();
@@ -199,23 +200,26 @@ impl Camera {
 
     // Compute the color seen along a ray
     #[inline]
-    fn ray_color(r: &Ray, depth: u32, world: &Hittable, rec: &mut HitRecord) -> Color {
+    fn ray_color(&self, r: &Ray, depth: u32, world: &Hittable, rec: &mut HitRecord) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered.
-        if depth == 0 { return Color::zero(); }
+        if depth <= 0 { return Color::zero(); }
 
-        if world.hit(r, &Interval::new(0.001, f64::INFINITY), rec) {
-            let mut scattered = Ray::default();
-            let mut attenuation = Color::default();
-            if rec.material.scatter(r, rec, &mut attenuation, &mut scattered) {
-                return attenuation * Camera::ray_color(&scattered, depth - 1, world, rec);
-            }
-            return Color::zero()
+        // If ray hits nothing, return background color
+        if !world.hit(r, &Interval::new(0.001, f64::INFINITY), rec) {
+            return self.background;
         }
 
-        // Sky background
-        let unit_direction = Vec3::unit_vector(&r.direction);
-        let t = 0.5 * (unit_direction.y() + 1.0); // From y value from [-1,1] to [0,1]
-        Color::new(1.0, 1.0, 1.0) * (1.0 - t) + Color::new(0.5, 0.7, 1.0) * t // Linear blend
+        let mut scattered = Ray::default();
+        let mut attenuation = Color::default();
+        let emitted_color = rec.material.emitted(rec.u, rec.v, &rec.point);
+
+        // If the material does not scatter, return emitted light only
+        if !rec.material.scatter(r, rec, &mut attenuation, &mut scattered) {
+            return emitted_color;
+        }
+
+        let scattered_color = attenuation * self.ray_color(&scattered, depth - 1, world, rec);
+        emitted_color + scattered_color
     }
 
     // Function to set camera parameters to a high-quality default
@@ -241,10 +245,11 @@ impl Default for Camera {
     fn default() -> Self {
         Camera {
             // Public
-            aspect_ratio: 1.0,
-            image_width: 100,
-            samples_per_pixel: 10,
-            max_depth: 10,
+            aspect_ratio: 16.0 / 9.0,
+            image_width: 400,
+            samples_per_pixel: 50,
+            max_depth: 50,
+            background: Color::new(0.70, 0.80, 1.00), // Light blue sky
 
             v_fov: 90.0,
             look_from: Point3::new(0.0, 0.0, 0.0),
