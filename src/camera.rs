@@ -100,9 +100,10 @@ impl Camera {
             pb.set_position(j as u64);
             for i in 0..self.image_width {
                 let mut pixel_color = Color::default();
+                let mut rec = HitRecord::new();
                 for _sample in 0..self.samples_per_pixel {
                     let r: Ray = self.get_ray(i, j);
-                    pixel_color += Camera::ray_color(&r, self.max_depth, &world);
+                    pixel_color += self.ray_color(&r, self.max_depth, &world, &mut rec);
                 }
                 img.put_pixel(i, j, (self.pixel_samples_scaled * pixel_color).as_rgb());
             }

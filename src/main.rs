@@ -266,9 +266,12 @@ fn cornell_box() {
     world.add(Quad::new(&Point3::new(343.0, 554.0, 332.0), &Vec3::new(-130.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, -105.0), light));
     world.add(Quad::new(&Point3::new(0.0, 0.0, 0.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, 555.0), white.clone()));
     world.add(Quad::new(&Point3::new(555.0, 555.0, 555.0), &Vec3::new(-555.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, -555.0), white.clone()));
-    world.add(Quad::new(&Point3::new(0.0, 0.0, 555.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), white));
+    world.add(Quad::new(&Point3::new(0.0, 0.0, 555.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), white.clone()));
 
-        let mut cam = Camera::default();
+    world.add(Cuboid::new(&Point3::new(130.0, 0.0, 65.0), &Point3::new(295.0, 165.0, 230.0), white.clone()));
+    world.add(Cuboid::new(&Point3::new(265.0, 0.0, 295.0), &Point3::new(430.0, 330.0, 460.0), white.clone()));
+
+    let mut cam = Camera::default();
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
@@ -288,7 +291,7 @@ fn cornell_box() {
 }
 
 fn main() {
-    match 7 {
+    match 8 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
