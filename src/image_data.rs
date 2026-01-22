@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use crate::color::Color;
 
+/// Image data structure holding pixel colors in linear RGB format.
 #[derive(Clone)]
 pub struct ImageData {
     width: u32,
@@ -11,10 +12,11 @@ pub struct ImageData {
 }
 
 impl ImageData {
-    // Loads an image from the given filename.
-    // Searches for the  file in the current directory, in 'textures/' and '../textures/'.
-    // Writes to "data" in row-major order, 3 floats per pixel (R, G, B).
-    // Assumptions: The image is in a format supported by the 'image' crate and is RGB8.
+    /// Loads an image from the given filename.
+    /// Searches for the  file in the current directory, in 'textures/' and '../textures/'.
+    /// Writes to "data" in row-major order, 3 floats per pixel (R, G, B).
+    /// 
+    /// Assumptions: The image is in a format supported by the 'image' crate and is RGB8.
     pub fn new(filename: &str) -> Self {
         let search_paths = [ // Search in multiple locations
             PathBuf::from(filename),
@@ -48,26 +50,26 @@ impl ImageData {
         }
     }
 
-    // Returns true if the image has no data.
+    /// Returns true if the image has no data.
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
-    // Returns the width of the image.
+    /// Returns the width of the image.
     pub fn width(&self) -> u32 {
         self.width
     }
 
-    // Returns the height of the image.
+    /// Returns the height of the image.
     pub fn height(&self) -> u32 {
         self.height
     }
 
-    // Returns the color of the pixel at (x, y).
-    // If the image data is not available, returns magenta.
-    // Coordinates are clamped to the image dimensions.
-    // Assumes (0,0) is the top-left corner and (width-1, height-1) is the bottom-right corner.
-    // Returns color components in [0.0, 1.0].
+    /// Returns the color of the pixel at (x, y).
+    /// If the image data is not available, returns magenta.
+    /// Coordinates are clamped to the image dimensions.
+    /// Assumes (0,0) is the top-left corner and (width-1, height-1) is the bottom-right corner.
+    /// Returns color components in [0.0, 1.0].
     pub fn pixel_data(&self, x: u32, y: u32) -> Color {
         if self.is_empty() {
             return Color::new(1.0, 0.0, 1.0); // Magenta
@@ -85,7 +87,7 @@ impl ImageData {
     }
 }
 
-// sRGB [0, 1] -> linear [0, 1] as f32
+/// sRGB [0, 1] -> linear [0, 1] as f32.
 fn srgb_unit_to_linear(c: f32) -> f32 {
     if c <= 0.04045 {
         c / 12.92

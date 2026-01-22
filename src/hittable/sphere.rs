@@ -8,6 +8,7 @@ use crate::vec3::{Point3, Vec3};
 use std::f64::consts::PI;
 use std::sync::Arc;
 
+/// A sphere defined by a center point, radius, and material.
 #[derive(Clone)]
 pub struct Sphere {
     center: Ray,
@@ -17,7 +18,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    // Constructor for Stationary Sphere
+    /// Constructor for Stationary Sphere
     pub fn new(center: &Point3, radius: f64, material: Arc<Material>) -> Self {
         Self {
             center: Ray::new(*center, Vec3::zero()),
@@ -30,7 +31,7 @@ impl Sphere {
         }
     }
 
-    // Constructor for Moving Sphere
+    /// Constructor for a Moving Sphere between two centers.
     pub fn new_moving( center1: &Point3, center2: &Point3, radius: f64, material: Arc<Material>) -> Self {
         Self {
             center: Ray::new(*center1, *center2 - *center1),
@@ -45,7 +46,7 @@ impl Sphere {
         }
     }
 
-    // Check for ray-sphere intersection
+    /// Check for ray-sphere intersection.
     #[inline]
     pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         let current_center: Point3 = self.center.at(r.time);
@@ -80,12 +81,12 @@ impl Sphere {
         true
     }
 
-    // Get the bounding box of the sphere
+    /// Get the bounding box of the sphere.
     pub fn bounding_box(&self) -> &AABB {
         &self.bounding_box
     }
 
-    // Get the uv coordinates for a point on the sphere
+    /// Get the uv coordinates for a point on the sphere.
     fn get_sphere_uv(p: &Point3, u: &mut f64, v: &mut f64) {
         let theta = (-p.y()).acos();
         let phi = (-p.z()).atan2(p.x()) + PI;

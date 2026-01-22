@@ -5,6 +5,8 @@ use crate::prelude::*;
 use crate::texture::{Texture, SolidColor};
 
 // ----- Enum for different material types -----
+
+/// Material enum encapsulating different material types.
 #[derive(Clone)]
 pub enum Material {
     Lambertian(Lambertian),
@@ -14,7 +16,7 @@ pub enum Material {
 }
 
 impl Material {
-    // Implementation of scatter method for Material enum
+    /// Implementation of scatter method for Material enum
     #[inline]
     pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         match self {
@@ -25,7 +27,7 @@ impl Material {
         }
     }
 
-    // Implementation of emitted method for Material enum
+    /// Implementation of emitted method for Material enum.
     #[inline]
     pub fn emitted(&self, u: f64, v: f64, point: &Point3) -> Color {
         match self {
@@ -35,21 +37,28 @@ impl Material {
     }
 
     // Convenience Arc constructors
+
+    /// Create an Arc<Material> lambertian from a Color.
     pub fn lambertian(albedo: Color) -> Arc<Material> {
         Arc::new(Material::Lambertian(Lambertian::new(albedo)))
     }
+    /// Create an Arc<Material> lambertian from a Texture.
     pub fn lambertian_tex(tex: Arc<Texture>) -> Arc<Material> {
         Arc::new(Material::Lambertian(Lambertian::from_texture(tex)))
     }
+    /// Create an Arc<Material> metal from albedo Color and fuzz factor.
     pub fn metal(albedo: Color, fuzz: f64) -> Arc<Material> {
         Arc::new(Material::Metal(Metal::new(albedo, fuzz)))
     }
+    /// Create an Arc<Material> dielectric from refraction index.
     pub fn dielectric(refraction_index: f64) -> Arc<Material> {
         Arc::new(Material::Dielectric(Dielectric::new(refraction_index)))
     }
+    /// Create an Arc<Material> diffuse light from emit Color.
     pub fn diffuse_light(emit_color: Color) -> Arc<Material> {
         Arc::new(Material::DiffuseLight(DiffuseLight::new(emit_color)))
     }
+    /// Create an Arc<Material> diffuse light from Texture.
     pub fn diffuse_light_tex(tex: Arc<Texture>) -> Arc<Material> {
         Arc::new(Material::DiffuseLight(DiffuseLight::from_texture(tex)))
     }
@@ -93,26 +102,28 @@ impl_arc_material_from!(Lambertian, Metal, Dielectric, DiffuseLight);
 
 // ----- Lambertian (diffuse) Material -----
 
+/// A Lambertian material defined by a texture.
 #[derive(Clone)]
 pub struct Lambertian {
     tex: Arc<Texture>,
 }
 
 impl Lambertian {
-    // Constructor from Color
+    /// Constructor from a Color.
     pub fn new(albedo: Color) -> Self {
         Self { 
             tex: Arc::new(Texture::from(SolidColor::new(albedo))),
         }
     }
 
-    // Constructor from Texture reference counter
+    /// Constructor from a Texture reference counter.
     pub fn from_texture(tex: Arc<Texture>) -> Self {
         Self { 
             tex,
         }
     }
 
+    /// Scatter method for a Lambertian material.
     #[inline]
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         let mut scatter_direction = rec.normal + Vec3::random_unit_vector();
@@ -130,6 +141,8 @@ impl Lambertian {
 
 // ----- Metal Material -----
 // TODO: Add textures to Metal material
+
+/// A Metal material defined by an albedo color and fuzziness.
 #[derive(Clone)]
 pub struct Metal {
     albedo: Color,
@@ -137,6 +150,7 @@ pub struct Metal {
 }
 
 impl Metal {
+    /// Constructor for Metal material.
     pub fn new(albedo: Color, fuzz: f64) -> Self {
         Self { 
             albedo,
@@ -144,6 +158,7 @@ impl Metal {
         }
     }
 
+    /// Scatter method for a Metal material.
     #[inline]
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         let mut reflected = Vec3::reflect(&ray_in.direction, &rec.normal);
@@ -156,6 +171,8 @@ impl Metal {
 
 // ----- Dielectric (glass-like) Material -----
 // TODO: Add textures to Dielectric material
+
+/// A Dielectric material defined by its refractive index.
 #[derive(Clone)]
 pub struct Dielectric {
     // Refractive index in vacuum or air, or the ratio of the material's refractive index over
@@ -164,17 +181,19 @@ pub struct Dielectric {
 }
 
 impl Dielectric {
+    /// Constructor for a Dielectric material.
     pub fn new(refraction_index: f64) -> Self {
         Self { refraction_index }
     }
 
-    // Use Schlick's approximation for reflectance
+    /// A reflectance function using Schlick's approximation.
     fn reflectance(cosine: f64, refraction_index: f64) -> f64 {
         let r0: f64 = (1.0 - refraction_index) / (1.0 + refraction_index);
         let r0_squared: f64 = r0 * r0;
         r0_squared + (1.0 - r0_squared) * f64::powf(1.0 - cosine, 5.0)
     }
 
+    /// Scatter method for a Dielectric material.
     #[inline]
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         *attenuation = Color::new(1.0, 1.0, 1.0); // No attenuation for Dielectric
@@ -199,27 +218,28 @@ impl Dielectric {
 
 // ----- Diffuse Light Material -----
 
+/// A Diffuse Light material defined by its emission texture.
 #[derive(Clone)]
 pub struct DiffuseLight {
     tex: Arc<Texture>,
 }
 
 impl DiffuseLight {
-    // Constructor from Color
+    /// Constructor from a Color.
     pub fn new(emit_color: Color) -> Self {
         Self { 
             tex: Arc::new(Texture::from(SolidColor::new(emit_color))),
         }
     }
 
-    // Constructor from Texture reference counter
+    /// Constructor from a Texture reference counter.
     pub fn from_texture(tex: Arc<Texture>) -> Self {
         Self { 
             tex,
         }
     }
 
-    // Emitted light function
+    /// Emitted light function.
     #[inline]
     pub fn emitted(&self, u: f64, v: f64, point: &Point3) -> Color {
         self.tex.value(u, v, point)

@@ -7,6 +7,7 @@ use crate::vec3::{Point3, Vec3};
 
 use std::sync::Arc;
 
+/// A quadrilateral defined by a point and two edge vectors.
 #[derive(Clone)]
 pub struct Quad {
     Q: Point3,
@@ -20,7 +21,7 @@ pub struct Quad {
 }
 
 impl Quad {
-    // Constructor
+    /// Constructor for Quad given point Q, edge vectors u and v, and material.
     pub fn new(Q: &Point3, u: &Vec3, v: &Vec3, material: Arc<Material>) -> Self {
         let n = Vec3::cross(u, v);
         let normal = Vec3::unit_vector(&n);
@@ -41,12 +42,12 @@ impl Quad {
         }
     }
 
-    // Get the bounding box of the quad
+    /// Get the bounding box of the quad.
     pub fn bounding_box(&self) -> &AABB {
         &self.bounding_box
     }
 
-    // Hit method
+    /// Hit method for the quad.
     #[inline]
     pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         let denom = Vec3::dot(&self.normal, &r.direction);
@@ -81,6 +82,7 @@ impl Quad {
         true
     }
 
+    /// Check if the point with plane coordinates (a, b) is inside the quad.
     pub fn is_interior(a: f64, b: f64, rec: &mut HitRecord) -> bool {
         let unit_interval = Interval::new(0.0, 1.0);
         // Given the hit point in plane coordinates, return false if it is outside the

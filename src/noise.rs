@@ -1,7 +1,9 @@
 use crate::prelude::*;
 
+/// The number of random gradient vectors and permutation entries.
 const POINT_COUNT: usize = 256;
 
+/// A struct representing Perlin noise.
 #[derive(Clone)]
 pub struct Noise {
     randvec: [Vec3; POINT_COUNT],
@@ -11,6 +13,7 @@ pub struct Noise {
 }
 
 impl Noise {
+    /// Constructor for Perlin noise.
     pub fn perlin() -> Self {
         let mut n = Noise {
             randvec: [Vec3::zero(); POINT_COUNT],
@@ -27,6 +30,7 @@ impl Noise {
         n
     }
 
+    /// Get the Perlin noise value at point p.
     pub fn value(&self, p: &Point3) -> f64 {
         let u = p.x() - p.x().floor();
         let v = p.y() - p.y().floor();
@@ -52,6 +56,7 @@ impl Noise {
         Noise::perlin_interp(&c, u, v, w)
     }
 
+    /// Get the turbulence value at point p with given depth.
     pub fn turbulence(&self, p: &Point3, depth: usize) -> f64 {
         let mut accum = 0.0;
         let mut temp_p = *p;
@@ -66,6 +71,7 @@ impl Noise {
         accum.abs()
     }
 
+    /// Generate a permutation array for Perlin noise.
     fn perlin_generate_perm() -> [usize; POINT_COUNT] {
         let mut p: [usize; POINT_COUNT] = [0; POINT_COUNT];
         for (i, slot) in p.iter_mut().enumerate() {
@@ -75,6 +81,7 @@ impl Noise {
         p
     }
 
+    /// Permute the given array in place.
     fn permute(p: &mut [usize; POINT_COUNT], n: usize) {
         for i in (1..n).rev() {
             let target = random_usize_range(0, i);
@@ -82,6 +89,7 @@ impl Noise {
         }
     }
 
+    /// Trilinear interpolation for Perlin noise.
     fn perlin_interp(c: &[[[Vec3; 2]; 2]; 2], u: f64, v: f64, w: f64) -> f64 {
         let uu = u * u * (3.0 - 2.0 * u);
         let vv = v * v * (3.0 - 2.0 * v);

@@ -42,6 +42,7 @@ impl HitRecord {
     }
 }
 
+// Default implementation for HitRecord
 impl Default for HitRecord {
     fn default() -> Self {
         Self::new()

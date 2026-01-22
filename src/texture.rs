@@ -6,8 +6,8 @@ use crate::noise::Noise;
 
 // Todo: Split texture types into separate files if this file gets too large
 
-// ----- Enum for different texture types -----
-// A texture is a mapping from a (u,v) texture coordinate to a Color value.
+/// Enum for different texture types.
+/// A texture is a mapping from a (u,v) texture coordinate to a Color value.
 #[derive(Clone)]
 pub enum Texture { // Update for each new texture type
     SolidColor(SolidColor),
@@ -17,7 +17,7 @@ pub enum Texture { // Update for each new texture type
 }
 
 impl Texture {
-    // Implementation of the value method for Texture enum
+    /// Implementation of the value method for Texture enum.
     #[inline]
     pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color { // Update for each new texture type
         match self {
@@ -29,25 +29,31 @@ impl Texture {
     }
 
     // Convenience Arc constructors
+
+    /// Create an Arc<Texture> solid color from a Color.
     pub fn solid(albedo: Color) -> Arc<Texture> {
         Arc::new(Texture::SolidColor(SolidColor::new(albedo)))
     }
+    /// Create an Arc<Texture> checker texture from scale and two Colors.
     pub fn checker(scale: f64, even: Color, odd: Color) -> Arc<Texture> {
         Arc::new(Texture::CheckerTexture(CheckerTexture::from_colors(scale, even, odd)))
     }
+    /// Create an Arc<Texture> checker texture from scale and two Textures.
     pub fn checker_tex(scale: f64, even: Texture, odd: Texture) -> Arc<Texture> {
         Arc::new(Texture::CheckerTexture(CheckerTexture::new(scale, even, odd)))
     }
+    /// Create an Arc<Texture> image texture from a filename.
     pub fn image(filename: &str) -> Arc<Texture> {
         Arc::new(Texture::ImageTexture(ImageTexture::new(filename)))
     }
+    /// Create an Arc<Texture> noise texture from a scale.
     pub fn noise(scale: f64) -> Arc<Texture> {
         Arc::new(Texture::NoiseTexture(NoiseTexture::new(scale)))
     }
 }
 
 // ----- Macros to implement From trait for texture types -----
-// From texture type to Textuee
+// From texture type to Texture
 macro_rules! impl_texture_from {
     ($($variant:ident),+ $(,)?) => {
         $(
@@ -76,25 +82,27 @@ macro_rules! impl_arc_texture_from {
 impl_arc_texture_from!(SolidColor, CheckerTexture, ImageTexture, NoiseTexture);
 
 // ----- Solid Color Texture -----
+
+/// Solid color texture that returns the same color regardless of (u,v,p).
 #[derive(Clone)]
 pub struct SolidColor {
     albedo: Color,
 }
 
 impl SolidColor {
-    // Contructor from Color
+    /// Contructor for SolidColor from a Color.
     pub fn new(albedo: Color) -> Self {
         Self { albedo }
     }
 
-    // Contructor from RGB values
+    /// Contructor for SolidColor from RGB values.
     pub fn from_rgb(r: f64, g: f64, b: f64) -> Self {
         Self {
             albedo: Color::new(r, g, b),
         }
     }
 
-    // Value method returns the solid color
+    /// Value method returns the solid color.
     #[inline]
     pub fn value(&self, _u: f64, _v: f64, _p: &Point3) -> Color {
         self.albedo
@@ -102,6 +110,8 @@ impl SolidColor {
 }
 
 // ----- Checker Texture -----
+
+/// Checker texture that alternates between two textures based on position.
 #[derive(Clone)]
 pub struct CheckerTexture {
     inv_scale: f64,
@@ -110,7 +120,7 @@ pub struct CheckerTexture {
 }
 
 impl CheckerTexture {
-    // Constructor from scale, even texture, and odd texture
+    /// Constructor from scale and two textures. 
     pub fn new(scale: f64, even: Texture, odd: Texture) -> Self {
         Self {
             inv_scale: 1.0 / scale,
@@ -119,7 +129,7 @@ impl CheckerTexture {
         }
     }
 
-    // Constructor from scale and two colors
+    /// Constructor from scale and two colors.
     pub fn from_colors(scale: f64, even: Color, odd: Color) -> Self {
         Self {
             inv_scale: 1.0 / scale,
@@ -128,7 +138,7 @@ impl CheckerTexture {
         }
     }
 
-    // Value method returns the checker pattern color
+    /// Value method returns the checker texture color at (u,v,p).
     #[inline]
     pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
         let x_int = (p.x() * self.inv_scale).floor() as i32;
@@ -146,20 +156,22 @@ impl CheckerTexture {
 }
 
 // ----- Image Texture -----
+
+/// Image texture that maps (u,v) coordinates to pixel colors from an image.
 #[derive(Clone)]
 pub struct ImageTexture {
     image_data: ImageData, // Ownes the image data
 }
 
 impl ImageTexture {
-    // Constructor from filename
+    /// Constructor from a filename.
     pub fn new(filename: &str) -> Self {
         Self {
             image_data: ImageData::new(filename),
         }
     }
 
-    // Value method returns the color from the image at (u, v)
+    /// Value method returns the color at (u,v) from the image data.
     #[inline]
     pub fn value(&self, u: f64, v: f64, _p: &Point3) -> Color {
         // If we have no texture data, then return solid cyan as a debugging aid.
@@ -177,6 +189,8 @@ impl ImageTexture {
 }
 
 // ----- Noise Texture -----
+
+/// Noise texture that uses Perlin noise to generate a procedural texture.
 #[derive(Clone)]
 pub struct NoiseTexture {
     noise: Arc<Noise>,
@@ -184,7 +198,7 @@ pub struct NoiseTexture {
 }
 
 impl NoiseTexture {
-    // Constructor
+    /// Constructor from a scale.
     pub fn new(scale: f64) -> Self {
         Self {
             noise: Arc::new(Noise::perlin()),
@@ -192,7 +206,7 @@ impl NoiseTexture {
         }
     }
 
-    // Value method returns the noise value as a grayscale color
+    /// Value method returns the noise texture color at (u,v,p).
     #[inline]
     pub fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color {
         Color::new(0.5, 0.5, 0.5) * (1.0 + (self.scale * p.z() + 10.0 * self.noise.turbulence(p, 7)).sin())

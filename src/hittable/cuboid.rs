@@ -14,12 +14,10 @@ pub struct Cuboid {
     sides: BVHNode,
 }
 
-// Cuboid made from 6 quads
 impl Cuboid {
-    // Constructor given two opposite corners and a material
+    /// Constructor given two opposite corners and a material, returns the 3D box as a BVHNode of 6 quads.
     pub fn new(a: &Point3, b: &Point3, material: Arc<Material>) -> Self {
         // Returns the 3D box (six sides) that contains the two opposite vertices a & b.
-
         let mut sides = HittableList::new();
 
         // Construct the two opposite vertices with the minimum and maximum coordinates.
@@ -40,12 +38,12 @@ impl Cuboid {
         Self { sides: sides.into_bvh() }
     }
 
-    // Get the bounding box of the cuboid
+    /// Get the bounding box of the cuboid
     pub fn bounding_box(&self) -> &AABB {
         &self.sides.bounding_box()
     }
 
-    // Hit method
+    /// Check if a ray hits the cuboid
     #[inline]
     pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         self.sides.hit(r, ray_t, rec)

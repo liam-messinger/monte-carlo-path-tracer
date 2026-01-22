@@ -1,11 +1,11 @@
 use crate::vec3::Vec3;
 use image::Rgb;
 
-// Type alias for color
+/// Color type alias for Vec3.
 pub type Color = Vec3;
 
 impl Color {
-    // Convert a color with components in [0,1] range to RGB bytes [0,255]
+    /// Convert a color with components in [0,1] range to RGB bytes [0,255].
     pub fn as_rgb(&self) -> Rgb<u8> {
         let r = self.x();
         let g = self.y();
@@ -25,6 +25,7 @@ impl Color {
         Rgb([rbyte, gbyte, bbyte])
     }
 
+    /// Apply a linear to gamma correction (gamma 2) to a color component.
     fn linear_to_gamma(linear_component: f64) -> f64 {
         if linear_component > 0.0 {
             linear_component.sqrt()
@@ -35,12 +36,12 @@ impl Color {
 
     // ----------------- Utility functions -----------------
 
-    // Create a new color from RGB components in [0,1] range
+    /// Create a new color from RGB components in [0,1] range.
     pub fn rgb(r: f64, g: f64, b: f64) -> Color {
         Color::new(r, g, b)
     }
 
-    // Create a new color from RGB components in [0,255] range
+    /// Create a new color from RGB components in [0,255] range.
     pub fn rgb_bytes(r: u8, g: u8, b: u8) -> Color {
         Color::new(r as f64 / 255.0, g as f64 / 255.0, b as f64 / 255.0)
     }

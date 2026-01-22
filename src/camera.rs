@@ -7,6 +7,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 //use image::ImageBuffer;
 
+/// Camera struct defining the viewpoint and rendering parameters.
 pub struct Camera {
     pub aspect_ratio: f64,      // Ratio of image width over height
     pub image_width: u32,       // Rendered image width in pixel count
@@ -38,8 +39,7 @@ pub struct Camera {
 impl Camera {
     // ----- Public -----
 
-    // TODO: Make render take a HittableList and convert to BVH automatically
-    // Render the scene from this camera's point of view
+    /// Render the scene from this camera's point of view.
     pub fn render (&mut self, world: impl Into<Hittable>) {
         let world: Hittable = world.into();
 
@@ -119,7 +119,7 @@ impl Camera {
 
     // ----- Private -----
 
-    // Create and configure a progress bar
+    /// Create and configure a progress bar.
     fn create_progress_bar(total: u64) -> ProgressBar {
         let pb = ProgressBar::new(total);
         pb.set_style(
@@ -131,7 +131,7 @@ impl Camera {
         pb
     }
 
-    // Initialize camera parameters based on current settings
+    /// Initialize camera parameters based on current settings.
     fn initialize(&mut self) {
         self.image_height = (self.image_width as f64 / self.aspect_ratio) as u32;
         self.image_height = if self.image_height < 1 { 1 } else { self.image_height };
@@ -169,7 +169,7 @@ impl Camera {
         self.aperture_disk_v = self.v * aperture_radius;
     }
 
-    // Get a ray from the camera through pixel (i,j)
+    /// Get a ray from the camera through pixel (i,j).
     fn get_ray(&self, i: u32, j: u32) -> Ray {
         // Construct a camera ray originating from the aperture disk and directed at a randomly
         // sampled point around the pixel location i, j.
@@ -187,19 +187,19 @@ impl Camera {
         Ray::new_with_time(ray_origin, ray_direction, ray_time)
     }
 
-    // Returns a random point on the unit square
+    /// Returns a random point on the unit square.
     fn sample_square() -> Vec3 {
         // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
         Vec3::new(random_f64() - 0.5, random_f64() - 0.5, 0.0)
     }
 
-    // Returns a random point in the camera aperture disk.
+    /// Returns a random point in the camera aperture disk.
     fn aperture_disk_sample(&self) -> Point3 {
         let p = Vec3::random_in_unit_circle();
         self.center + (p.x() * self.aperture_disk_u) + (p.y() * self.aperture_disk_v)
     } 
 
-    // Compute the color seen along a ray
+    /// Compute the color seen along a ray.
     #[inline]
     fn ray_color(&self, r: &Ray, depth: u32, world: &Hittable, rec: &mut HitRecord) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered.
@@ -223,17 +223,16 @@ impl Camera {
         emitted_color + scattered_color
     }
 
-    // Function to set camera parameters to a high-quality default
+    /// Function to set camera parameters to a high-quality default.
     pub fn set_high_quality_settings(&mut self) {
         self.aspect_ratio = 16.0 / 9.0;
         self.image_width = 1200;
         self.samples_per_pixel = 500;
         self.max_depth = 50;
-
         self.v_fov = 20.0;
     }
 
-    // Constructor for high-quality default camera
+    /// Constructor for high-quality default camera.
     pub fn high_quality_default() -> Self {
         let mut cam = Camera::default();
         cam.set_high_quality_settings();

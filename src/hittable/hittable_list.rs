@@ -5,6 +5,7 @@ use crate::interval::Interval;
 
 use std::sync::Arc;
 
+/// A list of Hittable objects.
 #[derive(Clone)]
 pub struct HittableList {
     pub objects: Vec<Arc<Hittable>>,
@@ -12,7 +13,7 @@ pub struct HittableList {
 }
 
 impl HittableList {
-    // Constructor for HittableList
+    /// Constructor for HittableList.
     pub fn new() -> Self {
         Self { 
             objects: Vec::new(),
@@ -20,6 +21,7 @@ impl HittableList {
         }
     }
 
+    /// Constructor from a single Hittable object.
     pub fn from_hittable(object: impl Into<Hittable>) -> Self {
         let hittable_object = object.into();
         let bounding_box = hittable_object.bounding_box().clone();
@@ -29,23 +31,24 @@ impl HittableList {
         }
     }
 
+    /// Convert the HittableList into a BVH, returning the root BVHNode.
     pub fn into_bvh(mut self) -> BVHNode {
         BVHNode::build_from_list(&mut self)
     }
 
-    // Clear all objects from the list
+    /// Clear all objects from the list.
     pub fn clear(&mut self) {
         self.objects.clear();
     }
 
-    // Add an object to the list
+    /// Add an object to the list and update bounding box.
     pub fn add(&mut self, object: impl Into<Hittable>) {
         let hittable_object = object.into();
         self.bounding_box = AABB::merge(&self.bounding_box, hittable_object.bounding_box());
         self.objects.push(Arc::new(hittable_object));
     }
 
-    // Check for ray intersections with all objects in the list
+    /// Check for ray intersections with all objects in the list.
     #[inline]
     pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         let mut temp_rec = HitRecord::new();
@@ -68,13 +71,11 @@ impl HittableList {
         hit_anything
     }
 
-    // Get bounding box of the hittable list
+    /// Get bounding box of the hittable list.
     pub fn bounding_box(&self) -> &AABB {
         &self.bounding_box
     }
 }
-
-
 
 // From HittableList to HittableObject conversion
 impl From<HittableList> for Hittable {

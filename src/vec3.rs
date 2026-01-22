@@ -2,7 +2,7 @@ use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub};
 use crate::prelude::{random_f64, random_f64_range, EPSILON};
 
-// Struct definition
+/// A 3D vector or point in space.
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3 {
     pub e: [f64; 3],

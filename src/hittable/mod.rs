@@ -18,8 +18,7 @@ pub use cuboid::Cuboid;
 use crate::ray::Ray;
 use crate::interval::Interval;
 
-// ----- Enum for Hittable Object Types -----
-
+/// Enum representing different types of Hittable objects.
 #[derive(Clone)]
 pub enum Hittable {
     HittableList(HittableList),
@@ -31,6 +30,7 @@ pub enum Hittable {
 }
 
 impl Hittable {
+    /// Check if a ray hits the Hittable object.
     #[inline]
     pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         match self {
@@ -43,6 +43,7 @@ impl Hittable {
         }
     }
 
+    /// Get the bounding box of the Hittable object.
     pub fn bounding_box(&self) -> &AABB {
         match self {
             Hittable::HittableList(list) => list.bounding_box(),

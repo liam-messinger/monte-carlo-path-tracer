@@ -5,6 +5,7 @@ use crate::ray::Ray;
 
 use std::sync::Arc;
 
+/// Bounding Volume Hierarchy Node, has two children which are either other BVHNodes or Hittable objects.
 #[derive(Clone)]
 pub struct BVHNode {
     left: Arc<Hittable>,
@@ -13,11 +14,13 @@ pub struct BVHNode {
 }
 
 impl BVHNode {
+    /// Build a BVH from a list of Hittable objects.
     pub fn build_from_list(list: &mut HittableList) -> Self {
         let len = list.objects.len();
         Self::build_partition(&mut list.objects, 0, len)
     }
 
+    /// Recursively build a BVH partition from a slice of Hittable objects.
     pub fn build_partition(objects: &mut Vec<Arc<Hittable>>, start: usize, end: usize) -> Self {
         // Build the bounding box of the span of source objects.
         let mut bbox = AABB::empty();
@@ -63,24 +66,30 @@ impl BVHNode {
         }
     }
 
+    /// Compare two Hittable objects based on their bounding box minimum along a specified axis.
+    /// Returns an Ordering for sorting.
     pub fn box_compare(a: &Arc<Hittable>, b: &Arc<Hittable>, axis_index: usize) -> std::cmp::Ordering {
         let a_axis_interval = a.bounding_box().axis_interval(axis_index);
         let b_axis_interval = b.bounding_box().axis_interval(axis_index);
         a_axis_interval.min.partial_cmp(&b_axis_interval.min).unwrap()
     }
 
+    /// Axis-specific comparison function for the X axis.
     pub fn box_x_compare(a: &Arc<Hittable>, b: &Arc<Hittable>) -> std::cmp::Ordering {
         Self::box_compare(a, b, 0)
     }
 
+    /// Axis-specific comparison function for the Y axis.
     pub fn box_y_compare(a: &Arc<Hittable>, b: &Arc<Hittable>) -> std::cmp::Ordering {
         Self::box_compare(a, b, 1)
     }
 
+    /// Axis-specific comparison function for the Z axis.
     pub fn box_z_compare(a: &Arc<Hittable>, b: &Arc<Hittable>) -> std::cmp::Ordering {
         Self::box_compare(a, b, 2)
     }
 
+    /// Check if a ray hits the BVHNode, updating the HitRecord if it does.
     #[inline]
     pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         if !self.bounding_box.hit(r, ray_t) {

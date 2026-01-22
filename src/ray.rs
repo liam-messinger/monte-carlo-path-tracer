@@ -1,5 +1,6 @@
 use crate::vec3::{Point3, Vec3};
 
+/// Ray structure with origin, direction, and time.
 #[derive(Debug, Clone)]
 pub struct Ray {
     pub origin: Point3,
@@ -8,7 +9,7 @@ pub struct Ray {
 }
 
 impl Ray {
-    // Create a new ray with zero origin and zero direction
+    /// Create a new ray with zero origin and zero direction.
     pub fn zero() -> Self {
         Ray {
             origin: Point3::zero(),
@@ -17,7 +18,7 @@ impl Ray {
         }
     }
 
-    // Create a new ray with default values (origin at zero, direction at zero, time at 0.0)
+    /// Create a new ray with default values (origin at zero, direction at zero, time at 0.0).
     pub fn new(origin: Point3, direction: Vec3) -> Self {
         Ray {
             origin,
@@ -26,7 +27,7 @@ impl Ray {
         }
     }
 
-    // Create a new ray with specified origin, direction, and time
+    /// Create a new ray with specified origin, direction, and time
     pub fn new_with_time(origin: Point3, direction: Vec3, time: f64) -> Self {
         Ray {
             origin,
@@ -35,13 +36,14 @@ impl Ray {
         }
     }
 
-    // Implements P(t) = origin + t * direction
+    /// Implements P(t) = origin + t * direction
     #[inline]
     pub fn at(&self, t: f64) -> Point3 {
         self.origin + t * self.direction
     }
 }
 
+// Default implementation for Ray
 impl Default for Ray {
     fn default() -> Self {
         Ray::zero()
