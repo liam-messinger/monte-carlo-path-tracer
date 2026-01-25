@@ -131,3 +131,35 @@ impl Default for AABB {
         Self::EMPTY
     }
 }
+
+impl Add<Vec3> for AABB {
+    // aabb + vec3
+    type Output = AABB;
+    fn add(self, offset: Vec3) -> AABB {
+        AABB {
+            x: self.x + offset.x(),
+            y: self.y + offset.y(),
+            z: self.z + offset.z(),
+        }
+    }
+}
+
+impl Add<Vec3> for &AABB {
+    // &aabb + vec3
+    type Output = AABB;
+    fn add(self, offset: Vec3) -> AABB {
+        AABB {
+            x: self.x + offset.x(),
+            y: self.y + offset.y(),
+            z: self.z + offset.z(),
+        }
+    }
+}
+
+impl Add<AABB> for Vec3 {
+    // vec3 + aabb
+    type Output = AABB;
+    fn add(self, bbox: AABB) -> AABB {
+        bbox + self
+    }
+}
