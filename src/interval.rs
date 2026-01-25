@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 /// A one-dimensional interval [min, max].
 #[derive(Clone)]
 pub struct Interval {
@@ -67,5 +69,35 @@ impl Interval {
 impl Default for Interval {
     fn default() -> Self {
         Self::EMPTY
+    }
+}
+
+impl Add<f64> for Interval {
+    // interval + f64
+    type Output = Interval;
+    fn add(self, displacement: f64) -> Interval {
+        Interval {
+            min: self.min + displacement,
+            max: self.max + displacement,
+        }
+    }
+}
+
+impl Add<f64> for &Interval {
+    // &interval + f64
+    type Output = Interval;
+    fn add(self, displacement: f64) -> Interval {
+        Interval {
+            min: self.min + displacement,
+            max: self.max + displacement,
+        }
+    }
+}
+
+impl Add<Interval> for f64 {
+    // f64 + interval
+    type Output = Interval;
+    fn add(self, inval: Interval) -> Interval {
+        inval + self
     }
 }
