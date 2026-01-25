@@ -6,6 +6,7 @@ pub mod sphere;
 pub mod quad;
 pub mod aabb;
 pub mod cuboid;
+pub mod translate;
 
 pub use bvh_node::BVHNode;
 pub use hit_record::HitRecord;
@@ -14,6 +15,7 @@ pub use sphere::Sphere;
 pub use quad::Quad;
 pub use aabb::AABB;
 pub use cuboid::Cuboid;
+pub use translate::Translate;
 
 use crate::ray::Ray;
 use crate::interval::Interval;
@@ -26,6 +28,7 @@ pub enum Hittable {
     Sphere(Sphere),
     Quad(Quad),
     Cuboid(Cuboid),
+    Translate(Translate),
     // Etc.
 }
 
@@ -39,6 +42,7 @@ impl Hittable {
             Hittable::Sphere(sphere) => sphere.hit(r, ray_t, rec),
             Hittable::Quad(quad) => quad.hit(r, ray_t, rec),
             Hittable::Cuboid(cuboid) => cuboid.hit(r, ray_t, rec),
+            Hittable::Translate(translate) => translate.hit(r, ray_t, rec),
             // Etc.
         }
     }
@@ -51,6 +55,7 @@ impl Hittable {
             Hittable::Sphere(sphere) => sphere.bounding_box(),
             Hittable::Quad(quad) => quad.bounding_box(),
             Hittable::Cuboid(cuboid) => cuboid.bounding_box(),
+            Hittable::Translate(translate) => translate.bounding_box(),
             // Etc.
         }
     }
