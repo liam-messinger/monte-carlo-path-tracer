@@ -8,9 +8,9 @@ use crate::prelude::AABB_MIN_PADDING;
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Clone)]
 pub struct AABB {
-    x: Interval,
-    y: Interval,
-    z: Interval,
+    pub x: Interval,
+    pub y: Interval,
+    pub z: Interval,
 }
 
 impl AABB {
