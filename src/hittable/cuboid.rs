@@ -38,6 +38,13 @@ impl Cuboid {
         Self { sides: sides.into_bvh() }
     }
 
+    /// Create a box from a center point and side lengths
+    pub fn from_center(center: &Point3, dimensions: &Vec3, material: Arc<Material>) -> Self {
+        let min = *center - *dimensions / 2.0;
+        let max = *center + *dimensions / 2.0;
+        Self::new(&min, &max, material)
+    }
+
     /// Get the bounding box of the cuboid
     pub fn bounding_box(&self) -> &AABB {
         &self.sides.bounding_box()
