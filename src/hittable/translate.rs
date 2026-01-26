@@ -1,6 +1,5 @@
 use super::{Hittable, HitRecord, AABB};
 
-use crate::hittable::translate;
 use crate::interval::Interval;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
