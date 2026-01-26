@@ -38,11 +38,19 @@ impl Cuboid {
         Self { sides: sides.into_bvh() }
     }
 
-    /// Create a box from a center point and side lengths
+    /// Create a cuboid from a center point and side lengths
     pub fn from_center(center: &Point3, dimensions: &Vec3, material: Arc<Material>) -> Self {
         let min = *center - *dimensions / 2.0;
         let max = *center + *dimensions / 2.0;
         Self::new(&min, &max, material)
+    }
+
+    /// Create a cuboid from a center point, dimensions, 
+    /// and a rotation about its center (in degrees) around the Y axis
+    pub fn from_center_rotate_y(center: &Point3, dimensions: &Vec3, angle: f64, material: Arc<Material>) -> Hittable {
+        // Build at origin so rotation is around the cuboid center, then translate to requested center
+        let base = Cuboid::from_center(&Point3::new(0.0, 0.0, 0.0), dimensions, material);
+        Hittable::rotate_y_translate(base, angle, *center)
     }
 
     /// Get the bounding box of the cuboid

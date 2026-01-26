@@ -270,26 +270,31 @@ fn cornell_box() {
     world.add(Quad::new(&Point3::new(555.0, 555.0, 555.0), &Vec3::new(-555.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, -555.0), white.clone()));
     world.add(Quad::new(&Point3::new(0.0, 0.0, 555.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), white.clone()));
 
-    // Box 1: Rotate 15 degrees, then translate
-    let box1 = Cuboid::new(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 330.0, 165.0), white.clone());
-    let box1 = RotateY::new(box1, 15.0);
-    let box1 = Translate::new(box1, Vec3::new(265.0, 0.0, 295.0));
+    // Box 1
+    let box1 = Cuboid::from_center_rotate_y(
+        &Point3::new(365.0, 330.0/2.0, 325.0), 
+        &Vec3::new(165.0, 330.0, 165.0), 
+        15.0,
+        white.clone(),
+    );
     world.add(box1);
 
-    // Box 2: Rotate -18 degrees, then translate
-    let box2 = Cuboid::new(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 165.0, 165.0), white.clone());
-    let box2 = RotateY::new(box2, -18.0);
-    let box2 = Translate::new(box2, Vec3::new(130.0, 0.0, 65.0));
+    // Box 2
+    let box2 = Cuboid::from_center_rotate_y(
+        &Point3::new(130.0 + 53.0, 165.0/2.0, 65.0 + 104.0), 
+        &Vec3::new(165.0, 165.0, 165.0), 
+        -18.0,
+        white.clone(),
+    );
     world.add(box2);
 
     // Glass sphere on top of box 2
     let sphere = Material::dielectric(1.5);
-    let sphere = Sphere::new(&Point3::new(0.0, 0.0, 0.0), 165.0/2.0, sphere);
-    let sphere = Translate::new(sphere, Vec3::new(
-        130.0 + 52.968, // Box offset + offset from y rotation
+    let sphere = Sphere::new(&Point3::new(
+        130.0 + 53.0,    // Box offset + offset from y rotation
         165.0 + 165.0/2.0, // Box height + radius
-        65.0 + 103.956, // Box offset + offset from y rotation
-    ));
+        65.0 + 104.0),   // Box offset + offset from y rotation 
+        165.0/2.0, sphere);
     world.add(sphere);
 
     let mut cam = Camera::default();

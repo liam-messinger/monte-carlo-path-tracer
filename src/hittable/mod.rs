@@ -21,6 +21,7 @@ pub use rotate_y::RotateY;
 
 use crate::ray::Ray;
 use crate::interval::Interval;
+use crate::vec3::Vec3;
 
 /// Enum representing different types of Hittable objects.
 #[derive(Clone)]
@@ -63,5 +64,21 @@ impl Hittable {
             Hittable::RotateY(rotate_y) => rotate_y.bounding_box(),
             // Etc.
         }
+    }
+
+    // ---- Convenience Constructors ----
+    /// Translate any object by a given offset.
+    pub fn translate(object: impl Into<Hittable>, offset: Vec3) -> Hittable {
+        Hittable::Translate(Translate::new(object, offset))
+    }
+
+    /// Rotate any object around the Y axis by a given angle in degrees.
+    pub fn rotate_y(object: impl Into<Hittable>, angle_deg: f64) -> Hittable {
+        Hittable::RotateY(RotateY::new(object, angle_deg))
+    }
+
+    /// Rotate about the Y axis, then translate by an offset.
+    pub fn rotate_y_translate(object: impl Into<Hittable>, angle_deg: f64, offset: Vec3) -> Hittable {
+        Hittable::translate(RotateY::new(object, angle_deg), offset)
     }
 }
