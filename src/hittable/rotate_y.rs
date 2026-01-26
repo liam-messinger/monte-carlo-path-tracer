@@ -18,10 +18,13 @@ pub struct RotateY {
 
 impl RotateY {
     /// Constructor for RotateY given an object and rotation angle in degrees.
-    pub fn new(object: Arc<Hittable>, angle: f64) -> Self {
+    pub fn new(object: impl Into<Hittable>, angle: f64) -> Self {
+        let object = Arc::new(object.into());
+
         let radians = degrees_to_radians(angle);
         let sin_theta = radians.sin();
         let cos_theta = radians.cos();
+
         let bbox = object.bounding_box();
 
         let mut min = Point3::new(f64::INFINITY, f64::INFINITY, f64::INFINITY);
@@ -40,10 +43,16 @@ impl RotateY {
 
                     let tester = Vec3::new(newx, y, newz);
 
-                    for c in 0..3 {
-                        min[c] = min[c].min(tester[c]);
-                        max[c] = max[c].max(tester[c]);
-                    }
+                    min = Point3::new(
+                        min.x().min(tester.x()),
+                        min.y().min(tester.y()),
+                        min.z().min(tester.z()),
+                    );
+                    max = Point3::new(
+                        max.x().max(tester.x()),
+                        max.y().max(tester.y()),
+                        max.z().max(tester.z()),
+                    );
                 }
             }
         }

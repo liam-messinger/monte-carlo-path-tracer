@@ -272,20 +272,20 @@ fn cornell_box() {
 
     // Box 1: Rotate 15 degrees, then translate
     let box1 = Cuboid::new(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 330.0, 165.0), white.clone());
-    let box1 = RotateY::new(Arc::new(box1.into()), 15.0);
-    let box1 = Translate::new(Arc::new(box1.into()), Vec3::new(265.0, 0.0, 295.0));
+    let box1 = RotateY::new(box1, 15.0);
+    let box1 = Translate::new(box1, Vec3::new(265.0, 0.0, 295.0));
     world.add(box1);
 
     // Box 2: Rotate -18 degrees, then translate
     let box2 = Cuboid::new(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 165.0, 165.0), white.clone());
-    let box2 = RotateY::new(Arc::new(box2.into()), -18.0);
-    let box2 = Translate::new(Arc::new(box2.into()), Vec3::new(130.0, 0.0, 65.0));
+    let box2 = RotateY::new(box2, -18.0);
+    let box2 = Translate::new(box2, Vec3::new(130.0, 0.0, 65.0));
     world.add(box2);
 
     // Glass sphere on top of box 2
     let sphere = Material::dielectric(1.5);
     let sphere = Sphere::new(&Point3::new(0.0, 0.0, 0.0), 165.0/2.0, sphere);
-    let sphere = Translate::new(Arc::new(sphere.into()), Vec3::new(
+    let sphere = Translate::new(sphere, Vec3::new(
         130.0 + 52.968, // Box offset + offset from y rotation
         165.0 + 165.0/2.0, // Box height + radius
         65.0 + 103.956, // Box offset + offset from y rotation

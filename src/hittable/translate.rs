@@ -17,7 +17,8 @@ pub struct Translate {
 impl Translate {
     /// Constructor for a translated Hittable object.
     /// The bounding box is adjusted by the offset.
-    pub fn new(object: Arc<Hittable>, offset: Vec3) -> Self {
+    pub fn new(object: impl Into<Hittable>, offset: Vec3) -> Self {
+        let object = Arc::new(object.into());
         let bounding_box = object.bounding_box() + offset;
         Self {
             object,
