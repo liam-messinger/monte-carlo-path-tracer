@@ -68,16 +68,16 @@ impl RotateY {
     pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         // Transform the ray origin from world space to object space (rotate by -theta)
         let origin = Point3::new(
-            self.cos_theta * r.origin.x - self.sin_theta * r.origin.z,
-            r.origin.y,
-            self.sin_theta * r.origin.x + self.cos_theta * r.origin.z,
+            self.cos_theta * r.origin.x() - self.sin_theta * r.origin.z(),
+            r.origin.y(),
+            self.sin_theta * r.origin.x() + self.cos_theta * r.origin.z(),
         );
 
         // Transform the direction from world space to object space (rotate by -theta)
         let direction = Vec3::new(
-            self.cos_theta * r.direction.x - self.sin_theta * r.direction.z,
-            r.direction.y,
-            self.sin_theta * r.direction.x + self.cos_theta * r.direction.z,
+            self.cos_theta * r.direction.x() - self.sin_theta * r.direction.z(),
+            r.direction.y(),
+            self.sin_theta * r.direction.x() + self.cos_theta * r.direction.z(),
         );
 
         let rotated_r = Ray::new_with_time(origin, direction, r.time);
@@ -89,15 +89,15 @@ impl RotateY {
 
         // Transform the intersection from object space back to world space (rotate by +theta)
         rec.point = Point3::new(
-            self.cos_theta * rec.point.x + self.sin_theta * rec.point.z,
-            rec.point.y,
-            -self.sin_theta * rec.point.x + self.cos_theta * rec.point.z,
+            self.cos_theta * rec.point.x() + self.sin_theta * rec.point.z(),
+            rec.point.y(),
+            -self.sin_theta * rec.point.x() + self.cos_theta * rec.point.z(),
         );
 
         rec.normal = Vec3::new(
-            self.cos_theta * rec.normal.x + self.sin_theta * rec.normal.z,
-            rec.normal.y,
-            -self.sin_theta * rec.normal.x + self.cos_theta * rec.normal.z,
+            self.cos_theta * rec.normal.x() + self.sin_theta * rec.normal.z(),
+            rec.normal.y(),
+            -self.sin_theta * rec.normal.x() + self.cos_theta * rec.normal.z(),
         );
 
         true

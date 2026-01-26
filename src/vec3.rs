@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub};
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub};
 use crate::prelude::{random_f64, random_f64_range, EPSILON};
 
 /// A 3D vector or point in space.
@@ -250,6 +250,13 @@ impl Div<f64> for Vec3 {
         Vec3 {
             e: [self.e[0] * inv_t, self.e[1] * inv_t, self.e[2] * inv_t],
         }
+    }
+}
+
+impl IndexMut<usize> for Vec3 {
+    // v[i] = value
+    fn index_mut(&mut self, i: usize) -> &mut f64 {
+        &mut self.e[i]
     }
 }
 

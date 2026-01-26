@@ -13,6 +13,8 @@ mod texture;
 mod vec3;
 mod noise;
 
+use std::sync::Arc;
+
 use crate::prelude::*;
 use crate::camera::Camera;
 use crate::hittable::*;
@@ -268,14 +270,23 @@ fn cornell_box() {
     world.add(Quad::new(&Point3::new(555.0, 555.0, 555.0), &Vec3::new(-555.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, -555.0), white.clone()));
     world.add(Quad::new(&Point3::new(0.0, 0.0, 555.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), white.clone()));
 
-    world.add(Cuboid::new(&Point3::new(130.0, 0.0, 65.0), &Point3::new(295.0, 165.0, 230.0), white.clone()));
-    world.add(Cuboid::new(&Point3::new(265.0, 0.0, 295.0), &Point3::new(430.0, 330.0, 460.0), white.clone()));
+    // Box 1: Rotate 15 degrees, then translate
+    let box1 = Cuboid::new(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 330.0, 165.0), white.clone());
+    let box1 = RotateY::new(Arc::new(box1.into()), 15.0);
+    let box1 = Translate::new(Arc::new(box1.into()), Vec3::new(265.0, 0.0, 295.0));
+    world.add(box1);
+
+    // Box 2: Rotate -18 degrees, then translate
+    let box2 = Cuboid::new(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 165.0, 165.0), white.clone());
+    let box2 = RotateY::new(Arc::new(box2.into()), -18.0);
+    let box2 = Translate::new(Arc::new(box2.into()), Vec3::new(130.0, 0.0, 65.0));
+    world.add(box2);
 
     let mut cam = Camera::default();
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 200;
+    cam.samples_per_pixel = 2000;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 
