@@ -282,11 +282,21 @@ fn cornell_box() {
     let box2 = Translate::new(Arc::new(box2.into()), Vec3::new(130.0, 0.0, 65.0));
     world.add(box2);
 
+    // Glass sphere on top of box 2
+    let sphere = Material::dielectric(1.5);
+    let sphere = Sphere::new(&Point3::new(0.0, 0.0, 0.0), 165.0/2.0, sphere);
+    let sphere = Translate::new(Arc::new(sphere.into()), Vec3::new(
+        130.0 + 52.968, // Box offset + offset from y rotation
+        165.0 + 165.0/2.0, // Box height + radius
+        65.0 + 103.956, // Box offset + offset from y rotation
+    ));
+    world.add(sphere);
+
     let mut cam = Camera::default();
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 2000;
+    cam.samples_per_pixel = 200;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 
