@@ -13,6 +13,8 @@ pub enum Material {
     Metal(Metal),
     Dielectric(Dielectric),
     DiffuseLight(DiffuseLight),
+    Isotropic(Isotropic),
+    // Etc.
 }
 
 impl Material {
@@ -24,6 +26,8 @@ impl Material {
             Material::Metal(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
             Material::Dielectric(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
             Material::DiffuseLight(_) => false, // DiffuseLight does not scatter
+            Material::Isotropic(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
+            // Etc.
         }
     }
 
@@ -32,7 +36,7 @@ impl Material {
     pub fn emitted(&self, u: f64, v: f64, point: &Point3) -> Color {
         match self {
             Material::DiffuseLight(mat) => mat.emitted(u, v, point),
-            _ => Color::new(0.0, 0.0, 0.0), // Non-emissive materials emit no light
+            _ => Color::zero(), // Non-emissive materials emit no light
         }
     }
 
@@ -61,6 +65,14 @@ impl Material {
     /// Create an Arc<Material> diffuse light from Texture.
     pub fn diffuse_light_tex(tex: Arc<Texture>) -> Arc<Material> {
         Arc::new(Material::DiffuseLight(DiffuseLight::from_texture(tex)))
+    }
+    /// Create an Arc<Material> isotropic from a Color.
+    pub fn isotropic(albedo: Color) -> Arc<Material> {
+        Arc::new(Material::Isotropic(Isotropic::new(albedo)))
+    }
+    /// Create an Arc<Material> isotropic from a Texture.
+    pub fn isotropic_tex(tex: Arc<Texture>) -> Arc<Material> {
+        Arc::new(Material::Isotropic(Isotropic::from_texture(tex)))
     }
 }
 
@@ -243,5 +255,35 @@ impl DiffuseLight {
     #[inline]
     pub fn emitted(&self, u: f64, v: f64, point: &Point3) -> Color {
         self.tex.value(u, v, point)
+    }
+}
+
+// ----- Isotropic (fully scattering) Material -----
+
+/// An Isotropic material that scatters light uniformly in all directions. Primarily used for fog/volume rendering.
+#[derive(Clone)]
+pub struct Isotropic {
+    tex: Arc<Texture>,
+}
+
+impl Isotropic {
+    /// Constructor from a color.
+    pub fn new(albedo: Color) -> Self {
+        Self {
+            tex: Arc::new(Texture::from(SolidColor::new(albedo))),
+        }
+    }
+
+    /// Constructor from a texture.
+    pub fn from_texture(tex: Arc<Texture>) -> Self {
+        Self { tex }
+    }
+
+    /// Scatter method for Isotropic material.
+    #[inline]
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+        *scattered = Ray::new_with_time(rec.point, Vec3::random_unit_vector(), ray_in.time);
+        *attenuation = self.tex.value(rec.u, rec.v, &rec.point);
+        true
     }
 }

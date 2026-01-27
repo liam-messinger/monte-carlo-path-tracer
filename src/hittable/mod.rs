@@ -8,6 +8,7 @@ pub mod aabb;
 pub mod cuboid;
 pub mod translate;
 pub mod rotate_y;
+pub mod constant_medium;
 
 pub use bvh_node::BVHNode;
 pub use hit_record::HitRecord;
@@ -18,6 +19,7 @@ pub use aabb::AABB;
 pub use cuboid::Cuboid;
 pub use translate::Translate;
 pub use rotate_y::RotateY;
+pub use constant_medium::ConstantMedium;
 
 use crate::ray::Ray;
 use crate::interval::Interval;
@@ -33,6 +35,7 @@ pub enum Hittable {
     Cuboid(Cuboid),
     Translate(Translate),
     RotateY(RotateY),
+    ConstantMedium(ConstantMedium),
     // Etc.
 }
 
@@ -48,6 +51,7 @@ impl Hittable {
             Hittable::Cuboid(cuboid) => cuboid.hit(r, ray_t, rec),
             Hittable::Translate(translate) => translate.hit(r, ray_t, rec),
             Hittable::RotateY(rotate_y) => rotate_y.hit(r, ray_t, rec),
+            Hittable::ConstantMedium(medium) => medium.hit(r, ray_t, rec),
             // Etc.
         }
     }
@@ -62,6 +66,7 @@ impl Hittable {
             Hittable::Cuboid(cuboid) => cuboid.bounding_box(),
             Hittable::Translate(translate) => translate.bounding_box(),
             Hittable::RotateY(rotate_y) => rotate_y.bounding_box(),
+            Hittable::ConstantMedium(medium) => medium.bounding_box(),
             // Etc.
         }
     }
@@ -79,6 +84,6 @@ impl Hittable {
 
     /// Rotate about the Y axis, then translate by an offset.
     pub fn rotate_y_translate(object: impl Into<Hittable>, angle_deg: f64, offset: Vec3) -> Hittable {
-        Hittable::translate(RotateY::new(object, angle_deg), offset)
+        Hittable::translate(Hittable::rotate_y(object, angle_deg), offset)
     }
 }

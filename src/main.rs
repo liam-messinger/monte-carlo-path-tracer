@@ -316,8 +316,63 @@ fn cornell_box() {
     cam.render(world);
 }
 
+fn cornell_smoke() {
+    let mut world = HittableList::new();
+
+    // Materials
+    let red = Material::lambertian(Color::new(0.65, 0.05, 0.05));
+    let white = Material::lambertian(Color::new(0.73, 0.73, 0.73));
+    let green = Material::lambertian(Color::new(0.12, 0.45, 0.15));
+    let light = Material::diffuse_light(Color::new(7.0, 7.0, 7.0)); // larger, dimmer light
+
+    // Cornell walls
+    world.add(Quad::new(&Point3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), &Vec3::new(0.0, 0.0, 555.0), green));
+    world.add(Quad::new(&Point3::new(0.0, 0.0, 0.0),   &Vec3::new(0.0, 555.0, 0.0), &Vec3::new(0.0, 0.0, 555.0), red));
+    // Big area light on ceiling (normal points downward)
+    world.add(Quad::new(&Point3::new(113.0, 554.0, 127.0), &Vec3::new(330.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, 305.0), light));
+    world.add(Quad::new(&Point3::new(0.0,   555.0, 0.0),   &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, 555.0), white.clone()));
+    world.add(Quad::new(&Point3::new(0.0,   0.0,   0.0),   &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, 555.0), white.clone()));
+    world.add(Quad::new(&Point3::new(0.0,   0.0, 555.0),   &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), white.clone()));
+
+    // Boundary boxes (white), then wrapped in ConstantMedium volumes
+    let box1 = Cuboid::new(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 330.0, 165.0), white.clone());
+    let box1 = Hittable::translate(
+        Hittable::rotate_y(box1, 15.0),
+        Vec3::new(265.0, 0.0, 295.0),
+    );
+
+    let box2 = Cuboid::new(&Point3::new(0.0, 0.0, 0.0), &Point3::new(165.0, 165.0, 165.0), white.clone());
+    let box2 = Hittable::translate(
+        Hittable::rotate_y(box2, -18.0),
+        Vec3::new(130.0, 0.0, 65.0),
+    );
+
+    // Fog volumes: dark smoke and light fog
+    let smoke_black = ConstantMedium::new(Arc::new(box1), 0.01, &Color::new(0.0, 0.0, 0.0));
+    let smoke_white = ConstantMedium::new(Arc::new(box2), 0.01, &Color::new(1.0, 1.0, 1.0));
+    world.add(smoke_black);
+    world.add(smoke_white);
+
+    // Camera
+    let mut cam = Camera::default();
+    cam.aspect_ratio = 1.0;
+    cam.image_width = 600;
+    cam.samples_per_pixel = 4000;
+    cam.max_depth = 50;
+    cam.background = Color::new(0.0, 0.0, 0.0);
+
+    cam.v_fov = 40.0;
+    cam.look_from = Point3::new(278.0, 278.0, -800.0);
+    cam.look_at = Point3::new(278.0, 278.0, 0.0);
+    cam.v_up = Vec3::new(0.0, 1.0, 0.0);
+    cam.aperture_angle = 0.0;
+
+    let world = world.into_bvh();
+    cam.render(world);
+}
+
 fn main() {
-    match 8 {
+    match 9 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),
@@ -326,6 +381,7 @@ fn main() {
         6 => quads(),
         7 => simple_light(),
         8 => cornell_box(),
+        9 => cornell_smoke(),
         _ => println!("No scene selected."),
     }
 }
