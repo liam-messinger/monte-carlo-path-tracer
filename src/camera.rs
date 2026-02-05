@@ -233,6 +233,12 @@ impl Camera {
     }
 
     /// Constructor for high-quality default camera.
+    /// - Aspect Ratio: 16:9
+    /// - Image Width: 1200
+    /// - Samples per Pixel: 500
+    /// - Max Depth: 50
+    /// - Background Color: Light blue sky
+    /// - Vertical FOV: 20 degrees
     pub fn high_quality_default() -> Self {
         let mut cam = Camera::default();
         cam.set_high_quality_settings();
@@ -240,8 +246,14 @@ impl Camera {
     }
 }
 
-// Implement default camera settings
 impl Default for Camera {
+    /// Implement default camera settings
+    /// - Aspect Ratio: 16:9
+    /// - Image Width: 400
+    /// - Samples per Pixel: 100
+    /// - Max Depth: 50
+    /// - Background Color: Light blue sky
+    /// - Vertical FOV: 90 degrees
     fn default() -> Self {
         Camera {
             // Public
