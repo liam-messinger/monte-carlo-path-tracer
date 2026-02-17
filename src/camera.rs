@@ -236,7 +236,11 @@ impl Camera {
             return emitted_color;
         }
 
-        let scattered_color = attenuation * self.ray_color(&scattered, depth - 1, world, rec);
+        let scattering_pdf = rec.material.scattering_pdf(r, rec, &scattered);
+        let pdf_value = scattering_pdf;
+        
+        let scattered_color = (attenuation * scattering_pdf * self.ray_color(&scattered, depth - 1, world, rec)) / pdf_value;
+
         emitted_color + scattered_color
     }
 

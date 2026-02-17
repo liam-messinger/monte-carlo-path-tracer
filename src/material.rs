@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::f64::consts::PI;
 
 use crate::hittable::{HitRecord};
 use crate::prelude::*;
@@ -37,6 +38,15 @@ impl Material {
         match self {
             Material::DiffuseLight(mat) => mat.emitted(u, v, point),
             _ => Color::zero(), // Non-emissive materials emit no light
+        }
+    }
+
+    /// Implementation of scattering_pdf method for Material enum.
+    #[inline]
+    pub fn scattering_pdf(&self, ray_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+        match self {
+            Material::Lambertian(mat) => { mat.scattering_pdf(ray_in, rec, scattered) },
+            _ => 0.0, // Default PDF for non-Lambertian materials
         }
     }
 
@@ -148,7 +158,14 @@ impl Lambertian {
         *scattered = Ray::new_with_time(rec.point, scatter_direction, ray_in.time);
         *attenuation = self.tex.value(rec.u, rec.v, &rec.point);
         true
-    }   
+    }
+
+    /// Scattering PDF for a Lambertian material.
+    #[inline]
+    pub fn scattering_pdf(&self, ray_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+        let cos_theta: f64 = Vec3::dot(&rec.normal, &Vec3::unit_vector(&scattered.direction));
+        if cos_theta < 0.0 { 0.0 } else { cos_theta / PI }
+    }
 }
 
 // ----- Metal Material -----
