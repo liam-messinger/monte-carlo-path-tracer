@@ -301,7 +301,7 @@ fn cornell_box() {
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 200;
+    cam.samples_per_pixel = 1000;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 
@@ -506,7 +506,7 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32) {
 }
 
 fn main() {
-    match 10 {
+    match 8 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => earth(),

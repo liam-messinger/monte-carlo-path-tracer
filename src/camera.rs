@@ -25,6 +25,8 @@ pub struct Camera {
 
     image_height: u32,          // Rendered image height
     pixel_samples_scaled: f64,  // Color scale factor for a sum of pixel samples
+    sqrt_spp: u32,              // Square root of samples per pixel
+    recip_sqrt_spp: f64,        // Reciprocal of square root of samples per pixel
     center: Point3,             // Camera center
     pixel00_loc: Point3,        // Location of pixel 0, 0
     pixel_delta_u: Vec3,        // Offeset to pixel to the right
@@ -48,7 +50,6 @@ impl Camera {
 
         let width = self.image_width;
         let height = self.image_height;
-        let spp = self.samples_per_pixel;
         let max_depth = self.max_depth;
 
         // Progress bar by row
@@ -65,9 +66,11 @@ impl Camera {
                 for i in 0..(width as usize) {
                     let mut pixel_color = Color::default();
                     let mut rec = HitRecord::new();
-                    for _ in 0..spp {
-                        let r: Ray = self.get_ray(i as u32, j as u32);
-                        pixel_color += self.ray_color(&r, max_depth, &world, &mut rec);
+                    for s_j in 0..self.sqrt_spp {
+                        for s_i in 0..self.sqrt_spp {
+                            let r: Ray = self.get_ray(i as u32, j as u32, s_i, s_j);
+                            pixel_color += self.ray_color(&r, max_depth, &world, &mut rec);
+                        }
                     }
                     pixel_color *= self.pixel_samples_scaled;
                     let rgb = pixel_color.as_rgb();
@@ -136,7 +139,9 @@ impl Camera {
         self.image_height = (self.image_width as f64 / self.aspect_ratio) as u32;
         self.image_height = if self.image_height < 1 { 1 } else { self.image_height };
 
-        self.pixel_samples_scaled = 1.0 / self.samples_per_pixel as f64;
+        self.sqrt_spp = (f64::sqrt(self.samples_per_pixel as f64)) as u32;
+        self.pixel_samples_scaled = 1.0 / (self.sqrt_spp * self.sqrt_spp) as f64;
+        self.recip_sqrt_spp = 1.0 / (self.sqrt_spp as f64);
 
         self.center = self.look_from;
 
@@ -169,12 +174,12 @@ impl Camera {
         self.aperture_disk_v = self.v * aperture_radius;
     }
 
-    /// Get a ray from the camera through pixel (i,j).
-    fn get_ray(&self, i: u32, j: u32) -> Ray {
-        // Construct a camera ray originating from the aperture disk and directed at a randomly
-        // sampled point around the pixel location i, j.
+    /// Get a ray from the camera through pixel (i,j) and subpixel sample (s_i, s_j).
+    fn get_ray(&self, i: u32, j: u32, s_i: u32, s_j: u32) -> Ray {
+        // Construct a camera ray originating from the defocus disk and directed at a randomly
+        // sampled point around the pixel location i, j for stratified sample square s_i, s_j.
 
-        let offset = Camera::sample_square();
+        let offset = self.sample_square_stratified(s_i, s_j);
         let pixel_sample = self.pixel00_loc
                          + (i as f64 + offset.x()) * self.pixel_delta_u
                          + (j as f64 + offset.y()) * self.pixel_delta_v;  
@@ -185,6 +190,18 @@ impl Camera {
         let ray_time = random_f64();
 
         Ray::new_with_time(ray_origin, ray_direction, ray_time)
+    }
+
+    /// Returns a stratified random point in the unit square sub-pixel specified by grid
+    /// indices s_i and s_j.
+    fn sample_square_stratified(&self, s_i: u32, s_j: u32) -> Vec3 {
+        // Returns the vector to a random point in the square sub-pixel specified by grid
+        // indices s_i and s_j, for an idealized unit square pixel [-.5,-.5] to [+.5,+.5].
+
+        let px = (s_i as f64 + random_f64()) * self.recip_sqrt_spp - 0.5;
+        let py = (s_j as f64 + random_f64()) * self.recip_sqrt_spp - 0.5;
+        
+        Vec3::new(px, py, 0.0)
     }
 
     /// Returns a random point on the unit square.
@@ -275,6 +292,8 @@ impl Default for Camera {
             // Will be set in initialize()
             image_height: 0,
             pixel_samples_scaled: 0.0,
+            sqrt_spp: 0,
+            recip_sqrt_spp: 0.0,
             center: Point3::zero(),
             pixel00_loc: Point3::zero(),
             pixel_delta_u: Vec3::zero(),
