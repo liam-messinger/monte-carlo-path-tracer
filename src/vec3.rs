@@ -37,27 +37,32 @@ impl Vec3 {
 
     // ----------------- Utility functions -----------------
 
-    // vec.length() 
+    // vec.length()
+    #[inline]
     pub fn length(&self) -> f64 { // length of the vector
         self.length_squared().sqrt()
     }
 
     // vec.length_squared()
+    #[inline]
     pub fn length_squared(&self) -> f64 { // squared length of the vector
         self.e[0] * self.e[0] + self.e[1] * self.e[1] + self.e[2] * self.e[2]
     }
 
     // vec.near_zero()
+    #[inline]
     pub fn near_zero(&self) -> bool { // checks if the vector is close to zero in all dimensions
         self.e[0].abs() < EPSILON && self.e[1].abs() < EPSILON && self.e[2].abs() < EPSILON
     }
 
     // Vec3::random()
+    #[inline]
     pub fn random() -> Self { // random vector with each component in [0,1)
         Vec3::new(random_f64(), random_f64(), random_f64())
     }
 
     // Vec3::random_range(min, max)
+    #[inline]
     pub fn random_range(min: f64, max: f64) -> Self { // random vector with each component in [min,max)
         Vec3::new( 
             random_f64_range(min, max),
@@ -67,11 +72,13 @@ impl Vec3 {
     }
 
     // Vec3::dot(u, v)
+    #[inline]
     pub fn dot(u: &Vec3, v: &Vec3) -> f64 { // dot product of two vectors
         u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2]
     }
 
     // Vec3::cross(u, v)
+    #[inline]
     pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 { // cross product of two vectors
         Vec3 {
             e: [
@@ -83,11 +90,13 @@ impl Vec3 {
     }
 
     // Vec3::unit_vector(v)
+    #[inline]
     pub fn unit_vector(v: &Vec3) -> Vec3 { // returns the unit vector in the direction of v
         *v / v.length()
     }
 
     // Vec3::random_in_unit_circle()
+    #[inline]
     pub fn random_in_unit_circle() -> Vec3 { // Generates a random point in the unit disk in the XY plane
         loop {
             let p = Vec3::new(random_f64_range(-1.0, 1.0), random_f64_range(-1.0, 1.0), 0.0);
@@ -98,6 +107,7 @@ impl Vec3 {
     }
 
     // Vec3::random_unit_vector()
+    #[inline]
     pub fn random_unit_vector() -> Vec3 { // Generates a random unit vector uniformly distributed over the unit sphere
         loop {
             let v = Vec3::random_range(-1.0, 1.0);
@@ -109,6 +119,7 @@ impl Vec3 {
     }
 
     // Vec3::random_in_hemisphere(normal)
+    #[inline]
     pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 { // Using a normal, generates a random vector in the "same" direction
         let on_unit_sphere = Vec3::random_unit_vector();
         if Vec3::dot(&on_unit_sphere, normal) > 0.0 {
@@ -119,16 +130,32 @@ impl Vec3 {
     }
 
     // Vec3::reflect(v, n)
+    #[inline]
     pub fn reflect(vec: &Vec3, normal: &Vec3) -> Vec3 { // Reflects vector vec around a normal
         (*vec) - 2.0 * Vec3::dot(vec, normal) * (*normal)
     }
 
     // Vec3::refract(ray_in, normal, etai_over_etat)
+    #[inline]
     pub fn refract(ray_in: &Vec3, normal: &Vec3, etai_over_etat: f64) -> Vec3 { // Refracts ray_in with normal and ratio of indices of refraction
         let cos_theta = f64::min(Vec3::dot(&-*ray_in, normal), 1.0);
         let r_out_perp = etai_over_etat * (*ray_in + cos_theta * (*normal));
         let r_out_parallel = -(1.0 - r_out_perp.length_squared()).abs().sqrt() * (*normal);
         r_out_perp + r_out_parallel
+    }
+
+    // Vec3::random_in_unit_sphere()
+    #[inline]
+    pub fn random_cosine_direction() -> Vec3 { // Generates a random direction in the hemisphere with cosine-weighted distribution
+        let r1 = random_f64();
+        let r2 = random_f64();
+
+        let phi = 2.0 * std::f64::consts::PI * r1;
+        let x = phi.cos() * r2.sqrt();
+        let y = phi.sin() * r2.sqrt();
+        let z = (1.0 - r2).sqrt();
+
+        Vec3::new(x, y, z)
     }
 }
 

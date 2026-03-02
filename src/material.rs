@@ -4,6 +4,7 @@ use std::f64::consts::PI;
 use crate::hittable::{HitRecord};
 use crate::prelude::*;
 use crate::texture::{Texture, SolidColor};
+use crate::onb::ONB;
 
 // ----- Enum for different material types -----
 
@@ -21,13 +22,13 @@ pub enum Material {
 impl Material {
     /// Implementation of scatter method for Material enum
     #[inline]
-    pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+    pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, pdf: &mut f64) -> bool {
         match self {
-            Material::Lambertian(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
-            Material::Metal(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
-            Material::Dielectric(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
+            Material::Lambertian(mat) => mat.scatter(ray_in, rec, attenuation, scattered, pdf),
+            Material::Metal(mat) => mat.scatter(ray_in, rec, attenuation, scattered, pdf),
+            Material::Dielectric(mat) => mat.scatter(ray_in, rec, attenuation, scattered, pdf),
             Material::DiffuseLight(_) => false, // DiffuseLight does not scatter
-            Material::Isotropic(mat) => mat.scatter(ray_in, rec, attenuation, scattered),
+            Material::Isotropic(mat) => mat.scatter(ray_in, rec, attenuation, scattered, pdf),
             // Etc.
         }
     }
@@ -42,6 +43,7 @@ impl Material {
     }
 
     /// Implementation of scattering_pdf method for Material enum.
+    /// "What does the material physically say the scattering distribution should be in that direction?”
     #[inline]
     pub fn scattering_pdf(&self, ray_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
         match self {
@@ -147,22 +149,22 @@ impl Lambertian {
 
     /// Scatter method for a Lambertian material.
     #[inline]
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
-        let mut scatter_direction = rec.normal + Vec3::random_unit_vector();
-
-        // Catch degenerate scatter direction
-        if scatter_direction.near_zero() {
-            scatter_direction = rec.normal;
-        }
-
-        *scattered = Ray::new_with_time(rec.point, scatter_direction, ray_in.time);
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, pdf: &mut f64) -> bool {
+        // Create an ONB with w aligned to the hit normal
+        let uvw = ONB::new(&rec.normal);
+        // Sample a random direction in the hemisphere oriented around the normal using cosine-weighted sampling
+        let scatter_direction = uvw.transform(&Vec3::random_cosine_direction());
+        
+        *scattered = Ray::new_with_time(rec.point, Vec3::unit_vector(&scatter_direction), ray_in.time);
         *attenuation = self.tex.value(rec.u, rec.v, &rec.point);
+        // “what distribution did we actually use to pick this scattered direction?”
+        *pdf = Vec3::dot(&uvw.w(), &scattered.direction) / PI;
         true
     }
 
     /// Scattering PDF for a Lambertian material.
     #[inline]
-    pub fn scattering_pdf(&self, ray_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+    pub fn scattering_pdf(&self, _ray_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
         let cos_theta: f64 = Vec3::dot(&rec.normal, &Vec3::unit_vector(&scattered.direction));
         if cos_theta < 0.0 { 0.0 } else { cos_theta / PI }
     }
@@ -189,7 +191,7 @@ impl Metal {
 
     /// Scatter method for a Metal material.
     #[inline]
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, pdf: &mut f64) -> bool {
         let mut reflected = Vec3::reflect(&ray_in.direction, &rec.normal);
         reflected = Vec3::unit_vector(&reflected) + (self.fuzz * Vec3::random_unit_vector());
         *scattered = Ray::new_with_time(rec.point, reflected, ray_in.time);
@@ -224,7 +226,7 @@ impl Dielectric {
 
     /// Scatter method for a Dielectric material.
     #[inline]
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, pdf: &mut f64) -> bool {
         *attenuation = Color::new(1.0, 1.0, 1.0); // No attenuation for Dielectric
         let ri: f64 = if rec.front_face { 1.0 / self.refraction_index } else { self.refraction_index };
 
@@ -298,7 +300,7 @@ impl Isotropic {
 
     /// Scatter method for Isotropic material.
     #[inline]
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, pdf: &mut f64) -> bool {
         *scattered = Ray::new_with_time(rec.point, Vec3::random_unit_vector(), ray_in.time);
         *attenuation = self.tex.value(rec.u, rec.v, &rec.point);
         true
