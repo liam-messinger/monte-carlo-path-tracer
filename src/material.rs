@@ -48,6 +48,7 @@ impl Material {
     pub fn scattering_pdf(&self, ray_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
         match self {
             Material::Lambertian(mat) => { mat.scattering_pdf(ray_in, rec, scattered) },
+            Material::Isotropic(mat) => { mat.scattering_pdf(ray_in, rec, scattered) },
             _ => 0.0, // Default PDF for non-Lambertian materials
         }
     }
@@ -303,6 +304,13 @@ impl Isotropic {
     fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, pdf: &mut f64) -> bool {
         *scattered = Ray::new_with_time(rec.point, Vec3::random_unit_vector(), ray_in.time);
         *attenuation = self.tex.value(rec.u, rec.v, &rec.point);
+        *pdf = 1.0 / (4.0 * PI); // Uniform scattering in all directions
         true
+    }
+
+    /// Scattering PDF for Isotropic material
+    #[inline]
+    pub fn scattering_pdf(&self, _ray_in: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f64 {
+        1.0 / (4.0 * PI) // Uniform scattering in all directions
     }
 }
