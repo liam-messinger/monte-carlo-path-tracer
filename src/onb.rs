@@ -12,13 +12,25 @@ impl ONB {
     #[inline]
     pub fn new(n: &Vec3) -> Self {
         let w = Vec3::unit_vector(n);
-        let a = if w.x().abs() > 0.9 {
-            Vec3::new(0.0, 1.0, 0.0)
-        } else {
-            Vec3::new(1.0, 0.0, 0.0)
-        };
-        let v = Vec3::unit_vector(&Vec3::cross(&w, &a));
-        let u = Vec3::cross(&w, &v);
+
+        // Branch-light ONB construction (Frisvad/Duff style)
+        // ...existing code...
+        let sign = 1.0_f64.copysign(w.z());
+        let a = -1.0 / (sign + w.z());
+        let b = w.x() * w.y() * a;
+
+        let u = Vec3::new(
+            1.0 + sign * w.x() * w.x() * a,
+            sign * b,
+            -sign * w.x(),
+        );
+
+        let v = Vec3::new(
+            b,
+            sign + w.y() * w.y() * a,
+            -w.y(),
+        );
+
         Self { axis: [u, v, w] }
     }
 
