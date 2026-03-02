@@ -14,7 +14,6 @@ impl ONB {
         let w = Vec3::unit_vector(n);
 
         // Branch-light ONB construction (Frisvad/Duff style)
-        // ...existing code...
         let sign = 1.0_f64.copysign(w.z());
         let a = -1.0 / (sign + w.z());
         let b = w.x() * w.y() * a;
@@ -41,9 +40,9 @@ impl ONB {
     /// Get the w axis of the ONB (aligned with the normal).
     #[inline] pub fn w(&self) -> Vec3 { self.axis[2] }
 
-    /// Transform from basis coordinates (local) to world coordinates.
+    /// Transform a vector from local ONB coordinates to world coordinates.
     #[inline]
-    pub fn local(&self, v: &Vec3) -> Vec3 {
+    pub fn transform(&self, v: &Vec3) -> Vec3 {
         v.x() * self.u() + v.y() * self.v() + v.z() * self.w()
     }
 }
