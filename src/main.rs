@@ -298,6 +298,7 @@ fn cornell_box() {
     world.add(sphere);
 
     let mut cam = Camera::default();
+    cam.scene_name = "cornell_box".to_string();
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
@@ -355,6 +356,8 @@ fn cornell_smoke() {
 
     // Camera
     let mut cam = Camera::default();
+    cam.scene_name = "cornell_smoke".to_string();
+
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
     cam.samples_per_pixel = 4000;
