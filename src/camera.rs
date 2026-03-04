@@ -23,6 +23,8 @@ pub struct Camera {
     pub aperture_angle: f64,    // Variation angle of rays through each pixel
     pub focus_dist: f64,        // Distance from camera lookfrom point to plane of perfect focus
 
+    pub scene_name: String,     // Name of the scene for output file naming
+
     image_height: u32,          // Rendered image height
     pixel_samples_scaled: f64,  // Color scale factor for a sum of pixel samples
     sqrt_spp: u32,              // Square root of samples per pixel
@@ -83,12 +85,22 @@ impl Camera {
 
         pb.finish_with_message("Render complete!");
 
+        // Generate output filename with dimensions and characteristics
+        let filename = format!(
+            "{}_{}x{}_{}spp_{}depth.png",
+            if self.scene_name.is_empty() { "render" } else { &self.scene_name },
+            width,
+            height,
+            self.samples_per_pixel,
+            max_depth
+        );
+
         // Build the image and save
         // Default colorspace of an ImageBuffer is sRGB
         let img = image::RgbImage::from_raw(width, height, raw_img)
             .expect("Buffer size mismatch");
-        img.save("output.png").expect("Failed to save output.png");
-        eprintln!("Image saved to output.png");
+        img.save(&filename).expect(&format!("Failed to save {}", filename));
+        eprintln!("Image saved to {}", filename);
         //*/
 
         /*
@@ -114,9 +126,19 @@ impl Camera {
 
         pb.finish_with_message("Render complete!");
 
+        // Generate output filename with dimensions and characteristics
+        let filename = format!(
+            "{}_{}x{}_{}spp_{}depth.png",
+            if self.scene_name.is_empty() { "render" } else { &self.scene_name },
+            width,
+            height,
+            self.samples_per_pixel,
+            max_depth
+        );
+
         // Save the image
-        img.save("output.png").unwrap();
-        eprintln!("Image saved to output.png");
+        img.save(&filename).unwrap();
+        eprintln!("Image saved to {}", filename);
         */
     }
 
@@ -312,6 +334,8 @@ impl Default for Camera {
 
             aperture_angle: 0.0,
             focus_dist: 1.0,
+
+            scene_name: String::new(),
 
             // Private
             // Will be set in initialize()
