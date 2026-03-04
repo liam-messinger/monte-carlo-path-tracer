@@ -35,9 +35,9 @@ impl Material {
 
     /// Implementation of emitted method for Material enum.
     #[inline]
-    pub fn emitted(&self, u: f64, v: f64, point: &Point3) -> Color {
+    pub fn emitted(&self, ray_in: &Ray, rec: &HitRecord, u: f64, v: f64, point: &Point3) -> Color {
         match self {
-            Material::DiffuseLight(mat) => mat.emitted(u, v, point),
+            Material::DiffuseLight(mat) => mat.emitted(ray_in, rec, u, v, point),
             _ => Color::zero(), // Non-emissive materials emit no light
         }
     }
@@ -192,7 +192,7 @@ impl Metal {
 
     /// Scatter method for a Metal material.
     #[inline]
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, pdf: &mut f64) -> bool {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, _pdf: &mut f64) -> bool {
         let mut reflected = Vec3::reflect(&ray_in.direction, &rec.normal);
         reflected = Vec3::unit_vector(&reflected) + (self.fuzz * Vec3::random_unit_vector());
         *scattered = Ray::new_with_time(rec.point, reflected, ray_in.time);
@@ -227,7 +227,7 @@ impl Dielectric {
 
     /// Scatter method for a Dielectric material.
     #[inline]
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, pdf: &mut f64) -> bool {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, _pdf: &mut f64) -> bool {
         *attenuation = Color::new(1.0, 1.0, 1.0); // No attenuation for Dielectric
         let ri: f64 = if rec.front_face { 1.0 / self.refraction_index } else { self.refraction_index };
 
@@ -273,7 +273,10 @@ impl DiffuseLight {
 
     /// Emitted light function.
     #[inline]
-    pub fn emitted(&self, u: f64, v: f64, point: &Point3) -> Color {
+    pub fn emitted(&self, _ray_in: &Ray, rec: &HitRecord, u: f64, v: f64, point: &Point3) -> Color {
+        if !rec.front_face {
+            return Color::zero(); // No emission from the back face
+        }
         self.tex.value(u, v, point)
     }
 }
