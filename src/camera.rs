@@ -230,7 +230,8 @@ impl Camera {
         let mut scattered = Ray::default();
         let mut attenuation = Color::default();
         let mut pdf_value: f64 = 1.0;
-        let emitted_color = rec.material.emitted(rec.u, rec.v, &rec.point);
+        // TODO: Consider simplifying emitted() to just take rec, since rec.u, rec.v, rec.point are redundant
+        let emitted_color = rec.material.emitted(r, rec, rec.u, rec.v, &rec.point);
 
         // If the material does not scatter, return emitted light only
         if !rec.material.scatter(r, rec, &mut attenuation, &mut scattered, &mut pdf_value) {
