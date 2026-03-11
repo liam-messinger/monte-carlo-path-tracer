@@ -12,6 +12,8 @@ mod ray;
 mod texture;
 mod vec3;
 mod noise;
+mod onb;
+mod pdf;
 
 use std::sync::Arc;
 
