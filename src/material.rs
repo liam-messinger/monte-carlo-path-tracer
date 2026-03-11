@@ -165,7 +165,7 @@ impl Lambertian {
 
     /// Scattering PDF for a Lambertian material.
     #[inline]
-    pub fn scattering_pdf(&self, _ray_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
+    fn scattering_pdf(&self, _ray_in: &Ray, rec: &HitRecord, scattered: &Ray) -> f64 {
         let cos_theta: f64 = Vec3::dot(&rec.normal, &Vec3::unit_vector(&scattered.direction));
         if cos_theta < 0.0 { 0.0 } else { cos_theta / PI }
     }
@@ -273,7 +273,7 @@ impl DiffuseLight {
 
     /// Emitted light function.
     #[inline]
-    pub fn emitted(&self, _ray_in: &Ray, rec: &HitRecord, u: f64, v: f64, point: &Point3) -> Color {
+    fn emitted(&self, _ray_in: &Ray, rec: &HitRecord, u: f64, v: f64, point: &Point3) -> Color {
         if !rec.front_face {
             return Color::zero(); // No emission from the back face
         }
@@ -313,7 +313,7 @@ impl Isotropic {
 
     /// Scattering PDF for Isotropic material
     #[inline]
-    pub fn scattering_pdf(&self, _ray_in: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f64 {
+    fn scattering_pdf(&self, _ray_in: &Ray, _rec: &HitRecord, _scattered: &Ray) -> f64 {
         1.0 / (4.0 * PI) // Uniform scattering in all directions
     }
 }
