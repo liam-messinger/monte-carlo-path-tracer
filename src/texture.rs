@@ -104,7 +104,7 @@ impl SolidColor {
 
     /// Value method returns the solid color.
     #[inline]
-    pub fn value(&self, _u: f64, _v: f64, _p: &Point3) -> Color {
+    fn value(&self, _u: f64, _v: f64, _p: &Point3) -> Color {
         self.albedo
     }
 }
@@ -140,7 +140,7 @@ impl CheckerTexture {
 
     /// Value method returns the checker texture color at (u,v,p).
     #[inline]
-    pub fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
+    fn value(&self, u: f64, v: f64, p: &Point3) -> Color {
         let x_int = (p.x() * self.inv_scale).floor() as i32;
         let y_int = (p.y() * self.inv_scale).floor() as i32;
         let z_int = (p.z() * self.inv_scale).floor() as i32;
@@ -173,7 +173,7 @@ impl ImageTexture {
 
     /// Value method returns the color at (u,v) from the image data.
     #[inline]
-    pub fn value(&self, u: f64, v: f64, _p: &Point3) -> Color {
+    fn value(&self, u: f64, v: f64, _p: &Point3) -> Color {
         // If we have no texture data, then return solid cyan as a debugging aid.
         if self.image_data.height() == 0 { return Color::new(0.0, 1.0, 1.0); }
 
@@ -208,7 +208,7 @@ impl NoiseTexture {
 
     /// Value method returns the noise texture color at (u,v,p).
     #[inline]
-    pub fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color {
+    fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color {
         Color::new(0.5, 0.5, 0.5) * (1.0 + (self.scale * p.z() + 10.0 * self.noise.turbulence(p, 7)).sin())
     }
 }
