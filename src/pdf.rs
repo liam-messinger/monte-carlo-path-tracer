@@ -14,6 +14,7 @@ pub enum Pdf {
 
 impl Pdf {
     /// Evaluates the PDF value for a given direction.
+    /// "How much does the PDF say that this direction is likely to be chosen?”
     pub fn value(&self, direction: &Vec3) -> f64 {
         match self {
             Pdf::Sphere(pdf) => pdf.value(direction),
@@ -22,6 +23,7 @@ impl Pdf {
     }
 
     /// Generates a random direction according to the PDF.
+    /// Effectively "What direction does the PDF say I should scatter in?"
     pub fn generate(&self) -> Vec3 {
         match self {
             Pdf::Sphere(pdf) => pdf.generate(),
@@ -61,7 +63,7 @@ pub struct CosinePdf {
 
 impl CosinePdf {
     /// Creates a new CosinePdf instance with the given normal direction.
-    pub fn new(w: Vec3) -> Self {
+    pub fn new(w: &Vec3) -> Self {
         Self { uvw: ONB::new(w) }
     }
 

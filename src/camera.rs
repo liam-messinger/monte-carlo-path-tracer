@@ -1,6 +1,7 @@
 use crate::hittable::Hittable;
 use crate::prelude::*;
 use crate::hittable::{HitRecord};
+use crate::pdf::*;
 
 // External crates
 use indicatif::{ProgressBar, ProgressStyle};
@@ -260,27 +261,11 @@ impl Camera {
             return emitted_color;
         }
 
-        // ### Temp ###
-        let on_light = Vec3::new(random_f64_range(213.0,343.0), 554.0, random_f64_range(227.0,332.0));
-        let mut to_light = on_light - rec.point;
-        let distance_squared = to_light.length_squared();
-        to_light = Vec3::unit_vector(&to_light);
-
-        if Vec3::dot(&to_light, &rec.normal) < 0.0 { return emitted_color; }
-
-        let light_area = (343.0-213.0)*(332.0-227.0);
-        let light_cosine = to_light.y().abs();
-        if light_cosine < 0.000001 { return emitted_color; }
-
-        pdf_value = distance_squared / (light_cosine * light_area);
-        scattered = Ray::new_with_time(rec.point, to_light, r.time);
+        let surface_pdf = Pdf::Cosine(CosinePdf::new(&rec.normal));
+        scattered = Ray::new_with_time(rec.point, surface_pdf.generate(), r.time);
+        pdf_value = surface_pdf.value(&scattered.direction);
 
         let scattering_pdf = rec.material.scattering_pdf(r, rec, &scattered);
-        // ### Temp ###
-
-        // "What does the material physically say the scattering distribution should be in that direction?”
-        //let scattering_pdf = rec.material.scattering_pdf(r, rec, &scattered);
-        //let pdf_value = scattering_pdf;
         
         let scattered_color = (attenuation * scattering_pdf * self.ray_color(&scattered, depth - 1, world, rec)) / pdf_value;
 
