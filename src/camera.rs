@@ -102,45 +102,6 @@ impl Camera {
             .expect("Buffer size mismatch");
         img.save(&filename).expect(&format!("Failed to save {}", filename));
         eprintln!("Image saved to {}", filename);
-        //*/
-
-        /*
-        self.initialize();
-
-        let mut img = ImageBuffer::new(self.image_width, self.image_height); // Create image buffer
-
-        let pb = Self::create_progress_bar(self.image_height as u64); // Create progress bar
-
-        // Loop over each pixel in the image
-        for j in 0..self.image_height {
-            pb.set_position(j as u64);
-            for i in 0..self.image_width {
-                let mut pixel_color = Color::default();
-                let mut rec = HitRecord::new();
-                for _sample in 0..self.samples_per_pixel {
-                    let r: Ray = self.get_ray(i, j);
-                    pixel_color += self.ray_color(&r, self.max_depth, &world, &mut rec);
-                }
-                img.put_pixel(i, j, (self.pixel_samples_scaled * pixel_color).as_rgb());
-            }
-        }
-
-        pb.finish_with_message("Render complete!");
-
-        // Generate output filename with dimensions and characteristics
-        let filename = format!(
-            "{}_{}x{}_{}spp_{}depth.png",
-            if self.scene_name.is_empty() { "render" } else { &self.scene_name },
-            width,
-            height,
-            self.samples_per_pixel,
-            max_depth
-        );
-
-        // Save the image
-        img.save(&filename).unwrap();
-        eprintln!("Image saved to {}", filename);
-        */
     }
 
     // ----- Private -----
