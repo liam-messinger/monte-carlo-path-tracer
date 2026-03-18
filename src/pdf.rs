@@ -1,7 +1,9 @@
 use std::f64::consts::PI;
+use std::sync::Arc;
 
+use crate::hittable::Hittable;
 use crate::onb::ONB;
-use crate::vec3::Vec3;
+use crate::vec3::{Point3, Vec3};
 
 // ----- Enum for different PDF types -----
 
@@ -10,6 +12,7 @@ use crate::vec3::Vec3;
 pub enum Pdf {
     Sphere(SpherePdf),
     Cosine(CosinePdf),
+    Hittable(HittablePdf),
 }
 
 impl Pdf {
@@ -19,6 +22,7 @@ impl Pdf {
         match self {
             Pdf::Sphere(pdf) => pdf.value(direction),
             Pdf::Cosine(pdf) => pdf.value(direction),
+            Pdf::Hittable(pdf) => pdf.value(direction),
         }
     }
 
@@ -28,6 +32,7 @@ impl Pdf {
         match self {
             Pdf::Sphere(pdf) => pdf.generate(),
             Pdf::Cosine(pdf) => pdf.generate(),
+            Pdf::Hittable(pdf) => pdf.generate(),
         }
     }
 }
@@ -76,5 +81,29 @@ impl CosinePdf {
     #[inline]
     fn generate(&self) -> Vec3 {
         self.uvw.transform(&Vec3::random_cosine_direction())
+    }
+}
+
+// ----- Hittable PDF -----
+#[derive(Clone)]
+pub struct HittablePdf {
+    objects: Arc<Hittable>,
+    origin: Point3,
+}
+
+impl HittablePdf {
+    /// Creates a new HittablePdf instance for the given hittable objects and origin point.
+    pub fn new(objects: Arc<Hittable>, origin: Point3) -> Self {
+        Self { objects, origin }
+    }
+
+    #[inline]
+    fn value(&self, direction: &Vec3) -> f64 {
+        self.objects.pdf_value(&self.origin, direction)
+    }
+
+    #[inline]
+    fn generate(&self) -> Vec3 {
+        self.objects.random(&self.origin)
     }
 }
