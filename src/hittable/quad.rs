@@ -4,6 +4,7 @@ use crate::interval::Interval;
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
+use crate::prelude::random_f64;
 
 use std::sync::Arc;
 
@@ -18,6 +19,7 @@ pub struct Quad {
     normal: Vec3,
     D: f64, // Normal dot Q
     w: Vec3, // n / (n dot n)
+    area: f64,
 }
 
 impl Quad {
@@ -39,6 +41,7 @@ impl Quad {
             normal,
             D,
             w: n / Vec3::dot(&n, &n),
+            area: n.length(),
         }
     }
 
@@ -95,6 +98,25 @@ impl Quad {
         rec.u = a;
         rec.v = b;
         true
+    }
+
+    /// Get the PDF value for a ray hitting the quad from a given origin in a given direction.
+    pub fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
+        let mut rec = HitRecord::new();
+        if !self.hit(&Ray::new(*origin, *direction), &Interval::new(0.001, f64::INFINITY), &mut rec) {
+            return 0.0;
+        }
+
+        let distance_squared = rec.t * rec.t * direction.length_squared();
+        let cosine = (Vec3::dot(direction, &rec.normal) / direction.length()).abs();
+
+        distance_squared / (cosine * self.area)
+    }
+
+    /// Generate a random direction from the given origin towards the quad.
+    pub fn random(&self, origin: &Point3) -> Vec3 {
+        let p = self.Q + (random_f64() * self.u) + (random_f64() * self.v);
+        p - *origin
     }
 }
 

@@ -57,6 +57,7 @@ impl Hittable {
     }
 
     /// Get the bounding box of the Hittable object.
+    #[inline]
     pub fn bounding_box(&self) -> &AABB {
         match self {
             Hittable::HittableList(list) => list.bounding_box(),
@@ -68,6 +69,22 @@ impl Hittable {
             Hittable::RotateY(rotate_y) => rotate_y.bounding_box(),
             Hittable::ConstantMedium(medium) => medium.bounding_box(),
             // Etc.
+        }
+    }
+
+    /// Get the PDF value for a ray hitting the Hittable object from a given origin in a given direction.
+    pub fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
+        match self {
+            Hittable::Quad(quad) => quad.pdf_value(origin, direction),
+            _ => 0.0, // Default to 0 for objects that don't implement PDF
+        }
+    }
+
+    /// Generate a random direction from the given origin towards the Hittable object.
+    pub fn random(&self, origin: &Point3) -> Vec3 {
+        match self {
+            Hittable::Quad(quad) => quad.random(origin),
+            _ => Vec3::new(1.0, 0.0, 0.0), // Default direction for objects that don't implement random
         }
     }
 
