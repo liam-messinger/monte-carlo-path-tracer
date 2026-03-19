@@ -6,6 +6,7 @@ use crate::pdf::*;
 // External crates
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
+use std::sync::Arc;
 //use image::ImageBuffer;
 
 /// Camera struct defining the viewpoint and rendering parameters.
@@ -45,7 +46,7 @@ impl Camera {
     // ----- Public -----
 
     /// Render the scene from this camera's point of view.
-    pub fn render (&mut self, world: impl Into<Hittable>) {
+    pub fn render (&mut self, world: impl Into<Hittable>, lights: Arc<Hittable>) {
         let world: Hittable = world.into();
 
         //*
@@ -72,7 +73,7 @@ impl Camera {
                     for s_j in 0..self.sqrt_spp {
                         for s_i in 0..self.sqrt_spp {
                             let r: Ray = self.get_ray(i as u32, j as u32, s_i, s_j);
-                            pixel_color += self.ray_color(&r, max_depth, &world, &mut rec);
+                            pixel_color += self.ray_color(&r, max_depth, &world, &lights, &mut rec);
                         }
                     }
                     pixel_color *= self.pixel_samples_scaled;
@@ -202,7 +203,7 @@ impl Camera {
 
     /// Compute the color seen along a ray.
     #[inline]
-    fn ray_color(&self, r: &Ray, depth: u32, world: &Hittable, rec: &mut HitRecord) -> Color {
+    fn ray_color(&self, r: &Ray, depth: u32, world: &Hittable, lights: &Arc<Hittable>,rec: &mut HitRecord) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered.
         if depth <= 0 { return Color::zero(); }
 
@@ -222,13 +223,13 @@ impl Camera {
             return emitted_color;
         }
 
-        let surface_pdf = Pdf::Cosine(CosinePdf::new(&rec.normal));
-        scattered = Ray::new_with_time(rec.point, surface_pdf.generate(), r.time);
-        pdf_value = surface_pdf.value(&scattered.direction);
+        let light_pdf = Pdf::Hittable(HittablePdf::new(Arc::clone(lights), rec.point));
+        scattered = Ray::new_with_time(rec.point, light_pdf.generate(), r.time);
+        pdf_value = light_pdf.value(&scattered.direction);
 
         let scattering_pdf = rec.material.scattering_pdf(r, rec, &scattered);
         
-        let scattered_color = (attenuation * scattering_pdf * self.ray_color(&scattered, depth - 1, world, rec)) / pdf_value;
+        let scattered_color = (attenuation * scattering_pdf * self.ray_color(&scattered, depth - 1, world, lights, rec)) / pdf_value;
 
         emitted_color + scattered_color
     }

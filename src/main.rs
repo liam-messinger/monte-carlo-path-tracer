@@ -79,7 +79,8 @@ fn bouncing_spheres() {
     cam.focus_dist = 10.0;
 
     let world = world.into_bvh(); // Build BVH from world
-    cam.render(world);
+    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
+    cam.render(world, empty_lights);
 }
 
 fn checkered_spheres() {
@@ -97,7 +98,8 @@ fn checkered_spheres() {
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
     let world = world.into_bvh(); // Build BVH from world
-    cam.render(world);
+    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
+    cam.render(world, empty_lights);
 }
 
 fn earth() {
@@ -110,7 +112,8 @@ fn earth() {
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
-    cam.render(globe);
+    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
+    cam.render(globe, empty_lights);
 }
 
 fn solar_system() {
@@ -168,7 +171,8 @@ fn solar_system() {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
-    cam.render(world);
+    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
+    cam.render(world, empty_lights);
 }
 
 fn perlin_spheres() {
@@ -185,7 +189,8 @@ fn perlin_spheres() {
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
     let world = world.into_bvh(); // Build BVH from world
-    cam.render(world);
+    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
+    cam.render(world, empty_lights);
 }
 
 fn quads() {
@@ -227,7 +232,8 @@ fn quads() {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh(); // Build BVH from world
-    cam.render(world);
+    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
+    cam.render(world, empty_lights);
 }
 
 fn simple_light() {
@@ -254,7 +260,8 @@ fn simple_light() {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
-    cam.render(world);
+    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
+    cam.render(world, empty_lights);
 }
 
 fn cornell_box() {
@@ -290,6 +297,15 @@ fn cornell_box() {
     );
     world.add(box2);
 
+    // Setup lights for importance sampling
+    let empty_material = Material::default();
+    let lights = Arc::new(Hittable::Quad(Quad::new(
+        &Point3::new(343.0, 554.0, 332.0), 
+        &Vec3::new(-130.0, 0.0, 0.0), 
+        &Vec3::new(0.0, 0.0, -105.0), 
+        Arc::new(empty_material)
+    )));
+
     // Glass sphere on top of box 2
     let sphere = Material::dielectric(1.5);
     let sphere = Sphere::new(&Point3::new(
@@ -297,14 +313,14 @@ fn cornell_box() {
         165.0 + 165.0/2.0, // Box height + radius
         65.0 + 104.0),   // Box offset + offset from y rotation 
         165.0/2.0, sphere);
-    world.add(sphere);
+    //world.add(sphere);
 
     let mut cam = Camera::default();
     cam.scene_name = "cornell_box".to_string();
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 1000;
+    cam.samples_per_pixel = 5000;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 
@@ -316,7 +332,7 @@ fn cornell_box() {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
-    cam.render(world);
+    cam.render(world, lights);
 }
 
 fn cornell_smoke() {
@@ -373,7 +389,8 @@ fn cornell_smoke() {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
-    cam.render(world);
+    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
+    cam.render(world, empty_lights);
 }
 
 fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32) {
@@ -507,7 +524,8 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32) {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
-    cam.render(world);
+    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
+    cam.render(world, empty_lights);
 }
 
 fn main() {
