@@ -223,9 +223,21 @@ impl Camera {
             return emitted_color;
         }
 
-        let light_pdf = Pdf::Hittable(HittablePdf::new(Arc::clone(lights), rec.point));
-        scattered = Ray::new_with_time(rec.point, light_pdf.generate(), r.time);
-        pdf_value = light_pdf.value(&scattered.direction);
+        /*
+        auto p0 = make_shared<hittable_pdf>(lights, rec.p);
+        auto p1 = make_shared<cosine_pdf>(rec.normal);
+        mixture_pdf mixed_pdf(p0, p1);
+
+        scattered = ray(rec.p, mixed_pdf.generate(), r.time());
+        pdf_value = mixed_pdf.value(scattered.direction());
+         */
+
+        let p0 = Pdf::hittable(lights.clone(), rec.point);
+        let p1 = Pdf::cosine(&rec.normal);
+        let mixed_pdf = Pdf::Mixture(MixturePdf::new(p0, p1));
+
+        scattered = Ray::new_with_time(rec.point, mixed_pdf.generate(), r.time);
+        pdf_value = mixed_pdf.value(&scattered.direction);
 
         let scattering_pdf = rec.material.scattering_pdf(r, rec, &scattered);
         

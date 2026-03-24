@@ -4,6 +4,7 @@ use std::sync::Arc;
 use crate::hittable::Hittable;
 use crate::onb::ONB;
 use crate::vec3::{Point3, Vec3};
+use crate::prelude::*;
 
 // ----- Enum for different PDF types -----
 
@@ -13,6 +14,7 @@ pub enum Pdf {
     Sphere(SpherePdf),
     Cosine(CosinePdf),
     Hittable(HittablePdf),
+    Mixture(MixturePdf),
 }
 
 impl Pdf {
@@ -23,6 +25,7 @@ impl Pdf {
             Pdf::Sphere(pdf) => pdf.value(direction),
             Pdf::Cosine(pdf) => pdf.value(direction),
             Pdf::Hittable(pdf) => pdf.value(direction),
+            Pdf::Mixture(pdf) => pdf.value(direction),
         }
     }
 
@@ -33,7 +36,23 @@ impl Pdf {
             Pdf::Sphere(pdf) => pdf.generate(),
             Pdf::Cosine(pdf) => pdf.generate(),
             Pdf::Hittable(pdf) => pdf.generate(),
+            Pdf::Mixture(pdf) => pdf.generate(),
         }
+    }
+
+    // Convenience Arc constructors
+
+    /// Create an Arc<Pdf> for a SpherePdf.
+    pub fn sphere() -> Arc<Self> {
+        Arc::new(Self::Sphere(SpherePdf::new()))
+    }
+    /// Create an Arc<Pdf> for a CosinePdf with the given normal direction.
+    pub fn cosine(w: &Vec3) -> Arc<Self> {
+        Arc::new(Self::Cosine(CosinePdf::new(w)))
+    }
+    /// Create an Arc<Pdf> for a HittablePdf with the given hittable objects and origin point.
+    pub fn hittable(objects: Arc<Hittable>, origin: Point3) -> Arc<Self> {
+        Arc::new(Self::Hittable(HittablePdf::new(objects, origin)))
     }
 }
 
@@ -105,5 +124,32 @@ impl HittablePdf {
     #[inline]
     fn generate(&self) -> Vec3 {
         self.objects.random(&self.origin)
+    }
+}
+
+// ----- Mixture PDF -----
+#[derive(Clone)]
+pub struct MixturePdf {
+    pdfs: [Arc<Pdf>; 2],
+}
+
+impl MixturePdf {
+    /// Creates a new MixturePdf instance with the given PDFs.
+    pub fn new(pdf1: Arc<Pdf>, pdf2: Arc<Pdf>) -> Self {
+        Self { pdfs: [pdf1, pdf2] }
+    }
+
+    #[inline]
+    fn value(&self, direction: &Vec3) -> f64 {
+        0.5 * self.pdfs[0].value(direction) + 0.5 * self.pdfs[1].value(direction)
+    }
+
+    #[inline]
+    fn generate(&self) -> Vec3 {
+        if random_f64() < 0.5 {
+            self.pdfs[0].generate()
+        } else {
+            self.pdfs[1].generate()
+        }
     }
 }
