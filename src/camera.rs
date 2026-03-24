@@ -1,6 +1,5 @@
-use crate::hittable::Hittable;
 use crate::prelude::*;
-use crate::hittable::{HitRecord};
+use crate::hittable::{Hittable, HitRecord};
 use crate::pdf::*;
 
 // External crates
