@@ -23,7 +23,7 @@ pub use constant_medium::ConstantMedium;
 
 use crate::ray::Ray;
 use crate::interval::Interval;
-use crate::vec3::Vec3;
+use crate::vec3::{Point3, Vec3};
 
 /// Enum representing different types of Hittable objects.
 #[derive(Clone)]
