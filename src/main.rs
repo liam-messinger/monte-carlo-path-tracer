@@ -423,12 +423,13 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32) {
 
     // Large area light
     let light = Material::diffuse_light(Color::new(7.0, 7.0, 7.0));
-    world.add(Quad::new(
+    let light_quad = Quad::new(
         &Point3::new(123.0, 554.0, 147.0),
         &Vec3::new(300.0, 0.0, 0.0),
         &Vec3::new(0.0, 0.0, 265.0),
         light,
-    ));
+    );
+    world.add(light_quad.clone());
 
     // Moving sphere
     let center1 = Point3::new(400.0, 400.0, 200.0);
@@ -524,8 +525,8 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32) {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
-    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
-    cam.render(world, empty_lights);
+    let light_target = Arc::new(Hittable::Quad(light_quad));
+    cam.render(world, light_target);
 }
 
 fn main() {
