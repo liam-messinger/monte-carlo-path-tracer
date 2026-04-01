@@ -222,18 +222,9 @@ impl Camera {
             return emitted_color;
         }
 
-        /*
-        auto p0 = make_shared<hittable_pdf>(lights, rec.p);
-        auto p1 = make_shared<cosine_pdf>(rec.normal);
-        mixture_pdf mixed_pdf(p0, p1);
-
-        scattered = ray(rec.p, mixed_pdf.generate(), r.time());
-        pdf_value = mixed_pdf.value(scattered.direction());
-         */
-
-        let p0 = Pdf::hittable(lights.clone(), rec.point);
-        let p1 = Pdf::cosine(&rec.normal);
-        let mixed_pdf = Pdf::Mixture(MixturePdf::new(p0, p1));
+        let p0 = PDF::hittable(lights.clone(), rec.point);
+        let p1 = PDF::cosine(&rec.normal);
+        let mixed_pdf = PDF::Mixture(MixturePDF::new(p0, p1));
 
         scattered = Ray::new_with_time(rec.point, mixed_pdf.generate(), r.time);
         pdf_value = mixed_pdf.value(&scattered.direction);

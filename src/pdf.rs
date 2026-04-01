@@ -8,24 +8,24 @@ use crate::prelude::*;
 
 // ----- Enum for different PDF types -----
 
-/// Pdf enum to represent different probability density function types.
+/// PDF enum to represent different probability density function types.
 #[derive(Clone)]
-pub enum Pdf {
-    Sphere(SpherePdf),
-    Cosine(CosinePdf),
-    Hittable(HittablePdf),
-    Mixture(MixturePdf),
+pub enum PDF {
+    Sphere(SpherePDF),
+    Cosine(CosinePDF),
+    Hittable(HittablePDF),
+    Mixture(MixturePDF),
 }
 
-impl Pdf {
+impl PDF {
     /// Evaluates the PDF value for a given direction.
     /// "How much does the PDF say that this direction is likely to be chosen?”
     pub fn value(&self, direction: &Vec3) -> f64 {
         match self {
-            Pdf::Sphere(pdf) => pdf.value(direction),
-            Pdf::Cosine(pdf) => pdf.value(direction),
-            Pdf::Hittable(pdf) => pdf.value(direction),
-            Pdf::Mixture(pdf) => pdf.value(direction),
+            PDF::Sphere(pdf) => pdf.value(direction),
+            PDF::Cosine(pdf) => pdf.value(direction),
+            PDF::Hittable(pdf) => pdf.value(direction),
+            PDF::Mixture(pdf) => pdf.value(direction),
         }
     }
 
@@ -33,26 +33,26 @@ impl Pdf {
     /// Effectively "What direction does the PDF say I should scatter in?"
     pub fn generate(&self) -> Vec3 {
         match self {
-            Pdf::Sphere(pdf) => pdf.generate(),
-            Pdf::Cosine(pdf) => pdf.generate(),
-            Pdf::Hittable(pdf) => pdf.generate(),
-            Pdf::Mixture(pdf) => pdf.generate(),
+            PDF::Sphere(pdf) => pdf.generate(),
+            PDF::Cosine(pdf) => pdf.generate(),
+            PDF::Hittable(pdf) => pdf.generate(),
+            PDF::Mixture(pdf) => pdf.generate(),
         }
     }
 
     // Convenience Arc constructors
 
-    /// Create an Arc<Pdf> for a SpherePdf.
+    /// Create an Arc<PDF> for a SpherePdf.
     pub fn sphere() -> Arc<Self> {
-        Arc::new(Self::Sphere(SpherePdf::new()))
+        Arc::new(Self::Sphere(SpherePDF::new()))
     }
-    /// Create an Arc<Pdf> for a CosinePdf with the given normal direction.
+    /// Create an Arc<PDF> for a CosinePdf with the given normal direction.
     pub fn cosine(w: &Vec3) -> Arc<Self> {
-        Arc::new(Self::Cosine(CosinePdf::new(w)))
+        Arc::new(Self::Cosine(CosinePDF::new(w)))
     }
-    /// Create an Arc<Pdf> for a HittablePdf with the given hittable objects and origin point.
+    /// Create an Arc<PDF> for a HittablePdf with the given hittable objects and origin point.
     pub fn hittable(objects: Arc<Hittable>, origin: Point3) -> Arc<Self> {
-        Arc::new(Self::Hittable(HittablePdf::new(objects, origin)))
+        Arc::new(Self::Hittable(HittablePDF::new(objects, origin)))
     }
 }
 
@@ -60,11 +60,11 @@ impl Pdf {
 
 /// A uniform PDF over the unit sphere.
 #[derive(Clone)]
-pub struct SpherePdf;
+pub struct SpherePDF;
 
-impl SpherePdf {
+impl SpherePDF {
     /// Creates a new SpherePdf instance.
-    pub fn new() -> Self { SpherePdf }
+    pub fn new() -> Self { SpherePDF }
     
     #[inline]
     fn value(&self, _direction: &Vec3) -> f64 {
@@ -81,11 +81,11 @@ impl SpherePdf {
 
 /// A cosine-weighted PDF oriented around a given normal direction.
 #[derive(Clone)]
-pub struct CosinePdf {
+pub struct CosinePDF {
     uvw: ONB,
 }
 
-impl CosinePdf {
+impl CosinePDF {
     /// Creates a new CosinePdf instance with the given normal direction.
     pub fn new(w: &Vec3) -> Self {
         Self { uvw: ONB::new(w) }
@@ -105,12 +105,12 @@ impl CosinePdf {
 
 // ----- Hittable PDF -----
 #[derive(Clone)]
-pub struct HittablePdf {
+pub struct HittablePDF {
     objects: Arc<Hittable>,
     origin: Point3,
 }
 
-impl HittablePdf {
+impl HittablePDF {
     /// Creates a new HittablePdf instance for the given hittable objects and origin point.
     pub fn new(objects: Arc<Hittable>, origin: Point3) -> Self {
         Self { objects, origin }
@@ -129,13 +129,13 @@ impl HittablePdf {
 
 // ----- Mixture PDF -----
 #[derive(Clone)]
-pub struct MixturePdf {
-    pdfs: [Arc<Pdf>; 2],
+pub struct MixturePDF {
+    pdfs: [Arc<PDF>; 2],
 }
 
-impl MixturePdf {
+impl MixturePDF {
     /// Creates a new MixturePdf instance with the given PDFs.
-    pub fn new(pdf1: Arc<Pdf>, pdf2: Arc<Pdf>) -> Self {
+    pub fn new(pdf1: Arc<PDF>, pdf2: Arc<PDF>) -> Self {
         Self { pdfs: [pdf1, pdf2] }
     }
 
