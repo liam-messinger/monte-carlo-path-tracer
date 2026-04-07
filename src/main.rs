@@ -280,11 +280,12 @@ fn cornell_box() {
     world.add(Quad::new(&Point3::new(0.0, 0.0, 555.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), white.clone()));
 
     // Box 1
+    let aluminum = Material::metal(Color::new(0.8, 0.85, 0.88), 0.0);
     let box1 = Cuboid::from_center_rotate_y(
         &Point3::new(365.0, 330.0/2.0, 325.0), 
         &Vec3::new(165.0, 330.0, 165.0), 
         15.0,
-        white.clone(),
+        aluminum.clone(),
     );
     world.add(box1);
 
@@ -320,7 +321,7 @@ fn cornell_box() {
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 5000;
+    cam.samples_per_pixel = 1000;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 

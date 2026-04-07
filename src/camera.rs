@@ -1,3 +1,4 @@
+use crate::material::ScatterRecord;
 use crate::prelude::*;
 use crate::hittable::{Hittable, HitRecord};
 use crate::pdf::*;
@@ -202,7 +203,7 @@ impl Camera {
 
     /// Compute the color seen along a ray.
     #[inline]
-    fn ray_color(&self, r: &Ray, depth: u32, world: &Hittable, lights: &Arc<Hittable>,rec: &mut HitRecord) -> Color {
+    fn ray_color(&self, r: &Ray, depth: u32, world: &Hittable, lights: &Arc<Hittable>, rec: &mut HitRecord) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered.
         if depth <= 0 { return Color::zero(); }
 
@@ -211,27 +212,39 @@ impl Camera {
             return self.background;
         }
 
-        let mut scattered = Ray::default();
-        let mut attenuation = Color::default();
-        let mut pdf_value: f64 = 1.0;
         // TODO: Consider simplifying emitted() to just take rec, since rec.u, rec.v, rec.point are redundant
+        // Emitted light from the hit point itself, before scattering
         let emitted_color = rec.material.emitted(r, rec, rec.u, rec.v, &rec.point);
 
-        // If the material does not scatter, return emitted light only
-        if !rec.material.scatter(r, rec, &mut attenuation, &mut scattered, &mut pdf_value) {
+        // Ask the material how it wants to scatter
+        let mut srec = ScatterRecord::default();
+        if !rec.material.scatter(r, rec, &mut srec) {
             return emitted_color;
         }
 
-        let p0 = PDF::hittable(lights.clone(), rec.point);
-        let p1 = PDF::cosine(&rec.normal);
-        let mixed_pdf = PDF::Mixture(MixturePDF::new(p0, p1));
+        // Specular path: follow the provided ray with no PDF work
+        if srec.skip_pdf {
+            let spec_color = self.ray_color(&srec.skip_pdf_ray, depth - 1, world, lights, rec);
+            return emitted_color + srec.attenuation * spec_color;
+        }
 
-        scattered = Ray::new_with_time(rec.point, mixed_pdf.generate(), r.time);
-        pdf_value = mixed_pdf.value(&scattered.direction);
+        // Diffuse path: build mixture PDF from light + material PDFs
+        let light_pdf = PDF::hittable(lights.clone(), rec.point); // TODO: Do we need to clone the lights Arc here?
+        let mat_pdf = srec
+            .pdf_ptr
+            .as_ref()
+            .expect("scatter: pdf_ptr must be Some when skip_pdf is false")
+            .clone();
+
+        let mixture_pdf = PDF::mixture(light_pdf, mat_pdf);
+
+        let scattered = Ray::new_with_time(rec.point, mixture_pdf.generate(), r.time);
+        let pdf_value = mixture_pdf.value(&scattered.direction);
 
         let scattering_pdf = rec.material.scattering_pdf(r, rec, &scattered);
         
-        let scattered_color = (attenuation * scattering_pdf * self.ray_color(&scattered, depth - 1, world, lights, rec)) / pdf_value;
+        let sample_color = self.ray_color(&scattered, depth - 1, world, lights, rec);
+        let scattered_color = (srec.attenuation * scattering_pdf * sample_color) / pdf_value;
 
         emitted_color + scattered_color
     }

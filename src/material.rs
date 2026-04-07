@@ -1,10 +1,32 @@
 use std::sync::Arc;
 use std::f64::consts::PI;
 
-use crate::hittable::{HitRecord};
+use crate::hittable::HitRecord;
+use crate::pdf::PDF;
 use crate::prelude::*;
 use crate::texture::{Texture, SolidColor};
-use crate::onb::ONB;
+
+// ----- Scatter record for material sampling -----
+
+/// Record describing how a material scatters light at a hit point.
+#[derive(Clone)]
+pub struct ScatterRecord {
+    pub attenuation: Color,
+    pub pdf_ptr: Option<Arc<PDF>>, // PDF used for diffuse scattering
+    pub skip_pdf: bool,            // true for specular/implicit sampling
+    pub skip_pdf_ray: Ray,         // ray to follow when skip_pdf is true
+}
+
+impl Default for ScatterRecord {
+    fn default() -> Self {
+        Self {
+            attenuation: Color::zero(),
+            pdf_ptr: None,
+            skip_pdf: false,
+            skip_pdf_ray: Ray::default(),
+        }
+    }
+}
 
 // ----- Enum for different material types -----
 
@@ -22,13 +44,13 @@ pub enum Material {
 impl Material {
     /// Implementation of scatter method for Material enum
     #[inline]
-    pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, pdf: &mut f64) -> bool {
+    pub fn scatter(&self, ray_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
         match self {
-            Material::Lambertian(mat) => mat.scatter(ray_in, rec, attenuation, scattered, pdf),
-            Material::Metal(mat) => mat.scatter(ray_in, rec, attenuation, scattered, pdf),
-            Material::Dielectric(mat) => mat.scatter(ray_in, rec, attenuation, scattered, pdf),
+            Material::Lambertian(mat) => mat.scatter(ray_in, rec, srec),
+            Material::Metal(mat) => mat.scatter(ray_in, rec, srec),
+            Material::Dielectric(mat) => mat.scatter(ray_in, rec, srec),
             Material::DiffuseLight(_) => false, // DiffuseLight does not scatter
-            Material::Isotropic(mat) => mat.scatter(ray_in, rec, attenuation, scattered, pdf),
+            Material::Isotropic(mat) => mat.scatter(ray_in, rec, srec),
             // Etc.
         }
     }
@@ -150,16 +172,10 @@ impl Lambertian {
 
     /// Scatter method for a Lambertian material.
     #[inline]
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, pdf: &mut f64) -> bool {
-        // Create an ONB with w aligned to the hit normal
-        let uvw = ONB::new(&rec.normal);
-        // Sample a random direction in the hemisphere oriented around the normal using cosine-weighted sampling
-        let scatter_direction = uvw.transform(&Vec3::random_cosine_direction());
-        
-        *scattered = Ray::new_with_time(rec.point, Vec3::unit_vector(&scatter_direction), ray_in.time);
-        *attenuation = self.tex.value(rec.u, rec.v, &rec.point);
-        // “what distribution did we actually use to pick this scattered direction?”
-        *pdf = Vec3::dot(&uvw.w(), &scattered.direction) / PI;
+    fn scatter(&self, _ray_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
+        srec.attenuation = self.tex.value(rec.u, rec.v, &rec.point);
+        srec.pdf_ptr = Some(PDF::cosine(&rec.normal)); // TODO: Is this inefficient to create a new CosinePDF for every scatter call?
+        srec.skip_pdf = false;
         true
     }
 
@@ -192,12 +208,16 @@ impl Metal {
 
     /// Scatter method for a Metal material.
     #[inline]
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, _pdf: &mut f64) -> bool {
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
         let mut reflected = Vec3::reflect(&ray_in.direction, &rec.normal);
         reflected = Vec3::unit_vector(&reflected) + (self.fuzz * Vec3::random_unit_vector());
-        *scattered = Ray::new_with_time(rec.point, reflected, ray_in.time);
-        *attenuation = self.albedo;
-        Vec3::dot(&scattered.direction, &rec.normal) > 0.0
+
+        srec.attenuation = self.albedo;
+        srec.pdf_ptr = None;
+        srec.skip_pdf = true;
+        srec.skip_pdf_ray = Ray::new_with_time(rec.point, reflected, ray_in.time);
+
+        true
     }
 }
 
@@ -227,8 +247,11 @@ impl Dielectric {
 
     /// Scatter method for a Dielectric material.
     #[inline]
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, _pdf: &mut f64) -> bool {
-        *attenuation = Color::new(1.0, 1.0, 1.0); // No attenuation for Dielectric
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
+        srec.attenuation = Color::new(1.0, 1.0, 1.0);
+        srec.pdf_ptr = None;
+        srec.skip_pdf = true;
+
         let ri: f64 = if rec.front_face { 1.0 / self.refraction_index } else { self.refraction_index };
 
         let unit_direction = Vec3::unit_vector(&ray_in.direction);
@@ -243,7 +266,7 @@ impl Dielectric {
             Vec3::refract(&unit_direction, &rec.normal, ri)
         };
 
-        *scattered = Ray::new_with_time(rec.point, direction, ray_in.time);
+        srec.skip_pdf_ray = Ray::new_with_time(rec.point, direction, ray_in.time);
         true
     }
 }
@@ -304,10 +327,10 @@ impl Isotropic {
 
     /// Scatter method for Isotropic material.
     #[inline]
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray, pdf: &mut f64) -> bool {
-        *scattered = Ray::new_with_time(rec.point, Vec3::random_unit_vector(), ray_in.time);
-        *attenuation = self.tex.value(rec.u, rec.v, &rec.point);
-        *pdf = 1.0 / (4.0 * PI); // Uniform scattering in all directions
+    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
+        srec.attenuation = self.tex.value(rec.u, rec.v, &rec.point);
+        srec.pdf_ptr = Some(PDF::sphere());
+        srec.skip_pdf = false;
         true
     }
 

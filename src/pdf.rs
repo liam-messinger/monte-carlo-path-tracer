@@ -54,6 +54,10 @@ impl PDF {
     pub fn hittable(objects: Arc<Hittable>, origin: Point3) -> Arc<Self> {
         Arc::new(Self::Hittable(HittablePDF::new(objects, origin)))
     }
+    /// Create an Arc<PDF> for a MixturePdf with the given PDFs.
+    pub fn mixture(pdf1: Arc<Self>, pdf2: Arc<Self>) -> Arc<Self> {
+        Arc::new(Self::Mixture(MixturePDF::new(pdf1, pdf2)))
+    }
 }
 
 // ----- Sphere PDF -----
