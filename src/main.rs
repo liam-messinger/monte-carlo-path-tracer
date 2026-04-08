@@ -280,23 +280,18 @@ fn cornell_box() {
     world.add(Quad::new(&Point3::new(0.0, 0.0, 555.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), white.clone()));
 
     // Box 1
-    let aluminum = Material::metal(Color::new(0.8, 0.85, 0.88), 0.0);
+    //let aluminum = Material::metal(Color::new(0.8, 0.85, 0.88), 0.0);
     let box1 = Cuboid::from_center_rotate_y(
         &Point3::new(365.0, 330.0/2.0, 325.0), 
         &Vec3::new(165.0, 330.0, 165.0), 
         15.0,
-        aluminum.clone(),
+        white.clone(),
     );
     world.add(box1);
 
-    // Box 2
-    let box2 = Cuboid::from_center_rotate_y(
-        &Point3::new(130.0 + 53.0, 165.0/2.0, 65.0 + 104.0), 
-        &Vec3::new(165.0, 165.0, 165.0), 
-        -18.0,
-        white.clone(),
-    );
-    world.add(box2);
+    // Glass sphere
+    let glass = Material::dielectric(1.5);
+    world.add(Sphere::new(&Point3::new(190.0, 90.0, 190.0), 90.0, glass));
 
     // Setup lights for importance sampling
     let empty_material = Material::default();
@@ -307,21 +302,12 @@ fn cornell_box() {
         Arc::new(empty_material)
     )));
 
-    // Glass sphere on top of box 2
-    let sphere = Material::dielectric(1.5);
-    let sphere = Sphere::new(&Point3::new(
-        130.0 + 53.0,    // Box offset + offset from y rotation
-        165.0 + 165.0/2.0, // Box height + radius
-        65.0 + 104.0),   // Box offset + offset from y rotation 
-        165.0/2.0, sphere);
-    //world.add(sphere);
-
     let mut cam = Camera::default();
     cam.scene_name = "cornell_box".to_string();
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 1000;
+    cam.samples_per_pixel = 5000;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 

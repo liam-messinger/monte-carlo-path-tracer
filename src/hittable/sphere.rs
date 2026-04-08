@@ -4,6 +4,8 @@ use crate::interval::Interval;
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
+use crate::onb::ONB;
+use crate::prelude::random_f64;
 
 use std::f64::consts::PI;
 use std::sync::Arc;
@@ -93,6 +95,42 @@ impl Sphere {
 
         *u = phi / (2.0 * PI);
         *v = theta / PI;
+    }
+
+    /// Get the PDF value for a ray hitting the sphere from a given origin in a given direction.
+    pub fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
+        // This only works for stationary spheres (center is time-independent)
+        let mut rec = HitRecord::default();
+        if !self.hit(&Ray::new(*origin, *direction), &Interval::new(0.001, f64::INFINITY), &mut rec) {
+            return 0.0;
+        }
+
+        let dist_squared = (self.center.at(0.0) - *origin).length_squared();
+        let cos_theta_max = (1.0 - self.radius * self.radius).sqrt() / dist_squared.sqrt();
+        let solid_angle = 2.0 * PI * (1.0 - cos_theta_max);
+
+        1.0 / solid_angle
+    }
+
+    /// Generate a random direction from the given origin towards the sphere.
+    pub fn random(&self, origin: &Point3) -> Vec3 {
+        let direction = self.center.at(0.0) - *origin;
+        let distance_squared = direction.length_squared();
+        let uvw = ONB::new(&direction);
+        uvw.transform(&Self::random_to_sphere(self.radius, distance_squared))
+    }
+
+    /// Private method to generate a random direction towards the sphere.
+    fn random_to_sphere(radius: f64, distance_squared: f64) -> Vec3 {
+        let r1 = random_f64();
+        let r2 = random_f64();
+        let z = 1.0 + r2 * ((1.0 - radius * radius / distance_squared).sqrt() - 1.0);
+
+        let phi = 2.0 * PI * r1;
+        let x = phi.cos() * (1.0 - z * z).sqrt();
+        let y = phi.sin() * (1.0 - z * z).sqrt();
+
+        Vec3::new(x, y, z)
     }
 }
 
