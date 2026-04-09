@@ -48,7 +48,7 @@ pub fn random_i32(min: i32, max: i32) -> i32 {
 
 /// Generate a random usize in [min,max].
 #[inline]
-pub fn random_usize_range(min: usize, max: usize) -> usize {
+pub fn random_usize(min: usize, max: usize) -> usize {
     // Returns a random usize in [min,max].
     rand::rng().random_range(min..=max)
 }

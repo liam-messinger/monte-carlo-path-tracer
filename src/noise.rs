@@ -84,7 +84,7 @@ impl Noise {
     /// Permute the given array in place.
     fn permute(p: &mut [usize; POINT_COUNT], n: usize) {
         for i in (1..n).rev() {
-            let target = random_usize_range(0, i);
+            let target = random_usize(0, i);
             p.swap(i, target);
         }
     }

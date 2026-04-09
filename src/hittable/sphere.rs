@@ -106,7 +106,7 @@ impl Sphere {
         }
 
         let dist_squared = (self.center.at(0.0) - *origin).length_squared();
-        let cos_theta_max = (1.0 - self.radius * self.radius).sqrt() / dist_squared.sqrt();
+        let cos_theta_max = (1.0 - self.radius * self.radius / dist_squared).sqrt();
         let solid_angle = 2.0 * PI * (1.0 - cos_theta_max);
 
         1.0 / solid_angle

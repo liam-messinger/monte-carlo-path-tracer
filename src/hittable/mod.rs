@@ -75,6 +75,7 @@ impl Hittable {
     /// Get the PDF value for a ray hitting the Hittable object from a given origin in a given direction.
     pub fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
         match self {
+            Hittable::HittableList(list) => list.pdf_value(origin, direction),
             Hittable::Quad(quad) => quad.pdf_value(origin, direction),
             Hittable::Sphere(sphere) => sphere.pdf_value(origin, direction),
             _ => 0.0, // Default to 0 for objects that don't implement PDF
@@ -84,6 +85,7 @@ impl Hittable {
     /// Generate a random direction from the given origin towards the Hittable object.
     pub fn random(&self, origin: &Point3) -> Vec3 {
         match self {
+            Hittable::HittableList(list) => list.random(origin),
             Hittable::Quad(quad) => quad.random(origin),
             Hittable::Sphere(sphere) => sphere.random(origin),
             _ => Vec3::new(1.0, 0.0, 0.0), // Default direction for objects that don't implement random

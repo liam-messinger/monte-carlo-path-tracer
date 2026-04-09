@@ -1,7 +1,9 @@
 use super::{HitRecord, Hittable, BVHNode, AABB};
 
+use crate::prelude::{random_usize};
 use crate::ray::Ray;
 use crate::interval::Interval;
+use crate::vec3::{Point3, Vec3};
 
 use std::sync::Arc;
 
@@ -74,6 +76,24 @@ impl HittableList {
     /// Get bounding box of the hittable list.
     pub fn bounding_box(&self) -> &AABB {
         &self.bounding_box
+    }
+
+    /// Get the PDF value for a given ray direction.
+    pub fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
+        let weight = 1.0 / self.objects.len() as f64;
+        let mut sum = 0.0;
+
+        for object in &self.objects {
+            sum += weight * object.pdf_value(origin, direction);
+        }
+        sum
+    }
+
+    /// Generate a random direction from the given origin towards the hittable list.
+    pub fn random(&self, origin: &Point3) -> Vec3 {
+        let size = self.objects.len();
+        let index = random_usize(0, size - 1);
+        self.objects[index].random(origin)
     }
 }
 

@@ -270,11 +270,9 @@ fn cornell_box() {
     let red = Material::lambertian(Color::new(0.65, 0.05, 0.05));
     let white = Material::lambertian(Color::new(0.73, 0.73, 0.73));
     let green = Material::lambertian(Color::new(0.12, 0.45, 0.15));
-    let light = Material::diffuse_light(Color::new(15.0, 15.0, 15.0));
 
     world.add(Quad::new(&Point3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), &Vec3::new(0.0, 0.0, 555.0), green));
     world.add(Quad::new(&Point3::new(0.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), &Vec3::new(0.0, 0.0, 555.0), red));
-    world.add(Quad::new(&Point3::new(343.0, 554.0, 332.0), &Vec3::new(-130.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, -105.0), light));
     world.add(Quad::new(&Point3::new(0.0, 0.0, 0.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, 555.0), white.clone()));
     world.add(Quad::new(&Point3::new(555.0, 555.0, 555.0), &Vec3::new(-555.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, -555.0), white.clone()));
     world.add(Quad::new(&Point3::new(0.0, 0.0, 555.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), white.clone()));
@@ -290,24 +288,27 @@ fn cornell_box() {
     world.add(box1);
 
     // Glass sphere
-    let glass = Material::dielectric(1.5);
-    world.add(Sphere::new(&Point3::new(190.0, 90.0, 190.0), 90.0, glass));
+    let glass_mat = Material::dielectric(1.5);
+    let glass_sphere = Sphere::new(&Point3::new(190.0, 90.0, 190.0), 90.0, glass_mat);
+    world.add(glass_sphere.clone());
 
-    // Setup lights for importance sampling
-    let empty_material = Material::default();
-    let lights = Arc::new(Hittable::Quad(Quad::new(
-        &Point3::new(343.0, 554.0, 332.0), 
-        &Vec3::new(-130.0, 0.0, 0.0), 
-        &Vec3::new(0.0, 0.0, -105.0), 
-        Arc::new(empty_material)
-    )));
+    // Light quad
+    let light_mat = Material::diffuse_light(Color::new(15.0, 15.0, 15.0));
+    let light_quad = Quad::new(&Point3::new(343.0, 554.0, 332.0), &Vec3::new(-130.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, -105.0), light_mat);
+    world.add(light_quad.clone());
+
+    // Setup for importance sampling
+    let mut lights_list = HittableList::new();
+    lights_list.add(light_quad);
+    lights_list.add(glass_sphere);
+    let lights = Arc::new(Hittable::HittableList(lights_list));
 
     let mut cam = Camera::default();
     cam.scene_name = "cornell_box".to_string();
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 5000;
+    cam.samples_per_pixel = 10000;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 
