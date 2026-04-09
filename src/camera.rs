@@ -241,7 +241,16 @@ impl Camera {
         let scattered = Ray::new_with_time(rec.point, mixture_pdf.generate(), r.time);
         let pdf_value = mixture_pdf.value(&scattered.direction);
 
+        // Guard against invalid or zero PDFs, which would cause NaNs (0/0, inf)
+        if pdf_value <= 0.0 || !pdf_value.is_finite() {
+            return emitted_color;
+        }
+
         let scattering_pdf = rec.material.scattering_pdf(r, rec, &scattered);
+
+        if scattering_pdf <= 0.0 || !scattering_pdf.is_finite() {
+            return emitted_color;
+        }
         
         let sample_color = self.ray_color(&scattered, depth - 1, world, lights, rec);
         let scattered_color = (srec.attenuation * scattering_pdf * sample_color) / pdf_value;
