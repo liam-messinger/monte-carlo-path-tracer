@@ -70,11 +70,13 @@ impl SpherePDF {
     /// Creates a new SpherePdf instance.
     pub fn new() -> Self { SpherePDF }
     
+    /// Evaluates the PDF value for a given direction. For a uniform sphere, this is constant.
     #[inline]
     fn value(&self, _direction: &Vec3) -> f64 {
         1.0 / (4.0 * PI)
     }
 
+    /// Generates a random direction uniformly distributed over the sphere.
     #[inline]
     fn generate(&self) -> Vec3 {
         Vec3::random_unit_vector()
@@ -95,12 +97,15 @@ impl CosinePDF {
         Self { uvw: ONB::new(w) }
     }
 
+    /// Evaluates the PDF value for a given direction.
+    /// This is the cosine of the angle between the direction and the normal, divided by PI.
     #[inline]
     fn value(&self, direction: &Vec3) -> f64 {
         let cosine_theta = Vec3::dot(&Vec3::unit_vector(direction), &self.uvw.w());
         f64::max(0.0, cosine_theta) / PI
     }
 
+    /// Generates a random direction according to the cosine-weighted distribution.
     #[inline]
     fn generate(&self) -> Vec3 {
         self.uvw.transform(&Vec3::random_cosine_direction())
@@ -120,11 +125,13 @@ impl HittablePDF {
         Self { objects, origin }
     }
 
+    /// Evaluates the PDF value for a given direction by delegating to the hittable objects.
     #[inline]
     fn value(&self, direction: &Vec3) -> f64 {
         self.objects.pdf_value(&self.origin, direction)
     }
 
+    /// Generates a random direction according to the PDF defined by the hittable objects.
     #[inline]
     fn generate(&self) -> Vec3 {
         self.objects.random(&self.origin)
@@ -143,11 +150,13 @@ impl MixturePDF {
         Self { pdfs: [pdf1, pdf2] }
     }
 
+    /// Evaluates the PDF value for a given direction by averaging the values from the two PDFs.
     #[inline]
     fn value(&self, direction: &Vec3) -> f64 {
         0.5 * self.pdfs[0].value(direction) + 0.5 * self.pdfs[1].value(direction)
     }
 
+    /// Generates a random direction according to the mixture PDF by randomly choosing one of the two PDFs.
     #[inline]
     fn generate(&self) -> Vec3 {
         if random_f64() < 0.5 {
