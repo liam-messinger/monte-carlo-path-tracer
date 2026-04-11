@@ -7,6 +7,7 @@ use crate::pdf::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use std::sync::Arc;
+use std::time::Instant;
 //use image::ImageBuffer;
 
 /// Camera struct defining the viewpoint and rendering parameters.
@@ -52,6 +53,8 @@ impl Camera {
         //*
         self.initialize();
 
+        let start_time = Instant::now();
+
         let width = self.image_width;
         let height = self.image_height;
         let max_depth = self.max_depth;
@@ -87,14 +90,21 @@ impl Camera {
 
         pb.finish_with_message("Render complete!");
 
+        // Calculate elapsed time
+        let elapsed = start_time.elapsed();
+        let minutes = elapsed.as_secs() / 60;
+        let seconds = elapsed.as_secs() % 60;
+        let time_str = format!("{}m{}s", minutes, seconds);
+
         // Generate output filename with dimensions and characteristics
         let filename = format!(
-            "{}_{}x{}_{}spp_{}depth.png",
+            "{}_{}x{}_{}spp_{}depth_{}.png",
             if self.scene_name.is_empty() { "render" } else { &self.scene_name },
             width,
             height,
             self.samples_per_pixel,
-            max_depth
+            max_depth,
+            time_str
         );
 
         // Build the image and save
