@@ -278,14 +278,14 @@ fn cornell_box() {
     world.add(Quad::new(&Point3::new(0.0, 0.0, 555.0), &Vec3::new(555.0, 0.0, 0.0), &Vec3::new(0.0, 555.0, 0.0), white.clone()));
 
     // Box 1
-    //let aluminum = Material::metal(Color::new(0.8, 0.85, 0.88), 0.0);
+    let aluminum = Material::metal(Color::new(0.8, 0.85, 0.88), 0.0);
     let box1 = Cuboid::from_center_rotate_y(
         &Point3::new(365.0, 330.0/2.0, 325.0), 
         &Vec3::new(165.0, 330.0, 165.0), 
         15.0,
-        white.clone(),
+        aluminum.clone(),
     );
-    world.add(box1);
+    world.add(box1.clone());
 
     // Glass sphere
     let glass_mat = Material::dielectric(1.5);
@@ -298,17 +298,18 @@ fn cornell_box() {
     world.add(light_quad.clone());
 
     // Setup for importance sampling
-    let mut lights_list = HittableList::new();
-    lights_list.add(light_quad);
-    lights_list.add(glass_sphere);
-    let lights = Arc::new(Hittable::HittableList(lights_list));
+    let mut sampling_list = HittableList::new();
+    sampling_list.add(light_quad);
+    sampling_list.add(glass_sphere);
+    sampling_list.add(box1);
+    let sampling_list = Arc::new(Hittable::HittableList(sampling_list));
 
     let mut cam = Camera::default();
     cam.scene_name = "cornell_box".to_string();
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 10000;
+    cam.samples_per_pixel = 1000;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 
@@ -320,7 +321,7 @@ fn cornell_box() {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
-    cam.render(world, lights);
+    cam.render(world, sampling_list);
 }
 
 fn cornell_smoke() {

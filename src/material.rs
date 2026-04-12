@@ -327,7 +327,7 @@ impl Isotropic {
 
     /// Scatter method for Isotropic material.
     #[inline]
-    fn scatter(&self, ray_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
+    fn scatter(&self, _ray_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
         srec.attenuation = self.tex.value(rec.u, rec.v, &rec.point);
         srec.pdf_ptr = Some(PDF::sphere());
         srec.skip_pdf = false;
