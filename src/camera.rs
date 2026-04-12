@@ -47,7 +47,7 @@ impl Camera {
     // ----- Public -----
 
     /// Render the scene from this camera's point of view.
-    pub fn render (&mut self, world: impl Into<Hittable>, lights: Arc<Hittable>) {
+    pub fn render (&mut self, world: impl Into<Hittable>, sample_target: Arc<Hittable>) {
         let world: Hittable = world.into();
 
         //*
@@ -76,7 +76,7 @@ impl Camera {
                     for s_j in 0..self.sqrt_spp {
                         for s_i in 0..self.sqrt_spp {
                             let r: Ray = self.get_ray(i as u32, j as u32, s_i, s_j);
-                            pixel_color += self.ray_color(&r, max_depth, &world, &lights, &mut rec);
+                            pixel_color += self.ray_color(&r, max_depth, &world, &sample_target, &mut rec);
                         }
                     }
                     pixel_color *= self.pixel_samples_scaled;
@@ -213,7 +213,7 @@ impl Camera {
 
     /// Compute the color seen along a ray.
     #[inline]
-    fn ray_color(&self, r: &Ray, depth: u32, world: &Hittable, lights: &Arc<Hittable>, rec: &mut HitRecord) -> Color {
+    fn ray_color(&self, r: &Ray, depth: u32, world: &Hittable, sample_target: &Arc<Hittable>, rec: &mut HitRecord) -> Color {
         // If we've exceeded the ray bounce limit, no more light is gathered.
         if depth <= 0 { return Color::zero(); }
 
@@ -234,19 +234,19 @@ impl Camera {
 
         // Specular path: follow the provided ray with no PDF work
         if srec.skip_pdf {
-            let spec_color = self.ray_color(&srec.skip_pdf_ray, depth - 1, world, lights, rec);
+            let spec_color = self.ray_color(&srec.skip_pdf_ray, depth - 1, world, sample_target, rec);
             return emitted_color + srec.attenuation * spec_color;
         }
 
         // Diffuse path: build mixture PDF from light + material PDFs
-        let light_pdf = PDF::hittable(lights.clone(), rec.point); // TODO: Do we need to clone the lights Arc here?
+        let importance_sampling_pdf = PDF::hittable(sample_target.clone(), rec.point); // TODO: Do we need to clone the lights Arc here?
         let mat_pdf = srec
             .pdf_ptr
             .as_ref()
             .expect("scatter: pdf_ptr must be Some when skip_pdf is false")
             .clone();
 
-        let mixture_pdf = PDF::mixture(light_pdf, mat_pdf);
+        let mixture_pdf = PDF::mixture(importance_sampling_pdf, mat_pdf);
 
         let scattered = Ray::new_with_time(rec.point, mixture_pdf.generate(), r.time);
         let pdf_value = mixture_pdf.value(&scattered.direction);
@@ -262,7 +262,7 @@ impl Camera {
             return emitted_color;
         }
         
-        let sample_color = self.ray_color(&scattered, depth - 1, world, lights, rec);
+        let sample_color = self.ray_color(&scattered, depth - 1, world, sample_target, rec);
         let scattered_color = (srec.attenuation * scattering_pdf * sample_color) / pdf_value;
 
         emitted_color + scattered_color
