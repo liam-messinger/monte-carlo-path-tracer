@@ -80,9 +80,13 @@ impl HittableList {
 
     /// Get the PDF value for a given ray direction.
     pub fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
-        let weight = 1.0 / self.objects.len() as f64;
-        let mut sum = 0.0;
+        let len = self.objects.len();
+        if len == 0 {
+            return 0.0;
+        }
 
+        let weight = 1.0 / len as f64;
+        let mut sum = 0.0;
         for object in &self.objects {
             sum += weight * object.pdf_value(origin, direction);
         }
@@ -91,8 +95,12 @@ impl HittableList {
 
     /// Generate a random direction from the given origin towards the hittable list.
     pub fn random(&self, origin: &Point3) -> Vec3 {
-        let size = self.objects.len();
-        let index = random_usize(0, size - 1);
+        let len = self.objects.len();
+        if len == 0 {
+            return Vec3::new(1.0, 0.0, 0.0);
+        }
+
+        let index = random_usize(0, len - 1);
         self.objects[index].random(origin)
     }
 }
