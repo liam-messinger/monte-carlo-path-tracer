@@ -118,6 +118,11 @@ impl Quad {
         let p = self.Q + (random_f64() * self.u) + (random_f64() * self.v);
         p - *origin
     }
+
+    /// Getter for the area of the quad.
+    pub fn area(&self) -> f64 {
+        self.area
+    }
 }
 
 // From Quad to Hittable implementation
