@@ -47,10 +47,9 @@ impl Camera {
     // ----- Public -----
 
     /// Render the scene from this camera's point of view.
-    pub fn render (&mut self, world: impl Into<Hittable>, sample_target: Arc<Hittable>) {
+    pub fn render (&mut self, world: impl Into<Hittable>, sample_target: Option<Arc<Hittable>>) {
         let world: Hittable = world.into();
 
-        //*
         self.initialize();
 
         let start_time = Instant::now();
@@ -76,7 +75,13 @@ impl Camera {
                     for s_j in 0..self.sqrt_spp {
                         for s_i in 0..self.sqrt_spp {
                             let r: Ray = self.get_ray(i as u32, j as u32, s_i, s_j);
-                            pixel_color += self.ray_color(&r, max_depth, &world, &sample_target, &mut rec);
+                            pixel_color += self.ray_color(
+                                &r, 
+                                max_depth, 
+                                &world, 
+                                sample_target.as_ref(), // pass Option<&Arc<Hittable>>
+                                &mut rec
+                            );
                         }
                     }
                     pixel_color *= self.pixel_samples_scaled;
@@ -213,7 +218,7 @@ impl Camera {
 
     /// Compute the color seen along a ray.
     #[inline]
-    fn ray_color(&self, r: &Ray, depth: u32, world: &Hittable, sample_target: &Arc<Hittable>, rec: &mut HitRecord) -> Color {
+    fn ray_color(&self, r: &Ray, depth: u32, world: &Hittable, sample_target: Option<&Arc<Hittable>>, rec: &mut HitRecord) -> Color { // TODO: change method declarations all over the place to separate input parameters onto separate lines for readability
         // If we've exceeded the ray bounce limit, no more light is gathered.
         if depth <= 0 { return Color::zero(); }
 
@@ -238,26 +243,32 @@ impl Camera {
             return emitted_color + srec.attenuation * spec_color;
         }
 
-        // Diffuse path: build mixture PDF from light + material PDFs
-        let importance_sampling_pdf = PDF::hittable(sample_target.clone(), rec.point); // TODO: Do we need to clone the lights Arc here?
+        // Diffuse path: build mixture PDF or just use material PDF if no sample target
         let mat_pdf = srec
             .pdf_ptr
             .as_ref()
             .expect("scatter: pdf_ptr must be Some when skip_pdf is false")
             .clone();
-
-        let mixture_pdf = PDF::mixture(importance_sampling_pdf, mat_pdf);
-
-        let scattered = Ray::new_with_time(rec.point, mixture_pdf.generate(), r.time);
-        let pdf_value = mixture_pdf.value(&scattered.direction);
+        // Branch: with or without importance sampling
+        let (scattered, pdf_value) = if let Some(target) = sample_target {
+            // Importance sampling: build mixture PDF from light + material PDFs
+            let importance_sampling_pdf = PDF::hittable(target.clone(), rec.point);
+            let mixture_pdf = PDF::mixture(importance_sampling_pdf, mat_pdf);
+            let s = Ray::new_with_time(rec.point, mixture_pdf.generate(), r.time);
+            let v = mixture_pdf.value(&s.direction);
+            (s, v)
+        } else {
+            // No importance sampling: just use the material PDF
+            let s = Ray::new_with_time(rec.point, mat_pdf.generate(), r.time);
+            let v = mat_pdf.value(&s.direction);
+            (s, v)
+        };
 
         // Guard against invalid or zero PDFs, which would cause NaNs (0/0, inf)
         if pdf_value <= 0.0 || !pdf_value.is_finite() {
             return emitted_color;
         }
-
         let scattering_pdf = rec.material.scattering_pdf(r, rec, &scattered);
-
         if scattering_pdf <= 0.0 || !scattering_pdf.is_finite() {
             return emitted_color;
         }
