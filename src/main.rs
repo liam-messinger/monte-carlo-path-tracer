@@ -79,8 +79,7 @@ fn bouncing_spheres() {
     cam.focus_dist = 10.0;
 
     let world = world.into_bvh(); // Build BVH from world
-    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
-    cam.render(world, empty_lights);
+    cam.render(world, None);
 }
 
 fn checkered_spheres() {
@@ -98,8 +97,7 @@ fn checkered_spheres() {
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
     let world = world.into_bvh(); // Build BVH from world
-    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
-    cam.render(world, empty_lights);
+    cam.render(world, None);
 }
 
 fn earth() {
@@ -112,8 +110,7 @@ fn earth() {
     cam.look_at = Point3::new(0.0, 0.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
-    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
-    cam.render(globe, empty_lights);
+    cam.render(globe, None);
 }
 
 fn solar_system() {
@@ -171,8 +168,7 @@ fn solar_system() {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
-    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
-    cam.render(world, empty_lights);
+    cam.render(world, None);
 }
 
 fn perlin_spheres() {
@@ -189,8 +185,7 @@ fn perlin_spheres() {
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
 
     let world = world.into_bvh(); // Build BVH from world
-    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
-    cam.render(world, empty_lights);
+    cam.render(world, None);
 }
 
 fn quads() {
@@ -232,8 +227,7 @@ fn quads() {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh(); // Build BVH from world
-    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
-    cam.render(world, empty_lights);
+    cam.render(world, None);
 }
 
 fn simple_light() {
@@ -260,8 +254,7 @@ fn simple_light() {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
-    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
-    cam.render(world, empty_lights);
+    cam.render(world, None);
 }
 
 fn cornell_box() {
@@ -309,7 +302,7 @@ fn cornell_box() {
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 1000;
+    cam.samples_per_pixel = 8000;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 
@@ -321,7 +314,7 @@ fn cornell_box() {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
-    cam.render(world, sampling_list);
+    cam.render(world, Some(sampling_list));
 }
 
 fn cornell_smoke() {
@@ -378,8 +371,7 @@ fn cornell_smoke() {
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
-    let empty_lights = Arc::new(Hittable::HittableList(HittableList::new()));
-    cam.render(world, empty_lights);
+    cam.render(world, None);
 }
 
 fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32) {
@@ -515,7 +507,7 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32) {
 
     let world = world.into_bvh();
     let light_target = Arc::new(Hittable::Quad(light_quad));
-    cam.render(world, light_target);
+    cam.render(world, Some(light_target));
 }
 
 fn main() {
@@ -529,8 +521,9 @@ fn main() {
         7 => simple_light(),
         8 => cornell_box(),
         9 => cornell_smoke(),
-        10 => final_scene(800, 10000, 40), // High quality
-        11 => final_scene(400, 250, 4),      // Quick preview
+        10 => final_scene(800, 10000, 40),  // High quality
+        11 => final_scene(400, 250, 4),     // Quick preview
         _ => println!("No scene selected."),
     }
 }
+// TODO: Have each scene as a separate file and use command line args to select which one to render. 
