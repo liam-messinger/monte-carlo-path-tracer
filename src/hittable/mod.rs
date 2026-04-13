@@ -77,7 +77,10 @@ impl Hittable {
         match self {
             Hittable::HittableList(list) => list.pdf_value(origin, direction),
             Hittable::Quad(quad) => quad.pdf_value(origin, direction),
+            Hittable::Cuboid(cuboid) => cuboid.pdf_value(origin, direction),
             Hittable::Sphere(sphere) => sphere.pdf_value(origin, direction),
+            Hittable::Translate(translate) => translate.pdf_value(origin, direction),
+            Hittable::RotateY(rotate_y) => rotate_y.pdf_value(origin, direction),
             _ => 0.0, // Default to 0 for objects that don't implement PDF
         }
     }
@@ -87,7 +90,10 @@ impl Hittable {
         match self {
             Hittable::HittableList(list) => list.random(origin),
             Hittable::Quad(quad) => quad.random(origin),
+            Hittable::Cuboid(cuboid) => cuboid.random(origin),
             Hittable::Sphere(sphere) => sphere.random(origin),
+            Hittable::Translate(translate) => translate.random(origin),
+            Hittable::RotateY(rotate_y) => rotate_y.random(origin),
             _ => Vec3::new(1.0, 0.0, 0.0), // Default direction for objects that don't implement random
         }
     }
