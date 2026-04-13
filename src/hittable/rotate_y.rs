@@ -111,6 +111,43 @@ impl RotateY {
 
         true
     }
+
+    /// Get the PDF value for a ray hitting the rotated object from a given origin in a given direction.
+    pub fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
+        // Rotate origin and direction into object space (by -theta)
+        let origin_obj = Point3::new(
+            self.cos_theta * origin.x() - self.sin_theta * origin.z(),
+            origin.y(),
+            self.sin_theta * origin.x() + self.cos_theta * origin.z(),
+        );
+
+        let direction_obj = Vec3::new(
+            self.cos_theta * direction.x() - self.sin_theta * direction.z(),
+            direction.y(),
+            self.sin_theta * direction.x() + self.cos_theta * direction.z(),
+        );
+
+        self.object.pdf_value(&origin_obj, &direction_obj)
+    }
+
+    /// Generate a random direction from the given 'origin' towards the rotated object.
+    pub fn random(&self, origin: &Point3) -> Vec3 {
+        // Rotate origin into object space (by -theta)
+        let origin_obj = Point3::new(
+            self.cos_theta * origin.x() - self.sin_theta * origin.z(),
+            origin.y(),
+            self.sin_theta * origin.x() + self.cos_theta * origin.z(),
+        );
+
+        let dir_obj = self.object.random(&origin_obj);
+
+        // Rotate sampled direction back to world space (by +theta)
+        Vec3::new(
+            self.cos_theta * dir_obj.x() + self.sin_theta * dir_obj.z(),
+            dir_obj.y(),
+            -self.sin_theta * dir_obj.x() + self.cos_theta * dir_obj.z(),
+        )
+    }
 }
 
 // From RotateY to Hittable implementation

@@ -2,7 +2,7 @@ use super::{Hittable, HitRecord, AABB};
 
 use crate::interval::Interval;
 use crate::ray::Ray;
-use crate::vec3::Vec3;
+use crate::vec3::{Point3, Vec3};
 
 use std::sync::Arc;
 
@@ -47,6 +47,18 @@ impl Translate {
         rec.point += self.offset;
 
         true
+    }
+
+    /// Get the PDF value for a ray hitting the translated object from a given origin in a given direction.
+    pub fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
+        let origin_local = *origin - self.offset;
+        self.object.pdf_value(&origin_local, direction)
+    }
+
+    /// Generate a random direction from the 'origin' towards the translated object.
+    pub fn random(&self, origin: &Point3) -> Vec3 {
+        let origin_local = *origin - self.offset;
+        self.object.random(&origin_local)
     }
 }
 
