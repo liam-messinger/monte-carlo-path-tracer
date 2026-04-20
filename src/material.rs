@@ -174,7 +174,7 @@ impl Lambertian {
     #[inline]
     fn scatter(&self, _ray_in: &Ray, rec: &HitRecord, srec: &mut ScatterRecord) -> bool {
         srec.attenuation = self.tex.value(rec.u, rec.v, &rec.point);
-        srec.pdf_ptr = Some(PDF::cosine(&rec.normal)); // TODO: Is this inefficient to create a new CosinePDF for every scatter call?
+        srec.pdf_ptr = Some(PDF::cosine(&rec.normal));
         srec.skip_pdf = false;
         true
     }

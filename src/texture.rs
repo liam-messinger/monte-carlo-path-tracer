@@ -4,8 +4,6 @@ use crate::prelude::*;
 use crate::image_data::ImageData;
 use crate::noise::Noise;
 
-// Todo: Split texture types into separate files if this file gets too large
-
 /// Enum for different texture types.
 /// A texture is a mapping from a (u,v) texture coordinate to a Color value.
 #[derive(Clone)]
