@@ -4,7 +4,7 @@ use crate::interval::Interval;
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
-use crate::prelude::random_f64;
+use crate::prelude::{EPSILON, random_f64};
 
 use std::sync::Arc;
 
@@ -12,8 +12,8 @@ use std::sync::Arc;
 #[derive(Clone)]
 pub struct Quad {
     Q: Point3,
-    u: Vec3,
-    v: Vec3,
+    edge_u: Vec3,
+    edge_v: Vec3,
     material: Arc<Material>,
     bounding_box: AABB,
     normal: Vec3,
@@ -34,8 +34,8 @@ impl Quad {
         let bbox_diagonal2 = AABB::from_corners(&(*Q + *u), &(*Q + *v));
         Self {
             Q: *Q,
-            u: *u,
-            v: *v,
+            edge_u: *u,
+            edge_v: *v,
             material,
             bounding_box: AABB::merge(&bbox_diagonal1, &bbox_diagonal2),
             normal,
@@ -56,8 +56,8 @@ impl Quad {
     pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
         let denom = Vec3::dot(&self.normal, &r.direction);
         
-        // No hit if the ray is parallel to the plane.
-        if denom.abs() < 1e-8 {
+        // No hit if the ray is parallel to the plane, multiply epsilon by direction length to allow for longer rays to be treated as parallel
+        if denom.abs() < EPSILON * r.direction.length() {
             return false;
         }
         
@@ -70,16 +70,20 @@ impl Quad {
         // Determine if the hit point lies within the planar shape using its plane coordinates.
         let intersection: Vec3 = r.at(t);
         let planar_hitpt_vector: Vec3 = intersection - self.Q;
-        let alpha = Vec3::dot(&self.w, &Vec3::cross(&planar_hitpt_vector, &self.v));
-        let beta = Vec3::dot(&self.w, &Vec3::cross(&self.u, &planar_hitpt_vector));
+        let alpha = Vec3::dot(&self.w, &Vec3::cross(&planar_hitpt_vector, &self.edge_v));
+        let beta = Vec3::dot(&self.w, &Vec3::cross(&self.edge_u, &planar_hitpt_vector));
 
-        if !Self::is_interior(alpha, beta, rec) {
+        // Check if hit point is outside the quad, otherwise set u, v coordinates
+        if !Self::is_interior(alpha, beta) {
             return false;
         }
+        rec.u = alpha;
+        rec.v = beta;
 
         // Ray hits the 2D shape; set the rest of the hit record and return true.
+        // Reconstruct the hit point in 3D space to ensure numerical stability.
         rec.t = t;
-        rec.point = intersection;
+        rec.point = self.Q + (alpha * self.edge_u) + (beta * self.edge_v);
         rec.material = Arc::clone(&self.material);
         rec.set_face_normal(r, &self.normal);
 
@@ -87,18 +91,10 @@ impl Quad {
     }
 
     /// Check if the point with plane coordinates (a, b) is inside the quad.
-    pub fn is_interior(a: f64, b: f64, rec: &mut HitRecord) -> bool {
+    pub fn is_interior(a: f64, b: f64) -> bool {
         let unit_interval = Interval::new(0.0, 1.0);
-        // Given the hit point in plane coordinates, return false if it is outside the
-        // primitive, otherwise set the hit record UV coordinates and return true.
-
-        if !unit_interval.contains(a) || !unit_interval.contains(b) {
-            return false;
-        }
-
-        rec.u = a;
-        rec.v = b;
-        true
+        // Given the hit point in plane coordinates, return false if it is outside the primitive
+        return unit_interval.contains(a) && unit_interval.contains(b);
     }
 
     /// Get the PDF value for a ray hitting the quad from a given origin in a given direction.
@@ -116,7 +112,7 @@ impl Quad {
 
     /// Generate a random direction from the given origin towards the quad.
     pub fn random(&self, origin: &Point3) -> Vec3 {
-        let p = self.Q + (random_f64() * self.u) + (random_f64() * self.v);
+        let p = self.Q + (random_f64() * self.edge_u) + (random_f64() * self.edge_v);
         p - *origin
     }
 
