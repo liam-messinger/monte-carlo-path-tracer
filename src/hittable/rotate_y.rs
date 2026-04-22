@@ -57,7 +57,7 @@ impl RotateY {
             }
         }
 
-        let bounding_box = AABB::from_points(&min, &max);
+        let bounding_box = AABB::from_corners(&min, &max);
 
         Self {
             object,
