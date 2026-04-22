@@ -30,8 +30,8 @@ impl Quad {
         let D = Vec3::dot(&normal, Q);
         
         // Compute the bounding box by considering the two diagonals of the quad
-        let bbox_diagonal1 = AABB::from_points(Q, &(*Q + *u + *v));
-        let bbox_diagonal2 = AABB::from_points(&(*Q + *u), &(*Q + *v));
+        let bbox_diagonal1 = AABB::from_corners(Q, &(*Q + *u + *v));
+        let bbox_diagonal2 = AABB::from_corners(&(*Q + *u), &(*Q + *v));
         Self {
             Q: *Q,
             u: *u,
@@ -50,6 +50,7 @@ impl Quad {
         &self.bounding_box
     }
 
+    // TODO: Use a more efficient algorithm for hit detection
     /// Hit method for the quad.
     #[inline]
     pub fn hit(&self, r: &Ray, ray_t: &Interval, rec: &mut HitRecord) -> bool {
