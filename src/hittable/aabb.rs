@@ -39,8 +39,10 @@ impl AABB {
         Self::UNIVERSE
     }
 
+    // TODO: create a constructor that takes a point and a radius
+    // TODO: change to remove branching
     /// Create an axis-aligned bounding box from two points, padding to minimum
-    pub fn from_points(p1: &Point3, p2: &Point3) -> Self {
+    pub fn from_corners(p1: &Point3, p2: &Point3) -> Self {
         let x = if p1.x() < p2.x() { Interval::new(p1.x(), p2.x()) } else { Interval::new(p2.x(), p1.x()) };
         let y = if p1.y() < p2.y() { Interval::new(p1.y(), p2.y()) } else { Interval::new(p2.y(), p1.y()) };
         let z = if p1.z() < p2.z() { Interval::new(p1.z(), p2.z()) } else { Interval::new(p2.z(), p1.z()) };
@@ -49,11 +51,30 @@ impl AABB {
         n
     }
 
-    /// Assign the AABB to tightly enclose two points
-    pub fn assign_from_points(&mut self, p1: &Point3, p2: &Point3) {
-        self.x = if p1.x() < p2.x() { Interval::new(p1.x(), p2.x()) } else { Interval::new(p2.x(), p1.x()) };
-        self.y = if p1.y() < p2.y() { Interval::new(p1.y(), p2.y()) } else { Interval::new(p2.y(), p1.y()) };
-        self.z = if p1.z() < p2.z() { Interval::new(p1.z(), p2.z()) } else { Interval::new(p2.z(), p1.z()) };
+    /// Create an axis-aligned bounding box from two ordered points (min, max), padding to minimum
+    pub fn from_ordered_corners(min: &Point3, max: &Point3) -> Self {
+        let mut n = Self {
+            x: Interval::new(min.x(), max.x()),
+            y: Interval::new(min.y(), max.y()),
+            z: Interval::new(min.z(), max.z()),
+        };
+        n.pad_to_minimum();
+        n
+    }
+
+    /// Create an axis-aligned bounding box from three points, padding to minimum
+    pub fn from_point_triplet(p1: &Point3, p2: &Point3, p3: &Point3) -> Self {
+        let x_min = p1.x().min(p2.x()).min(p3.x());
+        let x_max = p1.x().max(p2.x()).max(p3.x());
+        let y_min = p1.y().min(p2.y()).min(p3.y());
+        let y_max = p1.y().max(p2.y()).max(p3.y());
+        let z_min = p1.z().min(p2.z()).min(p3.z());
+        let z_max = p1.z().max(p2.z()).max(p3.z());
+
+        Self::from_ordered_corners(
+            &Point3::new(x_min, y_min, z_min), 
+            &Point3::new(x_max, y_max, z_max)
+        )
     }
 
     /// Construct an axis-aligned bounding box from two input boxes
