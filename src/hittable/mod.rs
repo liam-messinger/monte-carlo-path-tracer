@@ -2,29 +2,32 @@
 pub mod bvh_node;
 pub mod hit_record;
 pub mod hittable_list;
-pub mod sphere;
-pub mod quad;
 pub mod aabb;
-pub mod cuboid;
 pub mod translate;
 pub mod rotate_y;
 pub mod constant_medium;
+pub mod sphere;
+pub mod quad;
+pub mod cuboid;
+pub mod triangle;
 
 pub use bvh_node::BVHNode;
 pub use hit_record::HitRecord;
 pub use hittable_list::HittableList;
-pub use sphere::Sphere;
-pub use quad::Quad;
 pub use aabb::AABB;
-pub use cuboid::Cuboid;
 pub use translate::Translate;
 pub use rotate_y::RotateY;
 pub use constant_medium::ConstantMedium;
+pub use sphere::Sphere;
+pub use quad::Quad;
+pub use cuboid::Cuboid;
+pub use triangle::Triangle;
 
 use crate::ray::Ray;
 use crate::interval::Interval;
 use crate::vec3::{Point3, Vec3};
 
+// TODO: move Hittable enum to its own file
 /// Enum representing different types of Hittable objects.
 #[derive(Clone)]
 pub enum Hittable {
@@ -36,6 +39,7 @@ pub enum Hittable {
     Translate(Translate),
     RotateY(RotateY),
     ConstantMedium(ConstantMedium),
+    Triangle(Triangle),
     // Etc.
 }
 
@@ -46,12 +50,13 @@ impl Hittable {
         match self {
             Hittable::HittableList(list) => list.hit(r, ray_t, rec),
             Hittable::BVHNode(node) => node.hit(r, ray_t, rec),
-            Hittable::Sphere(sphere) => sphere.hit(r, ray_t, rec),
-            Hittable::Quad(quad) => quad.hit(r, ray_t, rec),
-            Hittable::Cuboid(cuboid) => cuboid.hit(r, ray_t, rec),
             Hittable::Translate(translate) => translate.hit(r, ray_t, rec),
             Hittable::RotateY(rotate_y) => rotate_y.hit(r, ray_t, rec),
             Hittable::ConstantMedium(medium) => medium.hit(r, ray_t, rec),
+            Hittable::Sphere(sphere) => sphere.hit(r, ray_t, rec),
+            Hittable::Quad(quad) => quad.hit(r, ray_t, rec),
+            Hittable::Cuboid(cuboid) => cuboid.hit(r, ray_t, rec),
+            Hittable::Triangle(triangle) => triangle.hit(r, ray_t, rec),
             // Etc.
         }
     }
@@ -62,12 +67,13 @@ impl Hittable {
         match self {
             Hittable::HittableList(list) => list.bounding_box(),
             Hittable::BVHNode(node) => node.bounding_box(),
-            Hittable::Sphere(sphere) => sphere.bounding_box(),
-            Hittable::Quad(quad) => quad.bounding_box(),
-            Hittable::Cuboid(cuboid) => cuboid.bounding_box(),
             Hittable::Translate(translate) => translate.bounding_box(),
             Hittable::RotateY(rotate_y) => rotate_y.bounding_box(),
             Hittable::ConstantMedium(medium) => medium.bounding_box(),
+            Hittable::Sphere(sphere) => sphere.bounding_box(),
+            Hittable::Quad(quad) => quad.bounding_box(),
+            Hittable::Cuboid(cuboid) => cuboid.bounding_box(),
+            Hittable::Triangle(triangle) => triangle.bounding_box(),
             // Etc.
         }
     }
@@ -76,11 +82,12 @@ impl Hittable {
     pub fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
         match self {
             Hittable::HittableList(list) => list.pdf_value(origin, direction),
-            Hittable::Quad(quad) => quad.pdf_value(origin, direction),
-            Hittable::Cuboid(cuboid) => cuboid.pdf_value(origin, direction),
-            Hittable::Sphere(sphere) => sphere.pdf_value(origin, direction),
             Hittable::Translate(translate) => translate.pdf_value(origin, direction),
             Hittable::RotateY(rotate_y) => rotate_y.pdf_value(origin, direction),
+            Hittable::Sphere(sphere) => sphere.pdf_value(origin, direction),
+            Hittable::Quad(quad) => quad.pdf_value(origin, direction),
+            Hittable::Cuboid(cuboid) => cuboid.pdf_value(origin, direction),
+            Hittable::Triangle(triangle) => triangle.pdf_value(origin, direction),
             _ => 0.0, // Default to 0 for objects that don't implement PDF
         }
     }
@@ -89,11 +96,12 @@ impl Hittable {
     pub fn random(&self, origin: &Point3) -> Vec3 {
         match self {
             Hittable::HittableList(list) => list.random(origin),
-            Hittable::Quad(quad) => quad.random(origin),
-            Hittable::Cuboid(cuboid) => cuboid.random(origin),
-            Hittable::Sphere(sphere) => sphere.random(origin),
             Hittable::Translate(translate) => translate.random(origin),
             Hittable::RotateY(rotate_y) => rotate_y.random(origin),
+            Hittable::Sphere(sphere) => sphere.random(origin),
+            Hittable::Quad(quad) => quad.random(origin),
+            Hittable::Cuboid(cuboid) => cuboid.random(origin),
+            Hittable::Triangle(triangle) => triangle.random(origin),
             _ => Vec3::new(1.0, 0.0, 0.0), // Default direction for objects that don't implement random
         }
     }
