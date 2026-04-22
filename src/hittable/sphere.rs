@@ -28,7 +28,7 @@ impl Sphere {
             material,
             bounding_box: {
                 let r_vec = Vec3::new(radius, radius, radius);
-                AABB::from_points(&(*center - r_vec), &(*center + r_vec))
+                AABB::from_corners(&(*center - r_vec), &(*center + r_vec))
             },
         }
     }
@@ -41,8 +41,8 @@ impl Sphere {
             material,
             bounding_box: {
                 let r_vec = Vec3::new(radius, radius, radius);
-                let box1 = AABB::from_points(&(*center1 - r_vec), &(*center1 + r_vec));
-                let box2 = AABB::from_points(&(*center2 - r_vec), &(*center2 + r_vec));
+                let box1 = AABB::from_corners(&(*center1 - r_vec), &(*center1 + r_vec));
+                let box2 = AABB::from_corners(&(*center2 - r_vec), &(*center2 + r_vec));
                 AABB::merge(&box1, &box2)
             },
         }
