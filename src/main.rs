@@ -100,77 +100,6 @@ fn checkered_spheres() {
     cam.render(world, None);
 }
 
-fn earth() {
-    let earth_material = Material::lambertian_tex(Texture::image("earthmap.jpg"));
-    let globe = Sphere::new(&Point3::new(0.0, 0.0, 0.0), 2.0, earth_material);
-
-    let mut cam = Camera::high_quality_default();
-
-    cam.look_from = Point3::new(0.0, 0.0, 12.0);
-    cam.look_at = Point3::new(0.0, 0.0, 0.0);
-    cam.v_up = Vec3::new(0.0, 1.0, 0.0);
-
-    cam.render(globe, None);
-}
-
-fn solar_system() {
-    let mut world = HittableList::new();
-
-    // Sun
-    let sun_mat = Material::lambertian_tex(Texture::image("2k_sun.jpg"));
-    world.add(Sphere::new(&Point3::new(-6.0, 0.0, 0.0), 2.2, sun_mat));
-
-    // Mercury
-    let mercury_mat = Material::lambertian_tex(Texture::image("2k_mercury.jpg"));
-    world.add(Sphere::new(&Point3::new(-3.2, 0.05, -0.2), 0.15, mercury_mat));
-
-    // Venus
-    let venus_mat = Material::lambertian_tex(Texture::image("2k_venus_surface.jpg"));
-    world.add(Sphere::new(&Point3::new(-2.3, 0.07, 0.4), 0.24, venus_mat));
-
-    // Earth
-    let earth_mat = Material::lambertian_tex(Texture::image("2k_earth_daymap.jpg"));
-    world.add(Sphere::new(&Point3::new(-1.4, 0.09, -0.35), 0.26, earth_mat));
-
-    // Mars
-    let mars_mat = Material::lambertian_tex(Texture::image("2k_mars.jpg"));
-    world.add(Sphere::new(&Point3::new(-0.4, 0.06, 0.2), 0.18, mars_mat));
-
-    // Jupiter
-    let jupiter_mat = Material::lambertian_tex(Texture::image("2k_jupiter.jpg"));
-    world.add(Sphere::new(&Point3::new(2.0, 0.2, 0.1), 0.95, jupiter_mat));
-
-    // Saturn (rings not modeled; just a textured sphere)
-    let saturn_mat = Material::lambertian_tex(Texture::image("2k_saturn.jpg"));
-    world.add(Sphere::new(&Point3::new(4.6, 0.16, -0.25), 0.8, saturn_mat));
-
-    // Uranus
-    let uranus_mat = Material::lambertian_tex(Texture::image("2k_uranus.jpg"));
-    world.add(Sphere::new(&Point3::new(6.7, 0.12, 0.35), 0.55, uranus_mat));
-
-    // Neptune
-    let neptune_mat = Material::lambertian_tex(Texture::image("2k_neptune.jpg"));
-    world.add(Sphere::new(&Point3::new(8.6, 0.1, -0.1), 0.52, neptune_mat));
-
-    // Stars
-    let star_material = Material::lambertian_tex(Texture::image("8k_stars_milky_way.jpg"));
-    world.add(Sphere::new(&Point3::new(0.0, -30.0, -50.0), 50.0, star_material));
-
-    // Camera tuned to frame the whole arc
-    let mut cam = Camera::high_quality_default();
-
-    cam.v_fov = 35.0;
-    // Raise the camera and tilt it downward for an aerial view
-    cam.look_from = Point3::new(0.0, 10.0, 20.0);
-    cam.look_at = Point3::new(1.0, 0.0, 0.0);
-    cam.v_up = Vec3::new(0.0, 1.0, 0.0);
-
-    cam.aperture_angle = 0.0;
-
-    let world = world.into_bvh();
-    cam.render(world, None);
-}
-
 fn perlin_spheres() {
     let mut world = HittableList::new();
 
@@ -302,7 +231,7 @@ fn cornell_box() {
 
     cam.aspect_ratio = 1.0;
     cam.image_width = 600;
-    cam.samples_per_pixel = 8000;
+    cam.samples_per_pixel = 100;
     cam.max_depth = 50;
     cam.background = Color::new(0.0, 0.0, 0.0);
 
@@ -510,19 +439,82 @@ fn final_scene(image_width: u32, samples_per_pixel: u32, max_depth: u32) {
     cam.render(world, Some(light_target));
 }
 
+fn pyramid() {
+    let mut world = HittableList::new();
+
+    // Ground plane
+    let ground_checker = Texture::checker(0.5, Color::new(0.1, 0.1, 0.1), Color::new(0.9, 0.9, 0.9));
+    let ground_mat = Material::lambertian_tex(ground_checker);
+    world.add(Quad::new(&Point3::new(-10.0, 0.0, -10.0), &Vec3::new(20.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, 20.0), ground_mat));
+
+    // Pyramid: apex at top, square base below
+    let apex = Point3::new(0.0, 2.0, 0.0);
+    let base_a = Point3::new(-1.0, 0.1, -1.0);
+    let base_b = Point3::new(1.0, 0.1, -1.0);
+    let base_c = Point3::new(1.0, 0.1, 1.0);
+    let base_d = Point3::new(-1.0, 0.1, 1.0);
+
+    // Mixed materials for more visual interest
+    let mat_red_metal = Material::metal(Color::new(1.0, 0.2, 0.2), 0.3);
+    let mat_green = Material::lambertian(Color::new(0.2, 1.0, 0.2));
+    let mat_blue_metal = Material::metal(Color::new(0.2, 0.2, 1.0), 0.2);
+    let mat_yellow = Material::lambertian(Color::new(1.0, 1.0, 0.2));
+    let mat_base = Material::metal(Color::new(0.9, 0.9, 0.95), 0.1);
+
+    // Four triangular faces
+    world.add(Triangle::new(&apex, &base_a, &base_b, mat_red_metal));      // Front face (red metal)
+    world.add(Triangle::new(&apex, &base_b, &base_c, mat_green));          // Right face (green)
+    world.add(Triangle::new(&apex, &base_c, &base_d, mat_blue_metal));     // Back face (blue metal)
+    world.add(Triangle::new(&apex, &base_d, &base_a, mat_yellow));         // Left face (yellow)
+
+    // Base (two triangles)
+    world.add(Triangle::new(&base_a, &base_b, &base_c, mat_base.clone()));
+    world.add(Triangle::new(&base_a, &base_c, &base_d, mat_base));
+
+    // Add a glass sphere for reflection/refraction interest
+    world.add(Sphere::new(&Point3::new(2.5, 1.0, 2.5), 0.8, Material::dielectric(1.5)));
+
+    // Add a metal sphere
+    world.add(Sphere::new(&Point3::new(-2.5, 0.7, -2.5), 0.7, Material::metal(Color::new(1.0, 0.84, 0.0), 0.2)));
+
+    // Rotate pyramid for visibility
+    let pyramid_bvh = world.into_bvh();
+    let pyramid = Hittable::rotate_y(pyramid_bvh, 35.0);
+
+    // Light quad above the scene
+    let light_mat = Material::diffuse_light(Color::new(2.0, 2.0, 2.0));
+    let mut scene = HittableList::from_hittable(pyramid);
+    scene.add(Quad::new(&Point3::new(-5.0, 5.0, -5.0), &Vec3::new(10.0, 0.0, 0.0), &Vec3::new(0.0, 0.0, 10.0), light_mat));
+
+    let mut cam = Camera::default();
+    cam.aspect_ratio = 1.0;
+    cam.image_width = 1024;
+    cam.samples_per_pixel = 3000;
+    cam.max_depth = 50;
+    cam.background = Color::new(0.15, 0.15, 0.2);
+
+    cam.v_fov = 45.0;
+    cam.look_from = Point3::new(4.5, 3.0, 4.5);
+    cam.look_at = Point3::new(0.0, 1.2, 0.0);
+    cam.v_up = Vec3::new(0.0, 1.0, 0.0);
+    cam.aperture_angle = 0.0;
+
+    let final_world = scene.into_bvh();
+    cam.render(final_world, None);
+}
+
 fn main() {
-    match 8 {
+    match 10 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
-        3 => earth(),
-        4 => solar_system(),
-        5 => perlin_spheres(),
-        6 => quads(),
-        7 => simple_light(),
-        8 => cornell_box(),
-        9 => cornell_smoke(),
-        10 => final_scene(800, 10000, 40),  // High quality
-        11 => final_scene(400, 250, 4),     // Quick preview
+        3 => perlin_spheres(),
+        4 => quads(),
+        5 => simple_light(),
+        6 => cornell_box(),
+        7 => cornell_smoke(),
+        8 => final_scene(800, 10000, 40),  // High quality
+        9 => final_scene(400, 250, 4),     // Quick preview
+        10 => pyramid(),
         _ => println!("No scene selected."),
     }
 }
