@@ -8,7 +8,7 @@ use crate::prelude::AABB_MIN_PADDING;
 /// Axis-aligned bounding box (AABB) struct
 /// Holds three intervals, one for each axis
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct AABB {
     pub x: Interval,
     pub y: Interval,
@@ -86,6 +86,15 @@ impl AABB {
         }
     }
 
+    /// Construct an axis-aligned bounding box that tightly encloses the input box and point.
+    pub fn merge_point(bbox: &AABB, point: &Point3) -> Self {
+        Self {
+            x: Interval::merge(&bbox.x, &Interval::new(point.x(), point.x())),
+            y: Interval::merge(&bbox.y, &Interval::new(point.y(), point.y())),
+            z: Interval::merge(&bbox.z, &Interval::new(point.z(), point.z())),
+        }
+    }
+
     /// Get the interval for the specified axis (0 = x, 1 = y, 2 = z)
     pub fn axis_interval(&self, n: usize) -> &Interval {
         match n {
@@ -97,34 +106,56 @@ impl AABB {
     }
 
     /// Check if a ray intersects the bounding box within a given interval
-    #[inline(always)]
+    #[inline]
     pub fn hit(&self, r: &Ray, ray_t: &Interval) -> bool {
-        let ray_orig: Point3 = r.origin;
-        let ray_dir: Vec3 = r.direction;
-
         let mut t_min = ray_t.min;
         let mut t_max = ray_t.max;
 
         for axis in 0..3 {
             let ax_int = self.axis_interval(axis);
-            let axis_dir_inv = 1.0 / ray_dir[axis];
+            let axis_dir_inv = 1.0 / r.direction[axis];
 
-            let t0 = (ax_int.min - ray_orig[axis]) * axis_dir_inv;
-            let t1 = (ax_int.max - ray_orig[axis]) * axis_dir_inv;
+            let mut t0 = (ax_int.min - r.origin[axis]) * axis_dir_inv;
+            let mut t1 = (ax_int.max - r.origin[axis]) * axis_dir_inv;
 
-            if t0 < t1 {
-                if t0 > t_min { t_min = t0; }
-                if t1 < t_max { t_max = t1; }
-            } else {
-                if t1 > t_min { t_min = t1; }
-                if t0 < t_max { t_max = t0; }
+            if axis_dir_inv < 0.0 { // Direction is negative -> t1 is near side.
+                std::mem::swap(&mut t0, &mut t1);
             }
+
+            if t0 > t_min { t_min = t0; }
+            if t1 < t_max { t_max = t1; }
 
             if t_max <= t_min {
                 return false;
             }
         }
         true
+    }
+
+    /// Like `hit()`, but returns the parameter `t` of the near-side intersection on a hit.
+    /// Used for BVH traversal to find the closest hit of node children.
+    #[inline]
+    pub fn hit_with_t(&self, r: &Ray, ray_t: &Interval) -> Option<f64> {
+        let mut t_min = ray_t.min;
+        let mut t_max = ray_t.max;
+
+        for axis in 0..3 {
+            let ax_int = self.axis_interval(axis);
+            let axis_dir_inv = 1.0 / r.direction[axis];
+
+            let mut t0 = (ax_int.min - r.origin[axis]) * axis_dir_inv;
+            let mut t1 = (ax_int.max - r.origin[axis]) * axis_dir_inv;
+
+            if axis_dir_inv < 0.0 { // Direction is negative -> t1 is near side.
+                std::mem::swap(&mut t0, &mut t1);
+            }
+            if t0 > t_min { t_min = t0; }
+            if t1 < t_max { t_max = t1; }
+            if t_max <= t_min { // No hit
+                return None;
+            }
+        }
+        Some(t_min)
     }
 
     /// Get the index of the longest axis of the bounding box
@@ -145,6 +176,14 @@ impl AABB {
         self.x.pad_to_minimum(AABB_MIN_PADDING);
         self.y.pad_to_minimum(AABB_MIN_PADDING);
         self.z.pad_to_minimum(AABB_MIN_PADDING);
+    }
+
+    /// Get the surface area of the AABB. Clamped to zero if any side is degenerate.
+    pub fn surface_area(&self) -> f64 {
+        let dx = self.x.size().max(0.0);
+        let dy = self.y.size().max(0.0);
+        let dz = self.z.size().max(0.0);
+        2.0 * (dx * dy + dy * dz + dz * dx)
     }
 }
 
