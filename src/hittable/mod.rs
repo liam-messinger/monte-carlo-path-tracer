@@ -10,6 +10,7 @@ pub mod sphere;
 pub mod quad;
 pub mod cuboid;
 pub mod triangle;
+pub mod triangle_mesh;
 
 pub use bvh_node::BVHNode;
 pub use hit_record::HitRecord;
@@ -22,6 +23,7 @@ pub use sphere::Sphere;
 pub use quad::Quad;
 pub use cuboid::Cuboid;
 pub use triangle::Triangle;
+pub use triangle_mesh::TriangleMesh;
 
 use crate::ray::Ray;
 use crate::interval::Interval;
@@ -40,6 +42,7 @@ pub enum Hittable {
     RotateY(RotateY),
     ConstantMedium(ConstantMedium),
     Triangle(Triangle),
+    TriangleMesh(TriangleMesh),
     // Etc.
 }
 
@@ -57,6 +60,7 @@ impl Hittable {
             Hittable::Quad(quad) => quad.hit(r, ray_t, rec),
             Hittable::Cuboid(cuboid) => cuboid.hit(r, ray_t, rec),
             Hittable::Triangle(triangle) => triangle.hit(r, ray_t, rec),
+            Hittable::TriangleMesh(triangle_mesh) => triangle_mesh.hit(r, ray_t, rec),
             // Etc.
         }
     }
@@ -74,6 +78,7 @@ impl Hittable {
             Hittable::Quad(quad) => quad.bounding_box(),
             Hittable::Cuboid(cuboid) => cuboid.bounding_box(),
             Hittable::Triangle(triangle) => triangle.bounding_box(),
+            Hittable::TriangleMesh(triangle_mesh) => triangle_mesh.bounding_box(),
             // Etc.
         }
     }
@@ -88,6 +93,7 @@ impl Hittable {
             Hittable::Quad(quad) => quad.pdf_value(origin, direction),
             Hittable::Cuboid(cuboid) => cuboid.pdf_value(origin, direction),
             Hittable::Triangle(triangle) => triangle.pdf_value(origin, direction),
+            Hittable::TriangleMesh(triangle_mesh) => triangle_mesh.pdf_value(origin, direction),
             _ => 0.0, // Default to 0 for objects that don't implement PDF
         }
     }
@@ -102,6 +108,7 @@ impl Hittable {
             Hittable::Quad(quad) => quad.random(origin),
             Hittable::Cuboid(cuboid) => cuboid.random(origin),
             Hittable::Triangle(triangle) => triangle.random(origin),
+            Hittable::TriangleMesh(triangle_mesh) => triangle_mesh.random(origin),
             _ => Vec3::new(1.0, 0.0, 0.0), // Default direction for objects that don't implement random
         }
     }
