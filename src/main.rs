@@ -14,6 +14,7 @@ mod vec3;
 mod noise;
 mod onb;
 mod pdf;
+mod ply;
 
 use std::sync::Arc;
 
@@ -503,8 +504,65 @@ fn pyramid() {
     cam.render(final_world, None);
 }
 
+fn ply_model_scene() {
+    // Load geometry from file
+    let mut data = ply::load("models/dragon.ply").expect("load PLY");
+
+    let scale = 8.0;
+    for p in &mut data.positions {
+        *p = *p * scale;
+    }
+    
+    // Build TriangleMesh
+    let mat1 = Material::lambertian(Color::new(0.7, 0.7, 0.7));
+    let mat2 = Material::metal(Color::new(0.8, 0.8, 0.9), 0.1);
+    let mat3 = Material::dielectric(1.5);
+    let mesh = TriangleMesh::new(data.positions, data.indices, mat1);
+
+    // Add to world
+    let mesh = Hittable::rotate_y_translate(mesh, 180.0-35.0, Vec3::new(-0.1, -0.4, -1.0));
+
+    let mut world = HittableList::new();
+    world.add(mesh);
+
+    let ground = Material::lambertian(Color::new(0.4, 0.4, 0.4));
+    world.add(Quad::new(
+        &Point3::new(-10.0, 0.0, -10.0),
+        &Vec3::new(20.0, 0.0, 0.0),
+        &Vec3::new(0.0, 0.0, 20.0),
+        ground));
+
+    let light = Material::diffuse_light(Color::new(7.0, 7.0, 7.0));
+    let light_quad = Quad::new(
+        &Point3::new(-2.0, 3.99, -2.0),
+        &Vec3::new(4.0, 0.0, 0.0),
+        &Vec3::new(0.0, 0.0, 4.0), 
+        light,
+    );
+    world.add(light_quad.clone());
+
+    let mut cam = Camera::default();
+    cam.scene_name = "ply_model".to_string();
+
+    cam.aspect_ratio = 1.0;
+    cam.image_width = 1024;
+    cam.samples_per_pixel = 500;
+    cam.max_depth = 20;
+    cam.background = Color::new(0.02, 0.02, 0.03);
+
+    cam.v_fov = 20.0;
+    cam.look_from = Point3::new(0.0, 1.5, 4.0);
+    cam.look_at = Point3::new(0.0, 0.75, 0.0);
+    cam.v_up = Vec3::new(0.0, 1.0, 0.0);
+    cam.aperture_angle = 0.0;
+
+    let world = world.into_bvh();
+    let sampling_target = Arc::new(Hittable::Quad(light_quad));
+    cam.render(world, Some(sampling_target));
+}
+
 fn main() {
-    match 10 {
+    match 11 {
         1 => bouncing_spheres(),
         2 => checkered_spheres(),
         3 => perlin_spheres(),
@@ -515,6 +573,7 @@ fn main() {
         8 => final_scene(800, 10000, 40),  // High quality
         9 => final_scene(400, 250, 4),     // Quick preview
         10 => pyramid(),
+        11 => ply_model_scene(),
         _ => println!("No scene selected."),
     }
 }
