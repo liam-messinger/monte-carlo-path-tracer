@@ -55,6 +55,12 @@ impl Vec3 {
         self.e[0].abs() < EPSILON && self.e[1].abs() < EPSILON && self.e[2].abs() < EPSILON
     }
 
+    // vec.is_finite()
+    #[inline]
+    pub fn is_finite(&self) -> bool { // checks if all components of the vector are finite numbers
+        self.e[0].is_finite() && self.e[1].is_finite() && self.e[2].is_finite()
+    }
+
     // Vec3::random()
     #[inline]
     pub fn random() -> Self { // random vector with each component in [0,1)
