@@ -78,6 +78,7 @@ impl HittableList {
         &self.bounding_box
     }
 
+    // TODO: Weight PDF sampling by surface area of objects instead of uniform random selection
     /// Get the PDF value for a given ray direction.
     pub fn pdf_value(&self, origin: &Point3, direction: &Vec3) -> f64 {
         let len = self.objects.len();

@@ -2,6 +2,9 @@ use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub};
 use crate::prelude::{random_f64, random_f64_range, EPSILON};
 
+// TODO: Change functions like cross to take &self for better readability and function chaining
+// e.g. v1.cross(&v2).dot(&v3) instead of Vec3::dot(&Vec3::cross(&v1, &v2), &v3)
+
 /// A 3D vector or point in space.
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3 {

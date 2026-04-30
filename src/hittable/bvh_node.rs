@@ -5,6 +5,9 @@ use crate::ray::Ray;
 
 use std::sync::Arc;
 
+// TODO: Refactor by BVH to have better locality by using a contiguous array of nodes instead of heap-allocated nodes with pointers.
+// TODO: Improve BVH construction by using a better partitioning strategy, such as Surface Area Heuristic (SAH) or using a spatial median split instead of object median split.
+// TODO: Don't sort 
 /// Bounding Volume Hierarchy Node, has two children which are either other BVHNodes or Hittable objects.
 #[derive(Clone)]
 pub struct BVHNode {
@@ -101,6 +104,7 @@ impl BVHNode {
             return self.left.hit(r, ray_t, rec);
         }
 
+        // TODO: Check which child is hit first and traverse nearer one first for better performance.
         let hit_left: bool = self.left.hit(r, ray_t, rec);
         let max_t = if hit_left { rec.t } else { ray_t.max };
         let hit_right: bool = self.right.hit(r, &Interval::new(ray_t.min, max_t), rec);

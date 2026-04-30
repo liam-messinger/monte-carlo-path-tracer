@@ -17,6 +17,7 @@ impl Interval {
         Self { min, max }
     }
 
+    // TODO: change to remove branching
     /// Create the interval tightly enclosing the two input intervals.
     pub fn merge(a: &Interval, b: &Interval) -> Self {
         Self {

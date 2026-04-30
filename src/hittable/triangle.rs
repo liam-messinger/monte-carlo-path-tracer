@@ -8,6 +8,7 @@ use crate::vec3::{Point3, Vec3};
 
 use std::sync::Arc;
 
+// TODO: Store e1 and e2 instead of b and c
 #[derive(Clone)]
 pub struct Triangle {
     a: Point3,
@@ -74,7 +75,7 @@ impl Triangle {
             return false; // Intersection outside triangle
         }
 
-        // Computer t to find intersection point on ray
+        // Compute t to find intersection point on ray
         let t = inv_det * Vec3::dot(&e2, &s_cross_e1);
         if !ray_t.contains(t) {
             return false; // Intersection outside ray bounds
