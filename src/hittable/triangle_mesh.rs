@@ -100,7 +100,13 @@ impl TriangleMesh {
     /// 2. Build a binned-SAH BVH - this returns a permutation of face indices in BVH leaf order.
     /// 3. Materialize `SimpleTriangle` data cold arrays in BVH leaf order.
     /// 4. Precompute area CDF for importance sampling.
-    pub fn new(positions: Vec<Point3>, face_indices: Vec<[u32; 3]>, material: Arc<Material>) -> Self {
+    /// 5. Optionally compute per-vertex normals for smooth shading.
+    pub fn new(
+        positions: Vec<Point3>, 
+        face_indices: Vec<[u32; 3]>, 
+        material: Arc<Material>,
+        smoothed_normals: bool,
+    ) -> Self {
         let n_faces = face_indices.len();
         let n_pos = positions.len();
         assert!(n_faces > 0, "Mesh must have at least one face");
@@ -109,6 +115,7 @@ impl TriangleMesh {
         // ----- 1. Per-face data keyed by ORIGINAL face index. -----
         let mut face_bboxes: Vec<AABB> = Vec::with_capacity(n_faces);
         let mut face_centroids: Vec<Vec3> = Vec::with_capacity(n_faces);
+        let mut face_normals: Vec<Vec3> = if smoothed_normals { Vec::with_capacity(n_faces) } else { Vec::new() };
 
         for (fi, &[i0, i1, i2]) in face_indices.iter().enumerate() {
             assert!((i0 as usize) < n_pos && (i1 as usize) < n_pos && (i2 as usize) < n_pos, 
@@ -164,7 +171,15 @@ impl TriangleMesh {
             acc += area * inv_total_area;
             face_area_cdf.push(acc);
         }
-        face_area_cdf[n_faces - 1] = 1.0; // Clamp last value to exactly 1.0
+        // Clamp last value to exactly 1.0
+        if let Some(last) = face_area_cdf.last_mut() { *last = 1.0; }
+
+        // ----- 5. Optionally compute per-vertex averaged normals -----
+        let vertex_normals = if smoothed_normals {
+            Some(compute_vertex_normals(n_pos, &valid_face_indices, &face_normals))
+        } else {
+            None
+        };
 
         // For default flat shading we don't need the original positions or per-vertex attributes,
         // everything intersection-related is already baked into `triangles`.
@@ -177,8 +192,8 @@ impl TriangleMesh {
             face_area_cdf,
             total_area,
             positions: None,
-            face_indices: None,
-            vertex_normals: None,
+            face_indices: if smoothed_normals { Some(face_indices_reordered) } else { None },
+            vertex_normals,
             vertex_uvs: None,
         };
 
@@ -289,12 +304,28 @@ impl TriangleMesh {
             // Compute the face normal lazily: only for the closest hit triangle, and after confirming a hit
             // instead of caching a Vec3 on every triangle.
             let tri: &SimpleTriangle = &geometry.triangles[best_tri_index];
-            let n: Vec3 = Vec3::unit_vector(&Vec3::cross(&tri.e1, &tri.e2));
+
+            // Compute the face normal using vertex normals if available,
+            // otherwise fallback to flat normal from cross product of edges.
+            let geometric_normal = Vec3::unit_vector(&Vec3::cross(&tri.e1, &tri.e2));
+            let normal = if let (Some(vn), Some(fi)) = (&geometry.vertex_normals, &geometry.face_indices) {
+                let [i0, i1, i2] = fi[best_tri_index];
+                let n0 = vn[i0 as usize];
+                let n1 = vn[i1 as usize];
+                let n2 = vn[i2 as usize];
+                // Barycentric interpolation: (1 - u - v) * n0 + u * n1 + v * n2
+                let w = 1.0 - best_u - best_v;
+                let interpolated = w * n0 + best_u * n1 + best_v * n2;
+                Vec3::unit_vector(&interpolated)
+            } else { // Fallback to flat normal
+                geometric_normal
+            };
+
             // Update hit record with hit information
             rec.t = closest_t;
             rec.point = r.at(closest_t);
             rec.material = Arc::clone(&self.material);
-            rec.set_face_normal(r, &n);
+            rec.set_face_normal(r, &normal);
             let _ = (best_u, best_v); // Silence unused variable warning for now
         }
 
@@ -347,6 +378,35 @@ impl From<TriangleMesh> for Hittable {
     fn from(mesh: TriangleMesh) -> Self {
         Hittable::TriangleMesh(mesh)
     }
+}
+
+/// Compute per-vertex normals by averaging the flat normals of all incident faces.
+/// This produces smooth shading when interpolated acroos triangle surfaces.
+/// Returns a vector of vertex normals
+fn compute_vertex_normals(
+    n_vertices: usize,
+    face_indices: &[ [u32; 3] ],
+    face_normals: &[Vec3],
+) -> Vec<Vec3> {
+    let mut vertex_normals: Vec<Vec3> = vec![Vec3::zero(); n_vertices];
+    
+    // Accumulate face normals at each vertex
+    for (face_index, &[i0, i1, i2]) in face_indices.iter().enumerate() {
+        let n: Vec3 = face_normals[face_index];
+        vertex_normals[i0 as usize] += n;
+        vertex_normals[i1 as usize] += n;
+        vertex_normals[i2 as usize] += n;
+        if (i0 == 424451) || (i1 == 424451) || (i2 == 424451) {
+            //println!("Debug: Face {} includes vertex 424451, normal: {}", face_index, n);
+        }
+    }
+
+    // Normalize each accumulated normal
+    for n in vertex_normals.iter_mut() {
+        *n = Vec3::unit_vector(n);
+    }
+
+    vertex_normals
 }
 
 // =====================================================================
