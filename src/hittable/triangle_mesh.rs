@@ -141,7 +141,7 @@ impl TriangleMesh {
             if smoothed_normals {
                 let e1: Vec3 = p1 - p0;
                 let e2: Vec3 = p2 - p0;
-                let n: Vec3 = Vec3::unit_vector(&Vec3::cross(&e1, &e2));
+                let n: Vec3 = Vec3::cross(&e1, &e2); // Not normalized for area-weighted normal averaging
                 face_normals.push(n);
             }
 
@@ -403,9 +403,12 @@ impl From<TriangleMesh> for Hittable {
     }
 }
 
-/// Compute per-vertex normals by averaging the flat normals of all incident faces.
-/// This produces smooth shading when interpolated acroos triangle surfaces.
-/// Returns a vector of vertex normals
+/// Compute per-vertex normals by averaging the normals of all incident faces.
+/// This produces smooth shading when interpolated across triangle surfaces.
+/// Returns a vector of vertex normals.
+/// 
+/// `face_normals` should be the non-normalized cross product of the triangle edges,
+/// for area weighted averaging. The final vertex normals are normalized at the end.
 fn compute_vertex_normals(
     n_vertices: usize,
     face_indices: &[ [u32; 3] ],
@@ -419,14 +422,16 @@ fn compute_vertex_normals(
         vertex_normals[i0 as usize] += n;
         vertex_normals[i1 as usize] += n;
         vertex_normals[i2 as usize] += n;
-        if (i0 == 424451) || (i1 == 424451) || (i2 == 424451) {
-            //println!("Debug: Face {} includes vertex 424451, normal: {}", face_index, n);
-        }
     }
 
     // Normalize each accumulated normal
     for n in vertex_normals.iter_mut() {
-        *n = Vec3::unit_vector(n);
+        let len = n.length();
+        if len > 0.0 {
+            *n /= len;
+        } else {
+            *n = Vec3::new(0.0, 1.0, 0.0); // Fallback normal for isolated vertices
+        }
     }
 
     vertex_normals
