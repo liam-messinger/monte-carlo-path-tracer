@@ -6,7 +6,7 @@ use crate::prelude::{random_f64, random_f64_range, EPSILON};
 // e.g. v1.cross(&v2).dot(&v3) instead of Vec3::dot(&Vec3::cross(&v1, &v2), &v3)
 
 /// A 3D vector or point in space.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vec3 {
     pub e: [f64; 3],
 }
