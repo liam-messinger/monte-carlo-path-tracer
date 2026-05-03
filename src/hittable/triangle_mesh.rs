@@ -116,26 +116,49 @@ impl TriangleMesh {
         let mut face_bboxes: Vec<AABB> = Vec::with_capacity(n_faces);
         let mut face_centroids: Vec<Vec3> = Vec::with_capacity(n_faces);
         let mut face_normals: Vec<Vec3> = if smoothed_normals { Vec::with_capacity(n_faces) } else { Vec::new() };
+        let mut valid_face_indices: Vec<[u32; 3]> = Vec::with_capacity(n_faces);
 
         for (fi, &[i0, i1, i2]) in face_indices.iter().enumerate() {
             assert!((i0 as usize) < n_pos && (i1 as usize) < n_pos && (i2 as usize) < n_pos, 
                 "Face {} has out-of-bounds index: ({}, {}, {}) with positions length {}", fi, i0, i1, i2, n_pos);
 
             let p0: Vec3 = positions[i0 as usize];
-            let p1 = positions[i1 as usize];
-            let p2 = positions[i2 as usize];
+            let p1: Vec3 = positions[i1 as usize];
+            let p2: Vec3 = positions[i2 as usize];
+
+            // Validate vertex positions to catch duplicate vertices, if so skip
+            if (p0 == p1) || (p1 == p2) || (p2 == p0) {
+                continue;
+            }
+
+            valid_face_indices.push([i0, i1, i2]);
 
             let tri_bbox: AABB = AABB::from_point_triplet(&p0, &p1, &p2);
             face_bboxes.push(tri_bbox);
             face_centroids.push((p0 + p1 + p2) / 3.0);
 
+            // Precompute flat face normals
+            if smoothed_normals {
+                let e1: Vec3 = p1 - p0;
+                let e2: Vec3 = p2 - p0;
+                let n: Vec3 = Vec3::unit_vector(&Vec3::cross(&e1, &e2));
+                face_normals.push(n);
+            }
+
             debug_assert!(i0 != i1 && i1 != i2 && i2 != i0,
                 "Face {} has duplicate vertex indices: ({}, {}, {})", fi, i0, i1, i2);
+            debug_assert!(p0 != p1 && p1 != p2 && p2 != p0,
+                "Face {} has duplicate vertex positions: p0={}, p1={}, p2={}", fi, p0, p1, p2);
             debug_assert!(
                 p0.is_finite() && p1.is_finite() && p2.is_finite(),
                 "Non-finite vertex detected in face {}: p0={}, p1={}, p2={}", fi, p0, p1, p2
             );
         }
+        // Shrink vectors in case some faces were degenerate and skipped, and reassign n_faces
+        face_bboxes.shrink_to_fit();
+        face_centroids.shrink_to_fit();
+        if smoothed_normals { face_normals.shrink_to_fit(); }
+        let n_faces = face_centroids.len();
 
         // ----- 2. Build BVH, obtaining a permutation of face indices in BVH leaf ordering -----
         let (bvh_nodes, new_triangle_order) = build_mesh_bvh(&face_bboxes, &face_centroids);
@@ -147,7 +170,7 @@ impl TriangleMesh {
         let mut face_areas: Vec<f64> = Vec::with_capacity(n_faces);
 
         for &orig_face_index in &new_triangle_order {
-            let [i0, i1, i2] = face_indices[orig_face_index as usize];
+            let [i0, i1, i2] = valid_face_indices[orig_face_index as usize];
             let p0: Point3 = positions[i0 as usize];
             let p1: Point3 = positions[i1 as usize];
             let p2: Point3 = positions[i2 as usize];
