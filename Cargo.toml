@@ -11,3 +11,7 @@ rayon = "1.11.0"
 
 [profile.release]
 debug = true
+
+[features]
+default = []
+normals = []
