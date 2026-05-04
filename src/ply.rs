@@ -53,6 +53,7 @@ struct Header {
 
 /// Load a PLY file from a give path.
 pub fn load(path: impl AsRef<Path>) -> io::Result<PlyMeshData> {
+    println!("Loading PLY file: {}", path.as_ref().display());
     let file = File::open(path)?;
     let mut reader = BufReader::new(file);
 
