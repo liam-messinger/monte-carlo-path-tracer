@@ -230,6 +230,10 @@ impl Camera {
             return self.background;
         }
 
+        // Testing: return just the normal for debugging:
+        #[cfg(feature = "normals")]
+        { return 0.5 * rec.normal + Color::new(0.5, 0.5, 0.5); }
+
         // TODO: Consider simplifying emitted() to just take rec, since rec.u, rec.v, rec.point are redundant
         // Emitted light from the hit point itself, before scattering
         let emitted_color = rec.material.emitted(r, rec, rec.u, rec.v, &rec.point);
