@@ -89,9 +89,9 @@ impl AABB {
     /// Construct an axis-aligned bounding box that tightly encloses the input box and point.
     pub fn merge_point(bbox: &AABB, point: &Point3) -> Self {
         Self {
-            x: Interval::merge(&bbox.x, &Interval::new(point.x(), point.x())),
-            y: Interval::merge(&bbox.y, &Interval::new(point.y(), point.y())),
-            z: Interval::merge(&bbox.z, &Interval::new(point.z(), point.z())),
+            x: Interval::merge_point(&bbox.x, point.x()),
+            y: Interval::merge_point(&bbox.y, point.y()),
+            z: Interval::merge_point(&bbox.z, point.z()),
         }
     }
 

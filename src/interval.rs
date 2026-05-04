@@ -26,6 +26,14 @@ impl Interval {
         }
     }
 
+    /// Add a point to the interval, expanding if it lies outside the current bounds.
+    pub fn merge_point(interval: &Interval, point: f64) -> Self {
+        Self {
+            min: interval.min.min(point),
+            max: interval.max.max(point),
+        }
+    }
+
     /// Create an empty interval.
     pub const fn empty() -> Self {
         Self::EMPTY
