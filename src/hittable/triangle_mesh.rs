@@ -28,6 +28,11 @@ const SAH_TRAVERSE_COST: f64 = 1.0;
 /// log2(1M / 4) ≈ 18, so 64 is a safe upper bound for typical scenes. 
 const MAX_BVH_DEPTH: usize = 64;
 
+/// Relative cell size for vertex deduplication (fraction of mesh extent).
+const DEDUP_REL_EPS: f64 = 1e-6;
+/// Absolute minimum cell size for vertex deduplication (world units).
+const DEDUP_ABS_EPS: f64 = 1e-9;
+
 // =====================================================================
 // Hot-path intersection geometry
 // =====================================================================
@@ -96,7 +101,7 @@ pub struct TriangleMesh {
 impl TriangleMesh {
     /// Build a `TriangleMesh` from a vertex buffer, triangle index buffer, and a single material.
     /// Performs the following steps:
-    /// 1. Deduplicate vertices by position matching.
+    /// 1. Quantize vertices to deduplicate and clean up the mesh.
     /// 2. Compute per-face bounds, centroids, and areas in original face order.
     /// 3. Build a binned-SAH BVH - this returns a permutation of face indices in BVH leaf order.
     /// 4. Materialize `SimpleTriangle` data cold arrays in BVH leaf order.
@@ -108,9 +113,9 @@ impl TriangleMesh {
         material: Arc<Material>,
         smoothed_normals: bool,
     ) -> Self {
-        // ----- 1. Deduplicate vertices by position matching. -----
-        let (positions, face_indices) = deduplicate_vertices(positions, face_indices);
-        println!("Deduplicated vertices: {}", positions.len());
+        // ----- 1. Quantize vertices to deduplicate and clean up the mesh. -----
+        let (positions, face_indices) = quantize_vertices(positions, face_indices);
+        println!("Vertices after quantization: {}", positions.len());
 
         let n_faces = face_indices.len();
         let n_pos = positions.len();
@@ -410,50 +415,60 @@ impl From<TriangleMesh> for Hittable {
 // Geometry processing helpers
 // =====================================================================
 
-/// Wrapper around Point3 that implements Eq and Hash by treating f64 bits as u64.
-/// Allows exact matching of positions.
-#[derive(Clone, Copy, Debug)]
-struct HashablePoint3([u64; 3]);
-impl HashablePoint3 {
-    /// Convert a Point3 to a hashable key by bit-casting each f64 coordinate.
+/// Quantized vertex key for approximate deduplication.
+/// Each component is snapped to a grid of size `cell_size`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+struct QuantizedPoint3([i64; 3]);
+
+impl QuantizedPoint3 {
+    /// Convert a Point3 to a quantized key. Uses rounding to the nearest grid point.
     #[inline]
-    fn from_point(p: Point3) -> Self {
-        HashablePoint3([p.x().to_bits(), p.y().to_bits(), p.z().to_bits()])
-    }
-}
-impl PartialEq for HashablePoint3 {
-    #[inline]
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-}
-impl Eq for HashablePoint3 {}
-impl std::hash::Hash for HashablePoint3 {
-    #[inline]
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
+    fn from_point(p: Point3, cell_size: f64) -> Self {
+        let inv_cell = 1.0 / cell_size;
+        let qx = (p.x() * inv_cell).round() as i64;
+        let qy = (p.y() * inv_cell).round() as i64;
+        let qz = (p.z() * inv_cell).round() as i64;
+        QuantizedPoint3([qx, qy, qz])
     }
 }
 
-/// Deduplicate vertices by position matching and remap face indices accordingly.
+/// Compute a reasonable quantization cell size from the mesh bounds.
+/// Uses `max_extent * DEDUP_REL_EPS`, clamped by `DEDUP_ABS_EPS`.
+fn compute_quant_cell_size(positions: &[Point3]) -> f64 {
+    let mut bounds = AABB::empty();
+    for p in positions {
+        bounds = AABB::merge_point(&bounds, p);
+    }
+
+    let dx = bounds.x.size();
+    let dy = bounds.y.size();
+    let dz = bounds.z.size();
+    let max_extent = dx.max(dy).max(dz);
+
+    (max_extent * DEDUP_REL_EPS).max(DEDUP_ABS_EPS)
+}
+
+/// Quantize vertices by position matching and remap face indices accordingly.
 /// 
-/// Returns `(deduplicated_positions, remapped_face_indices)`.
-fn deduplicate_vertices(
+/// Returns `(quantized_positions, remapped_face_indices)`.
+fn quantize_vertices(
     positions: Vec<Point3>,
     face_indices: Vec<[u32; 3]>,
 ) -> (Vec<Point3>, Vec<[u32; 3]>) {
     use std::collections::HashMap;
 
+    let cell_size: f64 = compute_quant_cell_size(&positions);
+    
     let mut unique_positions: Vec<Vec3> = Vec::new();
-    let mut vertex_map: HashMap<HashablePoint3, u32> = HashMap::new();
+    let mut vertex_map: HashMap<QuantizedPoint3, u32> = HashMap::new();
     let mut old_to_new_index: Vec<u32> = vec![0u32; positions.len()];
     let mut new_index_counter: u32 = 0;
 
-    // Build the mapping form old indices to new (deduplicated) indices.
+    // Build the mapping from old indices to new quantized indices.
     for (old_index, &pos) in positions.iter().enumerate() {
-        let key = HashablePoint3::from_point(pos);
+        let key = QuantizedPoint3::from_point(pos, cell_size);
         let new_index = if let Some(&existing_index) = vertex_map.get(&key) {
-            // This position was already seen, reuse the existing index.
+            // This quantized position was already seen, reuse the existing index.
             existing_index
         } else {
             // New unique position, add it and record the mapping.
@@ -466,7 +481,7 @@ fn deduplicate_vertices(
         old_to_new_index[old_index] = new_index;
     }
 
-    // Remap face indices to point to the deduplicated vertex indices.
+    // Remap face indices to point to the quantized vertex indices.
     let mut remapped_face_indices = Vec::with_capacity(face_indices.len());
     for &[i0, i1, i2] in &face_indices {
         remapped_face_indices.push([
