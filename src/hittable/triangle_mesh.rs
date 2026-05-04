@@ -96,23 +96,28 @@ pub struct TriangleMesh {
 impl TriangleMesh {
     /// Build a `TriangleMesh` from a vertex buffer, triangle index buffer, and a single material.
     /// Performs the following steps:
-    /// 1. Compute per-face bounds, centroids, and areas in original face order.
-    /// 2. Build a binned-SAH BVH - this returns a permutation of face indices in BVH leaf order.
-    /// 3. Materialize `SimpleTriangle` data cold arrays in BVH leaf order.
-    /// 4. Precompute area CDF for importance sampling.
-    /// 5. Optionally compute per-vertex normals for smooth shading.
+    /// 1. Deduplicate vertices by position matching.
+    /// 2. Compute per-face bounds, centroids, and areas in original face order.
+    /// 3. Build a binned-SAH BVH - this returns a permutation of face indices in BVH leaf order.
+    /// 4. Materialize `SimpleTriangle` data cold arrays in BVH leaf order.
+    /// 5. Precompute area CDF for importance sampling.
+    /// 6. Optionally compute per-vertex normals for smooth shading.
     pub fn new(
         positions: Vec<Point3>, 
         face_indices: Vec<[u32; 3]>, 
         material: Arc<Material>,
         smoothed_normals: bool,
     ) -> Self {
+        // ----- 1. Deduplicate vertices by position matching. -----
+        let (positions, face_indices) = deduplicate_vertices(positions, face_indices);
+        println!("Deduplicated vertices: {}", positions.len());
+
         let n_faces = face_indices.len();
         let n_pos = positions.len();
         assert!(n_faces > 0, "Mesh must have at least one face");
         assert!(n_pos > 0, "positions must not be empty");
 
-        // ----- 1. Per-face data keyed by ORIGINAL face index. -----
+        // ----- 2. Per-face data keyed by ORIGINAL face index. -----
         let mut face_bboxes: Vec<AABB> = Vec::with_capacity(n_faces);
         let mut face_centroids: Vec<Vec3> = Vec::with_capacity(n_faces);
         let mut face_normals: Vec<Vec3> = if smoothed_normals { Vec::with_capacity(n_faces) } else { Vec::new() };
@@ -147,8 +152,6 @@ impl TriangleMesh {
 
             debug_assert!(i0 != i1 && i1 != i2 && i2 != i0,
                 "Face {} has duplicate vertex indices: ({}, {}, {})", fi, i0, i1, i2);
-            debug_assert!(p0 != p1 && p1 != p2 && p2 != p0,
-                "Face {} has duplicate vertex positions: p0={}, p1={}, p2={}", fi, p0, p1, p2);
             debug_assert!(
                 p0.is_finite() && p1.is_finite() && p2.is_finite(),
                 "Non-finite vertex detected in face {}: p0={}, p1={}, p2={}", fi, p0, p1, p2
@@ -160,10 +163,10 @@ impl TriangleMesh {
         if smoothed_normals { face_normals.shrink_to_fit(); }
         let n_faces = face_centroids.len();
 
-        // ----- 2. Build BVH, obtaining a permutation of face indices in BVH leaf ordering -----
+        // ----- 3. Build BVH, obtaining a permutation of face indices in BVH leaf ordering -----
         let (bvh_nodes, new_triangle_order) = build_mesh_bvh(&face_bboxes, &face_centroids);
 
-        // ----- 3. Create hot-path triangle data and parallel "cold" arrays in BVH leaf order -----
+        // ----- 4. Create hot-path triangle data and parallel "cold" arrays in BVH leaf order -----
         // BVH leaves point at at indices [start, start+count) inside `triangles` directly.
         let mut triangles: Vec<SimpleTriangle> = Vec::with_capacity(n_faces);
         let mut face_indices_reordered: Vec<[u32; 3]> = Vec::with_capacity(n_faces);
@@ -185,7 +188,7 @@ impl TriangleMesh {
             face_areas.push(area);
         }
 
-        // ----- 4. Normalize culumative area distribution for area-weighted sampling -----
+        // ----- 5. Normalize culumative area distribution for area-weighted sampling -----
         let total_area: f64 = face_areas.iter().sum();
         let inv_total_area: f64 = if total_area > 0.0 { 1.0 / total_area } else { 0.0 };
         let mut face_area_cdf: Vec<f64> = Vec::with_capacity(n_faces);
@@ -197,7 +200,7 @@ impl TriangleMesh {
         // Clamp last value to exactly 1.0
         if let Some(last) = face_area_cdf.last_mut() { *last = 1.0; }
 
-        // ----- 5. Optionally compute per-vertex averaged normals -----
+        // ----- 6. Optionally compute per-vertex averaged normals -----
         let vertex_normals = if smoothed_normals {
             Some(compute_vertex_normals(n_pos, &valid_face_indices, &face_normals))
         } else {
@@ -403,6 +406,79 @@ impl From<TriangleMesh> for Hittable {
     }
 }
 
+// =====================================================================
+// Geometry processing helpers
+// =====================================================================
+
+/// Wrapper around Point3 that implements Eq and Hash by treating f64 bits as u64.
+/// Allows exact matching of positions.
+#[derive(Clone, Copy, Debug)]
+struct HashablePoint3([u64; 3]);
+impl HashablePoint3 {
+    /// Convert a Point3 to a hashable key by bit-casting each f64 coordinate.
+    #[inline]
+    fn from_point(p: Point3) -> Self {
+        HashablePoint3([p.x().to_bits(), p.y().to_bits(), p.z().to_bits()])
+    }
+}
+impl PartialEq for HashablePoint3 {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
+}
+impl Eq for HashablePoint3 {}
+impl std::hash::Hash for HashablePoint3 {
+    #[inline]
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+    }
+}
+
+/// Deduplicate vertices by position matching and remap face indices accordingly.
+/// 
+/// Returns `(deduplicated_positions, remapped_face_indices)`.
+fn deduplicate_vertices(
+    positions: Vec<Point3>,
+    face_indices: Vec<[u32; 3]>,
+) -> (Vec<Point3>, Vec<[u32; 3]>) {
+    use std::collections::HashMap;
+
+    let mut unique_positions: Vec<Vec3> = Vec::new();
+    let mut vertex_map: HashMap<HashablePoint3, u32> = HashMap::new();
+    let mut old_to_new_index: Vec<u32> = vec![0u32; positions.len()];
+    let mut new_index_counter: u32 = 0;
+
+    // Build the mapping form old indices to new (deduplicated) indices.
+    for (old_index, &pos) in positions.iter().enumerate() {
+        let key = HashablePoint3::from_point(pos);
+        let new_index = if let Some(&existing_index) = vertex_map.get(&key) {
+            // This position was already seen, reuse the existing index.
+            existing_index
+        } else {
+            // New unique position, add it and record the mapping.
+            let index = new_index_counter;
+            new_index_counter += 1;
+            unique_positions.push(pos);
+            vertex_map.insert(key, index);
+            index
+        };
+        old_to_new_index[old_index] = new_index;
+    }
+
+    // Remap face indices to point to the deduplicated vertex indices.
+    let mut remapped_face_indices = Vec::with_capacity(face_indices.len());
+    for &[i0, i1, i2] in &face_indices {
+        remapped_face_indices.push([
+            old_to_new_index[i0 as usize],
+            old_to_new_index[i1 as usize],
+            old_to_new_index[i2 as usize],
+        ]);
+    }
+
+    (unique_positions, remapped_face_indices)
+}
+
 /// Compute per-vertex normals by averaging the normals of all incident faces.
 /// This produces smooth shading when interpolated across triangle surfaces.
 /// Returns a vector of vertex normals.
@@ -427,7 +503,7 @@ fn compute_vertex_normals(
     // Normalize each accumulated normal
     for n in vertex_normals.iter_mut() {
         let len = n.length();
-        if len > 0.0 {
+        if len > EPSILON {
             *n /= len;
         } else {
             *n = Vec3::new(0.0, 1.0, 0.0); // Fallback normal for isolated vertices
