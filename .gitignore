@@ -1,4 +1,4 @@
 /target
 /progress/*
-/renders/*
+/renders*/*
 .DS_Store

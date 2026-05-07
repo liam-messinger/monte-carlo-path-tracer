@@ -105,7 +105,7 @@ impl Camera {
         // Generate output filename with dimensions and characteristics
         if self.scene_name.is_empty() { self.scene_name = "render".to_string(); }
         let mut filename = format!(
-            "renders/{}_{}x{}_{}spp_{}depth_{}.png",
+            "{}_{}x{}_{}spp_{}depth_{}.png",
             self.scene_name,
             width,
             height,
@@ -113,7 +113,7 @@ impl Camera {
             max_depth,
             time_str
         );
-        if !self.append_data { filename = format!("renders/{}.png", self.scene_name); }
+        if !self.append_data { filename = format!("{}.png", self.scene_name); }
 
         // Build the image and save
         // Default colorspace of an ImageBuffer is sRGB
