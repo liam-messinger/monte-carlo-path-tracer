@@ -27,7 +27,7 @@ pub struct Camera {
     pub focus_dist: f64,        // Distance from camera lookfrom point to plane of perfect focus
 
     pub scene_name: String,     // Name of the scene for output file naming
-    pub is_test: bool,          // Whether this is a test render (set name to "test" if true)
+    pub append_data: bool,      // Whether to append scene characteristics to output filename
 
     image_height: u32,          // Rendered image height
     pixel_samples_scaled: f64,  // Color scale factor for a sum of pixel samples
@@ -105,7 +105,7 @@ impl Camera {
         // Generate output filename with dimensions and characteristics
         if self.scene_name.is_empty() { self.scene_name = "render".to_string(); }
         let mut filename = format!(
-            "{}_{}x{}_{}spp_{}depth_{}.png",
+            "renders/{}_{}x{}_{}spp_{}depth_{}.png",
             self.scene_name,
             width,
             height,
@@ -113,7 +113,7 @@ impl Camera {
             max_depth,
             time_str
         );
-        if self.is_test { filename = format!("test_{}.png", self.scene_name); }
+        if !self.append_data { filename = format!("renders/{}.png", self.scene_name); }
 
         // Build the image and save
         // Default colorspace of an ImageBuffer is sRGB
@@ -335,7 +335,7 @@ impl Default for Camera {
             focus_dist: 1.0,
 
             scene_name: String::new(),
-            is_test: false,
+            append_data: true,
 
             // Private
             // Will be set in initialize()
