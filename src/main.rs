@@ -514,10 +514,10 @@ fn ply_model_scene() {
     }
     
     // Build TriangleMesh
-    let mat1 = Material::lambertian(Color::new(0.7, 0.7, 0.7));
+    let mat1 = Material::lambertian(Color::new(0.75, 0.05, 0.05));
     let mat2 = Material::metal(Color::new(0.8, 0.8, 0.9), 0.1);
     let mat3 = Material::dielectric(1.5);
-    let mesh = TriangleMesh::new(data.positions, data.indices, mat1);
+    let mesh = TriangleMesh::new(data.positions, data.indices, mat3, true);
 
     // Add to world
     let mesh = Hittable::rotate_y_translate(mesh, 180.0-35.0, Vec3::new(-0.1, -0.4, -1.0));
@@ -551,14 +551,83 @@ fn ply_model_scene() {
     cam.background = Color::new(0.02, 0.02, 0.03);
 
     cam.v_fov = 20.0;
+    // cam.v_fov = 5.0;
     cam.look_from = Point3::new(0.0, 1.5, 4.0);
     cam.look_at = Point3::new(0.0, 0.75, 0.0);
+    // cam.look_at = Point3::new(0.05, 1.0, 0.0);
     cam.v_up = Vec3::new(0.0, 1.0, 0.0);
     cam.aperture_angle = 0.0;
 
     let world = world.into_bvh();
     let sampling_target = Arc::new(Hittable::Quad(light_quad));
     cam.render(world, Some(sampling_target));
+}
+
+fn ply_model_spin() {
+    let frames: u32 = 120;
+
+    let mut data = ply::load("models/dragon.ply").expect("load PLY");
+
+    let scale = 8.0;
+    for p in &mut data.positions {
+        *p = *p * scale;
+    }
+
+    let mat = Material::dielectric(1.5);
+    let base_mesh = TriangleMesh::new(data.positions, data.indices, mat, true);
+
+    let mut world_base = HittableList::new();
+
+    let ground = Material::lambertian(Color::new(0.4, 0.4, 0.4));
+    world_base.add(Quad::new(
+        &Point3::new(-10.0, 0.0, -10.0),
+        &Vec3::new(20.0, 0.0, 0.0),
+        &Vec3::new(0.0, 0.0, 20.0),
+        ground,
+    ));
+
+    let light = Material::diffuse_light(Color::new(7.0, 7.0, 7.0));
+    let light_quad = Quad::new(
+        &Point3::new(-2.0, 3.99, -2.0),
+        &Vec3::new(4.0, 0.0, 0.0),
+        &Vec3::new(0.0, 0.0, 4.0),
+        light,
+    );
+    world_base.add(light_quad.clone());
+
+    let sampling_target = Arc::new(Hittable::Quad(light_quad));
+
+    // --- Render frames ---
+    for frame in 0..frames {
+        let angle = (frame as f64 / frames as f64) * 360.0;
+        let dragon = Hittable::rotate_y_translate(
+            base_mesh.clone(),
+            (180.0 - 35.0) + angle,
+            Vec3::new(-0.1, -0.3, -1.0),
+        );
+
+        let mut world = world_base.clone();
+        world.add(dragon);
+
+        let mut cam = Camera::default();
+        cam.scene_name = format!("dragon_spin_{:03}", frame);
+        cam.append_data = false;
+
+        cam.aspect_ratio = 1.0;
+        cam.image_width = 1024;
+        cam.samples_per_pixel = 500;
+        cam.max_depth = 20;
+        cam.background = Color::new(0.02, 0.02, 0.03);
+
+        cam.v_fov = 20.0;
+        cam.look_from = Point3::new(0.0, 1.5, 4.0);
+        cam.look_at = Point3::new(-0.1, 0.75, 0.0);
+        cam.v_up = Vec3::new(0.0, 1.0, 0.0);
+        cam.aperture_angle = 0.0;
+
+        let world = world.into_bvh();
+        cam.render(world, Some(sampling_target.clone()));
+    }
 }
 
 fn main() {
@@ -574,6 +643,7 @@ fn main() {
         9 => final_scene(400, 250, 4),     // Quick preview
         10 => pyramid(),
         11 => ply_model_scene(),
+        12 => ply_model_spin(),
         _ => println!("No scene selected."),
     }
 }
