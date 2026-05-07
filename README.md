@@ -1,58 +1,46 @@
 # Monte Carlo Path Tracer (Rust)
 
-A CPU path tracer inspired by the Ray Tracing in One Weekend series. It supports textured materials, Perlin noise, BVH acceleration, volumetrics, area lights, and several showcase scenes.
+CPU Monte Carlo path tracer in Rust inspired by Ray Tracing in One Weekend series.
 
-## Example Renders
+-- image
 
-Heavy final scene:
+## Gallery
 
 ![Final scene](images/output2.png)
 
-Cornell box variant:
+## Features
 
-![Cornell box](images/output3.png)
+- Geometry: spheres, quads, cuboids, triangles, triangle meshes (PLY loader, ASCII)
+- Acceleration: BVH for worlds and meshes; SAH binned builder for meshes
+- Materials: Lambertian (textured), metal, dielectric (glass), diffuse lights, isotropic (volumes)
+- Textures: solid color, checker, image textures, Perlin noise
+- Anti-aliasing: stratified sampling with configurable samples per pixel
+- Importance Sampling: cosine-weighted, light-importance, mixture PDFs
+- Volumetrics: constant-density media (fog/smoke)
+- Camera: depth of field (aperture + focus distance), configurable FOV and orientation
+- Parallelism: multi-threaded rendering with Rayon
 
-Other:
+## Quick Start
 
-![Other](images/output.png)
-
-## How to Run
-
-- Prerequisites: Install Rust and Cargo.
-- Debug run (faster build, slower render):
-
-```bash
-cargo run
-```
-
-- Release run (slower build, faster render):
+- Prerequisites: Rust + Cargo
+- Run:
 
 ```bash
 cargo run --release
+or
+cargo run -r
 ```
 
-Notes:
-- The program saves the rendered image as `output.png` in the project root and shows a progress bar while rendering.
-- The default `main()` renders a high‑quality final scene; it can take a long time.
+- Run (show normals):
 
-### Switching Scenes
-Edit [src/main.rs](src/main.rs) and change the `match` selector in `main()` to choose a scene:
+```bash
+cargo run --release --features normals
+or
+cargo run -r -F normals
+```
 
-```
-1  => bouncing_spheres
-2  => checkered_spheres
-3  => earth
-4  => solar_system
-5  => perlin_spheres
-6  => quads
-7  => simple_light
-8  => cornell_box
-9  => cornell_smoke
-10 => final_scene(800, 10000, 40)  # high quality
-11 => final_scene(400, 250, 4)     # quick preview
-```
+- Switch scenes: tweak the `match` in [src/main.rs](src/main.rs) to pick a scene.
 
 ## Credits
 
-This project is based on the excellent book series:
-- Ray Tracing in One Weekend — https://raytracing.github.io/books/RayTracingInOneWeekend.html
+- Inspired by Ray Tracing in One Weekend: https://raytracing.github.io/books/RayTracingInOneWeekend.html
