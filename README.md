@@ -2,9 +2,14 @@
 
 CPU Monte Carlo path tracer in Rust inspired by Ray Tracing in One Weekend series.
 
--- image
+<img width="600" height="600" alt="zdcornell_box_600x600_10000spp_50depth_112m23s" src="https://github.com/user-attachments/assets/36dd1128-52eb-4219-b7d0-e2cb84c474b1" />
 
 ## Gallery
+
+https://github.com/user-attachments/assets/a825c9b3-9471-4be1-8d90-095dd2a7dd68
+
+<img width="768" height="768" alt="h_ply_model_1024x1024_500spp_20depth_7m39s" src="https://github.com/user-attachments/assets/79e92e19-db54-441d-a13b-acc8e86a9d43" />
+<br>
 
 ![Final scene](images/output2.png)
 
