@@ -315,8 +315,14 @@ impl Default for Camera {
     /// - Image Width: 400
     /// - Samples per Pixel: 100
     /// - Max Depth: 50
-    /// - Background Color: Light blue sky
+    /// - Background Color: Light blue
     /// - Vertical FOV: 90 degrees
+    /// - Look From: (0, 0, 0)
+    /// - Look At: (0, 0, -1)
+    /// - V Up: (0, 1, 0)
+    /// - Aperture Angle: 0 (pinhole)
+    /// - Focus Dist: 1
+    /// - Append Data: true
     fn default() -> Self {
         Camera {
             // Public
