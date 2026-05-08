@@ -2,6 +2,7 @@ use crate::material::ScatterRecord;
 use crate::prelude::*;
 use crate::hittable::{Hittable, HitRecord};
 use crate::pdf::*;
+use crate::color::{linear_to_srgb_u8};
 
 // External crates
 use indicatif::{ProgressBar, ProgressStyle};
@@ -28,6 +29,9 @@ pub struct Camera {
 
     pub scene_name: String,     // Name of the scene for output file naming
     pub append_data: bool,      // Whether to append scene characteristics to output filename
+
+    pub denoise: bool,          // Whether to apply OIDN denoising to the final image
+    pub save_aovs: bool,        // Whether to save additional Arbitrary Output Variables
 
     image_height: u32,          // Rendered image height
     pixel_samples_scaled: f64,  // Color scale factor for a sum of pixel samples
@@ -58,43 +62,86 @@ impl Camera {
         let width = self.image_width;
         let height = self.image_height;
         let max_depth = self.max_depth;
+        let row_len = (width as usize) * 3; // Number of f32 values in a row of RGB pixels
 
         // Progress bar by row
-        let pb = Self::create_progress_bar(height as u64);
+        let bar = Self::create_progress_bar(height as u64);
 
-        // Raw RGB buffer (u8) to avoid shared ImageBuffer mutation
-        let mut raw_img: Vec<u8> = vec![0u8; (width as usize) * (height as usize) * 3];
+        // Determine if we need to compute AOVs for denoising or saving
+        let using_aovs: bool = self.denoise || self.save_aovs;
 
-        // Prallelize over rows; each row chunk is disjoint
-        let pb_row = pb.clone();
-        raw_img.par_chunks_mut((width as usize) * 3)
-            .enumerate()
-            .for_each(|(j, row)| {
-                for i in 0..(width as usize) {
-                    let mut pixel_color = Color::default();
-                    let mut rec = HitRecord::new();
-                    for s_j in 0..self.sqrt_spp {
-                        for s_i in 0..self.sqrt_spp {
-                            let r: Ray = self.get_ray(i as u32, j as u32, s_i, s_j);
-                            pixel_color += self.ray_color(
-                                &r, 
-                                max_depth, 
-                                &world, 
-                                sample_target.as_ref(), // pass Option<&Arc<Hittable>>
-                                &mut rec
-                            );
+        // Linear RGB buffers (f32) + AOVs, only allocate AOV buffers if needed
+        let mut color_linear = vec![0f32; row_len * (height as usize)];
+        let mut albedo = if using_aovs { vec![0f32; row_len * (height as usize)] } else { Vec::new() };
+        let mut normal = if using_aovs { vec![0f32; row_len * (height as usize)] } else { Vec::new() };
+
+        // Parallelize over rows, each row chunk is disjoint
+        if !using_aovs { // Fill only color_linear buffer
+            color_linear
+                .par_chunks_mut(row_len)
+                .enumerate()
+                .for_each(|(j, row_c)| {
+                    for i in 0..(width as usize) {
+                        let mut pixel_color = Color::zero();
+                        let mut rec = HitRecord::new();
+                        for s_j in 0..self.sqrt_spp {
+                            for s_i in 0..self.sqrt_spp {
+                                let r = self.get_ray(i as u32, j as u32, s_i, s_j);
+                                pixel_color += self.ray_color(&r, max_depth, &world, sample_target.as_ref(), &mut rec);
+                            }
                         }
+                        pixel_color *= self.pixel_samples_scaled;
+                        let off = i * 3; // Offset into the row for this pixel
+                        row_c[off..off + 3].copy_from_slice(&[pixel_color.x() as f32, pixel_color.y() as f32, pixel_color.z() as f32]);
                     }
-                    pixel_color *= self.pixel_samples_scaled;
-                    let rgb = pixel_color.as_rgb();
-                    row[i * 3] = rgb[0];
-                    row[i * 3 + 1] = rgb[1];
-                    row[i * 3 + 2] = rgb[2];
-                }
-                pb_row.inc(1);
-            });
+                    bar.inc(1);
+                });
+        } else { // Fill color_linear, albedo, and normal buffers
+            color_linear
+                .par_chunks_mut(row_len)
+                .zip(albedo.par_chunks_mut(row_len))
+                .zip(normal.par_chunks_mut(row_len))
+                .enumerate()
+                .for_each(|(j, ((row_c, row_a), row_n))| {
+                    for i in 0..(width as usize) {
+                        let mut pixel_color = Color::zero();
+                        let mut alb_acc = Color::zero();
+                        let mut nrm_acc = Vec3::zero();
+                        let mut rec = HitRecord::new();
 
-        pb.finish_with_message("Render complete!");
+                        for s_j in 0..self.sqrt_spp {
+                            for s_i in 0..self.sqrt_spp {
+                                let r: Ray = self.get_ray(i as u32, j as u32, s_i, s_j);
+                                // Color
+                                pixel_color += self.ray_color(
+                                    &r, 
+                                    max_depth, 
+                                    &world, 
+                                    sample_target.as_ref(),
+                                    &mut rec
+                                );
+                                // AOVs
+                                if let Some((alb, n)) = self.primary_aov(&r, &world) {
+                                    alb_acc += alb;
+                                    nrm_acc += n;
+                                }
+                            }
+                        }
+                        let scale = self.pixel_samples_scaled;
+                        pixel_color *= scale;
+                        let alb = alb_acc * scale;
+                        let mut nrm = nrm_acc * scale;
+                        nrm = Vec3::safe_unit_vector(&nrm);
+
+                        let off = i * 3; // Offset into the row for this pixel
+                        row_c[off..off + 3].copy_from_slice(&[pixel_color.x() as f32, pixel_color.y() as f32, pixel_color.z() as f32]);
+                        row_a[off..off + 3].copy_from_slice(&[alb.x() as f32, alb.y() as f32, alb.z() as f32]);
+                        row_n[off..off + 3].copy_from_slice(&[nrm.x() as f32, nrm.y() as f32, nrm.z() as f32]);
+                    }
+                    bar.inc(1);
+                });
+        }
+        bar.finish_with_message("Render complete!");
 
         // Calculate elapsed time
         let elapsed = start_time.elapsed();
@@ -102,25 +149,66 @@ impl Camera {
         let seconds = elapsed.as_secs() % 60;
         let time_str = format!("{}m{}s", minutes, seconds);
 
-        // Generate output filename with dimensions and characteristics
+        // Generate base filename with dimensions and characteristics
         if self.scene_name.is_empty() { self.scene_name = "render".to_string(); }
-        let mut filename = format!(
-            "{}_{}x{}_{}spp_{}depth_{}.png",
-            self.scene_name,
-            width,
-            height,
-            self.samples_per_pixel,
-            max_depth,
-            time_str
-        );
-        if !self.append_data { filename = format!("{}.png", self.scene_name); }
+        let base = if self.append_data {
+            format!("{}_{}x{}_{}spp_{}depth_{}", self.scene_name, width, height, self.samples_per_pixel, max_depth, time_str)
+        } else {
+            self.scene_name.clone()
+        };
+        
+        // Save original (linear->sRGB u8)
+        let orig_u8 = linear_to_srgb_u8(&color_linear);
+        image::RgbImage::from_raw(width, height, orig_u8)
+            .expect("Buffer size mismatch")
+            .save(format!("{}.png", base))
+            .expect("Failed to save original image");
 
-        // Build the image and save
-        // Default colorspace of an ImageBuffer is sRGB
-        let img = image::RgbImage::from_raw(width, height, raw_img)
-            .expect("Buffer size mismatch");
-        img.save(&filename).expect(&format!("Failed to save {}", filename));
-        eprintln!("Image saved to {}", filename);
+        // Optional OIDN denoise
+        if self.denoise {
+            let den = self.denoise_oidn(&color_linear, Some(&albedo), Some(&normal), width, height);
+            let den_u8 = linear_to_srgb_u8(&den);
+            image::RgbImage::from_raw(width, height, den_u8)
+                .expect("Buffer size mismatch")
+                .save(format!("{}_denoised.png", base))
+                .expect("Failed to save denoised image");
+            eprintln!("Images saved to {}.png and {}_denoised.png", base, base);
+        } else {
+            eprintln!("Image saved to {}.png", base);
+        }
+        
+        // Optional AOV visualizations
+        if self.save_aovs {
+            let alb_u8 = linear_to_srgb_u8(&albedo);
+            let _ = image::RgbImage::from_raw(width, height, alb_u8)
+                .and_then(|img| img.save(format!("{}_albedo.png", base)).ok());
+            eprintln!("Albedo AOV saved to {}_albedo.png", base);
+
+            // Map normals [-1,1] -> [0, 1] for viewing
+            let mut nrm_vis = normal.clone();
+            for v in nrm_vis.iter_mut() { *v = 0.5 * (*v + 1.0); }
+            let nrm_u8 = linear_to_srgb_u8(&nrm_vis);
+            let _ = image::RgbImage::from_raw(width, height, nrm_u8)
+                .and_then(|img| img.save(format!("{}_normal.png", base)).ok());
+            eprintln!("Normal AOV saved to {}_normal.png", base);
+        }
+    }
+
+    /// Constructor for high-quality default camera.
+    /// - Aspect Ratio: 16:9
+    /// - Image Width: 1200
+    /// - Samples per Pixel: 500
+    /// - Max Depth: 50
+    /// - Background Color: Light blue sky
+    /// - Vertical FOV: 20 degrees
+    pub fn high_quality_default() -> Self {
+        let mut cam = Camera::default();
+        cam.aspect_ratio = 16.0 / 9.0;
+        cam.image_width = 1200;
+        cam.samples_per_pixel = 500;
+        cam.max_depth = 50;
+        cam.v_fov = 20.0;
+        cam
     }
 
     // ----- Private -----
@@ -205,12 +293,6 @@ impl Camera {
         let py = (s_j as f64 + random_f64()) * self.recip_sqrt_spp - 0.5;
         
         Vec3::new(px, py, 0.0)
-    }
-
-    /// Returns a random point on the unit square.
-    fn sample_square() -> Vec3 {
-        // Returns the vector to a random point in the [-.5,-.5]-[+.5,+.5] unit square.
-        Vec3::new(random_f64() - 0.5, random_f64() - 0.5, 0.0)
     }
 
     /// Returns a random point in the camera aperture disk.
@@ -359,6 +441,9 @@ impl Default for Camera {
 
             scene_name: String::new(),
             append_data: true,
+
+            denoise: false,
+            save_aovs: false,
 
             // Private
             // Will be set in initialize()
