@@ -286,13 +286,16 @@ impl Camera {
         emitted_color + scattered_color
     }
 
-    /// Function to set camera parameters to a high-quality default.
-    pub fn set_high_quality_settings(&mut self) {
-        self.aspect_ratio = 16.0 / 9.0;
-        self.image_width = 1200;
-        self.samples_per_pixel = 500;
-        self.max_depth = 50;
-        self.v_fov = 20.0;
+    /// First-hit AOVs for albedo and normal. World- or view-space normals accepted by OIDN.
+    fn primary_aov(&self, r: &Ray, world: &Hittable) -> Option<(Color, Vec3)> {
+        let mut rec = HitRecord::new();
+        if world.hit(r, &Interval::new(0.001, f64::INFINITY), &mut rec) {
+            let alb = rec.material.albedo_hint(&rec);
+            let n = rec.normal;
+            Some((alb, n))
+        } else {
+            None
+        }
     }
 
     /// Constructor for high-quality default camera.
