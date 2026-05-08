@@ -298,17 +298,31 @@ impl Camera {
         }
     }
 
-    /// Constructor for high-quality default camera.
-    /// - Aspect Ratio: 16:9
-    /// - Image Width: 1200
-    /// - Samples per Pixel: 500
-    /// - Max Depth: 50
-    /// - Background Color: Light blue sky
-    /// - Vertical FOV: 20 degrees
-    pub fn high_quality_default() -> Self {
-        let mut cam = Camera::default();
-        cam.set_high_quality_settings();
-        cam
+    /// Run OIDN RayTracing denoiser with optional AOVs.
+    fn denoise_oidn(
+        &self,
+        color: &[f32],
+        albedo: Option<&[f32]>,
+        normal: Option<&[f32]>,
+        width: u32,
+        height: u32,
+    ) -> Vec<f32> {
+        let device = oidn::Device::new();
+        let mut out = vec![0f32; color.len()];
+        let mut rt = oidn::RayTracing::new(&device);
+        rt.hdr(true)
+            .image_dimensions(width as usize, height as usize);
+        rt.clean_aux(true);
+
+        if let (Some(a), Some(n)) = (albedo, normal) {
+            rt.albedo_normal(a, n);
+        } else if let Some(a) = albedo {
+            rt.albedo(a);
+        }
+
+        rt.filter(color, &mut out).expect("Filter config error!");
+        if let Err(e) = device.get_error() { eprintln!("OIDN error: {}", e.1); }
+        out
     }
 }
 
