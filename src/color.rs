@@ -46,3 +46,24 @@ impl Color {
         Color::new(r as f64 / 255.0, g as f64 / 255.0, b as f64 / 255.0)
     }
 }
+
+// ----------------- Buffer color conversion helpers -----------------
+
+/// Convert a single linear RBG channel (f32) to sRGB u8 with gamma 2.0 correction.
+#[inline]
+pub fn linear_to_srgb(x: f32) -> u8 {
+    let g = if x > 0.0 { x.sqrt() } else { 0.0 };
+    (255.999 * g.clamp(0.0, 1.0)) as u8
+}
+
+/// Convert a buffer of linear RGB channels (f32) to sRGB u8 with gamma 2.0 correction.
+/// Input: row-major RGBRGB..., length divisible by 3.
+pub fn linear_to_srgb_u8(color: &[f32]) -> Vec<u8> {
+    let mut out = vec![0u8; color.len()];
+    for i in 0..(color.len() / 3) {
+        out[3 * i] = linear_to_srgb(color[3 * i]);
+        out[3 * i + 1] = linear_to_srgb(color[3 * i + 1]);
+        out[3 * i + 2] = linear_to_srgb(color[3 * i + 2]);
+    }
+    out
+}
