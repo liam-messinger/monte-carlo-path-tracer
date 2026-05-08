@@ -99,9 +99,23 @@ impl Vec3 {
     }
 
     // Vec3::unit_vector(v)
+    /// Returns the unit vector in the direction of v
     #[inline]
-    pub fn unit_vector(v: &Vec3) -> Vec3 { // returns the unit vector in the direction of v
+    pub fn unit_vector(v: &Vec3) -> Vec3 {
         *v / v.length()
+    }
+
+    // Vec3::safe_unit_vector(v)
+    /// Returns the unit vector in the direction of v, 
+    /// but returns zero vector if v is too close to zero
+    #[inline]
+    pub fn safe_unit_vector(v: &Vec3) -> Vec3 {
+        let len_sq = v.length_squared();
+        if len_sq < EPSILON * EPSILON {
+            Vec3::zero()
+        } else {
+            *v / len_sq.sqrt()
+        }
     }
 
     // Vec3::random_in_unit_circle()
