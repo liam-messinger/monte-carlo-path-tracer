@@ -2,3 +2,4 @@
 /progress/*
 /renders*/*
 .DS_Store
+.cargo/*
