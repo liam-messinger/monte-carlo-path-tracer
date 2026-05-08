@@ -75,6 +75,34 @@ impl Material {
         }
     }
 
+    /// Returns a diffuse "base color" hint for denoising (no lighting).
+    /// Return values guided by recommendations from OIDN documentation.
+    #[inline]
+    pub fn albedo_hint(&self, rec: &HitRecord) -> Color {
+        match self {
+            Material::Lambertian(mat) => {
+                // Access texture directly
+                mat.tex.value(rec.u, rec.v, &rec.point)
+            }
+            Material::Metal(mat) => {
+                // "albedo should be either the reflectivity at normal incidence or the average reflectivity"
+                mat.albedo
+            }
+            Material::Dielectric(_) => {
+                // "The albedo for dielectric surfaces (e.g. glass) should be either 1 or, if the surface is perfect specular..."
+                Color::new(1.0, 1.0, 1.0)
+            }
+            Material::DiffuseLight(_) => {
+                // Don't include emissive materials in the albedo hint
+                Color::zero()
+            }
+            Material::Isotropic(mat) => {
+                // For volumes, give texture color or 0
+                mat.tex.value(rec.u, rec.v, &rec.point)
+            }
+        }
+    }
+
     // Convenience Arc constructors
 
     /// Create an Arc<Material> lambertian from a Color.
