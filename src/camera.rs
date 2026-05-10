@@ -13,39 +13,73 @@ use std::time::Instant;
 
 /// Camera struct defining the viewpoint and rendering parameters.
 pub struct Camera {
-    pub aspect_ratio: f64,      // Ratio of image width over height
-    pub image_width: u32,       // Rendered image width in pixel count
-    pub samples_per_pixel: u32, // Number of samples per pixel for anti-aliasing
-    pub max_depth: u32,         // Maximum ray bounce depth
-    pub background: Color,      // Background color
+    /// Ratio of image width over height
+    pub aspect_ratio: f64,
+    /// Rendered image width in pixel count
+    pub image_width: u32,
+    /// Number of samples per pixel for anti-aliasing
+    pub samples_per_pixel: u32,
+    /// Maximum ray bounce depth
+    pub max_depth: u32,
+    /// Background color
+    pub background: Color,
 
-    pub v_fov: f64,             // Vertical view angle (field of view)
-    pub look_from: Point3,      // Point camera is looking from
-    pub look_at: Point3,        // Point camera is looking at
-    pub v_up: Vec3,             // "Up" direction for the camera
+    /// Vertical view angle (field of view)
+    pub v_fov: f64,
+    /// Point camera is looking from
+    pub look_from: Point3,
+    /// Point camera is looking at
+    pub look_at: Point3,
+    /// "Up" direction for the camera
+    pub v_up: Vec3,
 
-    pub aperture_angle: f64,    // Variation angle of rays through each pixel
-    pub focus_dist: f64,        // Distance from camera lookfrom point to plane of perfect focus
+    /// Variation angle of rays through each pixel
+    pub aperture_angle: f64,
+    /// Distance from camera lookfrom point to plane of perfect focus
+    pub focus_dist: f64,
 
-    pub scene_name: String,     // Name of the scene for output file naming
-    pub append_data: bool,      // Whether to append scene characteristics to output filename
+    /// Name of the scene for output file naming
+    pub scene_name: String,
+    /// Whether to append scene characteristics to output filename
+    pub append_data: bool,
 
-    pub denoise: bool,          // Whether to apply OIDN denoising to the final image
-    pub save_aovs: bool,        // Whether to save additional Arbitrary Output Variables
+    /// Whether to apply OIDN denoising to the final image.
+    /// If `color_buffer` is provided, this is overridden to true.
+    pub denoise: bool,
+    /// Whether to save additional Arbitrary Output Variables.
+    /// If `compute_color` is false, this is overridden to true.
+    pub save_aovs: bool,
+    /// Whether to compute the color buffer. If false, overrides `save_aovs` to true.
+    pub compute_color: bool,
+    /// Optional buffer to hold linear RGB color data for denoising or AOV saving
+    color_buffer: Option<ImageData>,
 
-    image_height: u32,          // Rendered image height
-    pixel_samples_scaled: f64,  // Color scale factor for a sum of pixel samples
-    sqrt_spp: u32,              // Square root of samples per pixel
-    recip_sqrt_spp: f64,        // Reciprocal of square root of samples per pixel
-    center: Point3,             // Camera center
-    pixel00_loc: Point3,        // Location of pixel 0, 0
-    pixel_delta_u: Vec3,        // Offeset to pixel to the right
-    pixel_delta_v: Vec3,        // Offset to pixel below
-    u: Vec3,                    // Camera coordinate system basis vector u
-    v: Vec3,                    // Camera coordinate system basis vector v
-    w: Vec3,                    // Camera coordinate system basis vector w
-    aperture_disk_u: Vec3,      // Aperture disk horizontal radius
-    aperture_disk_v: Vec3,      // Aperture disk vertical radius
+    /// Rendered image height
+    image_height: u32,
+    /// Color scale factor for a sum of pixel samples
+    pixel_samples_scaled: f64,
+    /// Square root of samples per pixel
+    sqrt_spp: u32,
+    /// Recpiprocal of square root of samples per pixel, used for stratified sampling offsets
+    recip_sqrt_spp: f64,
+    /// Camera center
+    center: Point3,
+    /// Location of pixel 0, 0
+    pixel00_loc: Point3,
+    /// Offset to pixel to the right
+    pixel_delta_u: Vec3,
+    /// Offset to pixel below
+    pixel_delta_v: Vec3,
+    /// Camera coordinate system basis vector u
+    u: Vec3,
+    /// Camera coordinate system basis vector v
+    v: Vec3,
+    /// Camera coordinate system basis vector w
+    w: Vec3,
+    /// Aperture disk basis vector u
+    aperture_disk_u: Vec3,
+    /// Aperture disk vertical radius
+    aperture_disk_v: Vec3,
 }
 
 impl Camera {
