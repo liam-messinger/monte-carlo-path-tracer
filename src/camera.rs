@@ -43,14 +43,6 @@ pub struct Camera {
     /// Whether to append scene characteristics to output filename
     pub append_data: bool,
 
-    /// Whether to apply OIDN denoising to the final image.
-    /// If `color_buffer` is provided, this is overridden to true.
-    pub denoise: bool,
-    /// Whether to save additional Arbitrary Output Variables.
-    /// If `compute_color` is false, this is overridden to true.
-    pub save_aovs: bool,
-    /// Whether to compute the color buffer. If false, overrides `save_aovs` to true.
-    pub compute_color: bool,
     /// Optional buffer to hold linear RGB color data for denoising or AOV saving
     color_buffer: Option<ImageData>,
 
@@ -100,11 +92,11 @@ impl Camera {
         let max_depth = self.max_depth;
         let row_len = (width as usize) * 3; // Number of f32 values in a row of RGB pixels
 
-        // Flags
+        // Flags derived from compile-time features + optional color buffer
         let buffer_provided = self.color_buffer.is_some();
-        self.compute_color = self.compute_color && !buffer_provided;
-        let using_aovs = self.denoise || self.save_aovs || !self.compute_color; 
-        self.denoise = self.denoise && (self.compute_color || buffer_provided);
+        let compute_color = !cfg!(feature = "only-aovs") && !buffer_provided;
+        let using_aovs = cfg!(feature = "denoise") || cfg!(feature = "save-aovs") || !compute_color;
+        let denoise = cfg!(feature = "denoise") && (compute_color || buffer_provided);
 
         // Progress bar by row
         let bar = Self::create_progress_bar(height as u64);
@@ -114,14 +106,14 @@ impl Camera {
         let mut color_linear = Vec::new();
         if buffer_provided {
             color_linear = self.color_buffer.take().unwrap().data_vec();
-        } else if self.compute_color {
+        } else if compute_color {
             color_linear = vec![0f32; row_len * (height as usize)];
         }
         let mut albedo = if using_aovs { vec![0f32; row_len * (height as usize)] } else { Vec::new() };
         let mut normal = if using_aovs { vec![0f32; row_len * (height as usize)] } else { Vec::new() };
 
         // Parallelize over rows, each row chunk is disjoint
-        if self.compute_color && !using_aovs { // Fill only color_linear buffer
+        if compute_color && !using_aovs { // Fill only color_linear buffer
             color_linear
                 .par_chunks_mut(row_len)
                 .enumerate()
@@ -142,7 +134,7 @@ impl Camera {
                     }
                     bar.inc(1);
                 });
-        } else if self.compute_color && using_aovs { // Fill color_linear, albedo, and normal buffers
+        } else if compute_color && using_aovs { // Fill color_linear, albedo, and normal buffers
             color_linear
                 .par_chunks_mut(row_len)
                 .zip(albedo.par_chunks_mut(row_len))
@@ -231,7 +223,7 @@ impl Camera {
         }
 
         // Optional OIDN denoise
-        if self.denoise {
+        if denoise {
             let den = self.denoise_oidn(&color_linear, Some(&albedo), Some(&normal), width, height);
             let den_u8 = linear_to_srgb_u8(&den);
             image::RgbImage::from_raw(width, height, den_u8)
@@ -244,7 +236,7 @@ impl Camera {
         }
         
         // Optional AOV visualizations
-        if self.save_aovs {
+        if cfg!(feature = "save-aovs") {
             let alb_u8 = linear_to_srgb_u8(&albedo);
             let _ = image::RgbImage::from_raw(width, height, alb_u8)
                 .and_then(|img| img.save(format!("{}_albedo.png", base)).ok());
@@ -386,10 +378,6 @@ impl Camera {
             return self.background;
         }
 
-        // Testing: return just the normal for debugging:
-        #[cfg(feature = "normals")]
-        { return 0.5 * rec.normal + Color::new(0.5, 0.5, 0.5); }
-
         // TODO: Consider simplifying emitted() to just take rec, since rec.u, rec.v, rec.point are redundant
         // Emitted light from the hit point itself, before scattering
         let emitted_color = rec.material.emitted(r, rec, rec.u, rec.v, &rec.point);
@@ -455,6 +443,7 @@ impl Camera {
     }
 
     /// Run OIDN RayTracing denoiser with optional AOVs.
+    #[cfg(feature = "denoise")]
     fn denoise_oidn(
         &self,
         color: &[f32],
@@ -479,6 +468,17 @@ impl Camera {
         rt.filter(color, &mut out).expect("Filter config error!");
         if let Err(e) = device.get_error() { eprintln!("OIDN error: {}", e.1); }
         out
+    }
+    #[cfg(not(feature = "denoise"))]
+    fn denoise_oidn(
+        &self,
+        _color: &[f32],
+        _albedo: Option<&[f32]>,
+        _normal: Option<&[f32]>,
+        _width: u32,
+        _height: u32,
+    ) -> Vec<f32> {
+        unreachable!("denoise_oidn called without 'denoise' feature enabled");
     }
 
     /// Set a color buffer to be used for denoising.
@@ -521,9 +521,6 @@ impl Default for Camera {
             scene_name: String::new(),
             append_data: true,
 
-            denoise: false,
-            save_aovs: false,
-            compute_color: true,
             color_buffer: None,
 
             // Private
