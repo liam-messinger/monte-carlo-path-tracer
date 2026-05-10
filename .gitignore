@@ -1,5 +1,6 @@
 /target
 /progress/*
 /renders*/*
+/models/*
 .DS_Store
 .cargo/*
