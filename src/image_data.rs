@@ -16,7 +16,7 @@ impl ImageData {
     /// Searches for the  file in the current directory, in 'textures/' and '../textures/'.
     /// Writes to "data" in row-major order, 3 floats per pixel (R, G, B).
     /// 
-    /// Assumptions: The image is in a format supported by the 'image' crate and is RGB8.
+    /// Assumptions: The image is in a format supported by the 'image' crate and is sRGB8.
     pub fn new(filename: &str) -> Self {
         let search_paths = [ // Search in multiple locations
             PathBuf::from(filename),
@@ -63,6 +63,18 @@ impl ImageData {
     /// Returns the height of the image.
     pub fn height(&self) -> u32 {
         self.height
+    }
+
+    /// Returns the raw linear RGB data as a slice of f32.
+    /// The data is in row-major order, with 3 floats per pixel (R, G, B).
+    pub fn data(&self) -> &[f32] {
+        &self.data
+    }
+
+    /// Returns the vector of linear RGB data as f32.
+    /// Passes ownership of the data vector to the caller.
+    pub fn data_vec(self) -> Vec<f32> {
+        self.data
     }
 
     /// Returns the color of the pixel at (x, y).
