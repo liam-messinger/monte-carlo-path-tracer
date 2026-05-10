@@ -1,3 +1,4 @@
+use crate::image_data::ImageData;
 use crate::material::ScatterRecord;
 use crate::prelude::*;
 use crate::hittable::{Hittable, HitRecord};
@@ -9,7 +10,6 @@ use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use std::sync::Arc;
 use std::time::Instant;
-//use image::ImageBuffer;
 
 /// Camera struct defining the viewpoint and rendering parameters.
 pub struct Camera {
@@ -85,7 +85,9 @@ pub struct Camera {
 impl Camera {
     // ----- Public -----
 
-    /// Render the scene from this camera's point of view.
+    /// Render the given world and save the resulting image.
+    /// If sample_target is provided, it is used for importance sampling in ray_color().
+    /// Optionally saves AOVs for albedo and normal if save_aovs is true, which can be used for denoising or debugging.
     pub fn render (&mut self, world: impl Into<Hittable>, sample_target: Option<Arc<Hittable>>) {
         let world: Hittable = world.into();
 
@@ -98,19 +100,28 @@ impl Camera {
         let max_depth = self.max_depth;
         let row_len = (width as usize) * 3; // Number of f32 values in a row of RGB pixels
 
+        // Flags
+        let buffer_provided = self.color_buffer.is_some();
+        self.compute_color = self.compute_color && !buffer_provided;
+        let using_aovs = self.denoise || self.save_aovs || !self.compute_color; 
+        self.denoise = self.denoise && (self.compute_color || buffer_provided);
+
         // Progress bar by row
         let bar = Self::create_progress_bar(height as u64);
 
-        // Determine if we need to compute AOVs for denoising or saving
-        let using_aovs: bool = self.denoise || self.save_aovs;
-
         // Linear RGB buffers (f32) + AOVs, only allocate AOV buffers if needed
-        let mut color_linear = vec![0f32; row_len * (height as usize)];
+        //let mut color_linear = vec![0f32; row_len * (height as usize)];
+        let mut color_linear = Vec::new();
+        if buffer_provided {
+            color_linear = self.color_buffer.take().unwrap().data_vec();
+        } else if self.compute_color {
+            color_linear = vec![0f32; row_len * (height as usize)];
+        }
         let mut albedo = if using_aovs { vec![0f32; row_len * (height as usize)] } else { Vec::new() };
         let mut normal = if using_aovs { vec![0f32; row_len * (height as usize)] } else { Vec::new() };
 
         // Parallelize over rows, each row chunk is disjoint
-        if !using_aovs { // Fill only color_linear buffer
+        if self.compute_color && !using_aovs { // Fill only color_linear buffer
             color_linear
                 .par_chunks_mut(row_len)
                 .enumerate()
@@ -121,6 +132,7 @@ impl Camera {
                         for s_j in 0..self.sqrt_spp {
                             for s_i in 0..self.sqrt_spp {
                                 let r = self.get_ray(i as u32, j as u32, s_i, s_j);
+                                // Color
                                 pixel_color += self.ray_color(&r, max_depth, &world, sample_target.as_ref(), &mut rec);
                             }
                         }
@@ -130,7 +142,7 @@ impl Camera {
                     }
                     bar.inc(1);
                 });
-        } else { // Fill color_linear, albedo, and normal buffers
+        } else if self.compute_color && using_aovs { // Fill color_linear, albedo, and normal buffers
             color_linear
                 .par_chunks_mut(row_len)
                 .zip(albedo.par_chunks_mut(row_len))
@@ -142,18 +154,11 @@ impl Camera {
                         let mut alb_acc = Color::zero();
                         let mut nrm_acc = Vec3::zero();
                         let mut rec = HitRecord::new();
-
                         for s_j in 0..self.sqrt_spp {
                             for s_i in 0..self.sqrt_spp {
                                 let r: Ray = self.get_ray(i as u32, j as u32, s_i, s_j);
                                 // Color
-                                pixel_color += self.ray_color(
-                                    &r, 
-                                    max_depth, 
-                                    &world, 
-                                    sample_target.as_ref(),
-                                    &mut rec
-                                );
+                                pixel_color += self.ray_color(&r, max_depth, &world, sample_target.as_ref(), &mut rec);
                                 // AOVs
                                 if let Some((alb, n)) = self.primary_aov(&r, &world) {
                                     alb_acc += alb;
@@ -161,14 +166,39 @@ impl Camera {
                                 }
                             }
                         }
-                        let scale = self.pixel_samples_scaled;
-                        pixel_color *= scale;
-                        let alb = alb_acc * scale;
-                        let mut nrm = nrm_acc * scale;
-                        nrm = Vec3::safe_unit_vector(&nrm);
+                        pixel_color *= self.pixel_samples_scaled;
+                        let alb = alb_acc * self.pixel_samples_scaled;
+                        let nrm = Vec3::safe_unit_vector(&(nrm_acc * self.pixel_samples_scaled));
 
                         let off = i * 3; // Offset into the row for this pixel
                         row_c[off..off + 3].copy_from_slice(&[pixel_color.x() as f32, pixel_color.y() as f32, pixel_color.z() as f32]);
+                        row_a[off..off + 3].copy_from_slice(&[alb.x() as f32, alb.y() as f32, alb.z() as f32]);
+                        row_n[off..off + 3].copy_from_slice(&[nrm.x() as f32, nrm.y() as f32, nrm.z() as f32]);
+                    }
+                    bar.inc(1);
+                });
+        } else { // Fill only albedo and normal buffers
+            albedo
+                .par_chunks_mut(row_len)
+                .zip(normal.par_chunks_mut(row_len))
+                .enumerate()
+                .for_each(|(j, (row_a, row_n))| {
+                    for i in 0..(width as usize) {
+                        let mut alb_acc = Color::zero();
+                        let mut nrm_acc = Vec3::zero();
+                        for s_j in 0..self.sqrt_spp {
+                            for s_i in 0..self.sqrt_spp {
+                                let r: Ray = self.get_ray(i as u32, j as u32, s_i, s_j);
+                                if let Some((alb, n)) = self.primary_aov(&r, &world) {
+                                    alb_acc += alb;
+                                    nrm_acc += n;
+                                }
+                            }
+                        }
+                        let alb = alb_acc * self.pixel_samples_scaled;
+                        let nrm = Vec3::safe_unit_vector(&(nrm_acc * self.pixel_samples_scaled));
+
+                        let off = i * 3; // Offset into the row for this pixel
                         row_a[off..off + 3].copy_from_slice(&[alb.x() as f32, alb.y() as f32, alb.z() as f32]);
                         row_n[off..off + 3].copy_from_slice(&[nrm.x() as f32, nrm.y() as f32, nrm.z() as f32]);
                     }
@@ -192,11 +222,13 @@ impl Camera {
         };
         
         // Save original (linear->sRGB u8)
-        let orig_u8 = linear_to_srgb_u8(&color_linear);
-        image::RgbImage::from_raw(width, height, orig_u8)
-            .expect("Buffer size mismatch")
-            .save(format!("{}.png", base))
-            .expect("Failed to save original image");
+        if !buffer_provided && !color_linear.is_empty() {
+            let orig_u8 = linear_to_srgb_u8(&color_linear);
+            image::RgbImage::from_raw(width, height, orig_u8)
+                .expect("Buffer size mismatch")
+                .save(format!("{}.png", base))
+                .expect("Failed to save original image");
+        }
 
         // Optional OIDN denoise
         if self.denoise {
@@ -261,8 +293,16 @@ impl Camera {
 
     /// Initialize camera parameters based on current settings.
     fn initialize(&mut self) {
-        self.image_height = (self.image_width as f64 / self.aspect_ratio) as u32;
-        self.image_height = if self.image_height < 1 { 1 } else { self.image_height };
+        // Check if a color buffer was provided, if so set image dimensions
+        if self.color_buffer.is_some() {
+            let image = self.color_buffer.as_ref().unwrap();
+            self.image_width = image.width();
+            self.image_height = image.height();
+        } else {
+            // If no color buffer, calculate image height from width and aspect ratio
+            self.image_height = (self.image_width as f64 / self.aspect_ratio) as u32;
+            self.image_height = if self.image_height < 1 { 1 } else { self.image_height };
+        }
 
         self.sqrt_spp = (f64::sqrt(self.samples_per_pixel as f64)) as u32;
         self.pixel_samples_scaled = 1.0 / (self.sqrt_spp * self.sqrt_spp) as f64;
@@ -440,6 +480,11 @@ impl Camera {
         if let Err(e) = device.get_error() { eprintln!("OIDN error: {}", e.1); }
         out
     }
+
+    /// Set a color buffer to be used for denoising.
+    pub fn set_color_buffer(&mut self, buffer: ImageData) {
+        self.color_buffer = Some(buffer);
+    }
 }
 
 impl Default for Camera {
@@ -478,6 +523,8 @@ impl Default for Camera {
 
             denoise: false,
             save_aovs: false,
+            compute_color: true,
+            color_buffer: None,
 
             // Private
             // Will be set in initialize()
